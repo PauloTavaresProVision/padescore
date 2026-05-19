@@ -21,8 +21,8 @@ export function CopyButton({ text }: { text: string }) {
       className={[
         "flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition",
         copied
-          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-          : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800",
+          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+          : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50",
       ].join(" ")}
     >
       {copied ? <CheckIcon className="h-3.5 w-3.5" /> : <CopyIcon className="h-3.5 w-3.5" />}

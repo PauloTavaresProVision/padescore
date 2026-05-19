@@ -56,21 +56,21 @@ export default async function TournamentDetailPage({
     <div>
       <Link
         href="/admin"
-        className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
       >
         <ChevronLeftIcon className="h-4 w-4" />
         Torneios
       </Link>
 
       {/* Hero */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40">
+      <div className="mt-4 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
         <div
           className="h-2 w-full"
           style={{ background: tournament.primary_color ?? "#10b981" }}
         />
         <div className="flex flex-wrap items-center gap-6 p-6">
           <div
-            className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-800"
+            className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-100"
             style={{ boxShadow: `inset 0 0 0 2px ${tournament.primary_color ?? "#10b981"}50` }}
           >
             {tournament.logo_url ? (
@@ -85,10 +85,10 @@ export default async function TournamentDetailPage({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
-              <h1 className="truncate text-3xl font-bold tracking-tight">{tournament.name}</h1>
+              <h1 className="truncate text-3xl font-extrabold tracking-tight text-slate-900">{tournament.name}</h1>
               <Link
                 href={`/admin/tournaments/${id}/edit`}
-                className="shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
               >
                 Editar
               </Link>
@@ -106,7 +106,7 @@ export default async function TournamentDetailPage({
       {/* Jogos */}
       <div className="mt-10 mb-4 flex items-end justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Jogos</h2>
+          <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Jogos</h2>
           <p className="mt-0.5 text-sm text-slate-500">Cada jogo gera um link único para o operador.</p>
         </div>
         <LinkButton href={`/admin/tournaments/${id}/matches/new`}>
@@ -116,20 +116,20 @@ export default async function TournamentDetailPage({
       </div>
 
       {!matches?.length ? (
-        <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center">
-          <p className="text-sm text-slate-400">Sem jogos ainda.</p>
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+          <p className="text-sm text-slate-500">Sem jogos ainda.</p>
         </div>
       ) : (
-        <ul className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40">
+        <ul className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
           {matches.map((m, idx) => {
             const teamA = [m.team_a_player1, m.team_a_player2].filter(Boolean).join(" / ");
             const teamB = [m.team_b_player1, m.team_b_player2].filter(Boolean).join(" / ");
             const s = stateByMatch.get(m.id);
             return (
-              <li key={m.id} className={idx > 0 ? "border-t border-slate-800/80" : ""}>
+              <li key={m.id} className={idx > 0 ? "border-t border-slate-100" : ""}>
                 <Link
                   href={`/admin/tournaments/${id}/matches/${m.id}`}
-                  className="group flex items-center gap-4 p-4 transition hover:bg-slate-900/60"
+                  className="group flex items-center gap-4 p-4 transition hover:bg-slate-50"
                 >
                   <StatusDot status={m.status} />
 
@@ -147,8 +147,8 @@ export default async function TournamentDetailPage({
                         </>
                       )}
                     </div>
-                    <div className="mt-1 truncate text-sm font-medium text-white">
-                      {teamA} <span className="px-1 text-slate-600">vs</span> {teamB}
+                    <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+                      {teamA} <span className="px-1 text-slate-400">vs</span> {teamB}
                     </div>
                   </div>
 
@@ -160,7 +160,7 @@ export default async function TournamentDetailPage({
                     </div>
                   )}
 
-                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-slate-400" />
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" />
                 </Link>
               </li>
             );
@@ -177,7 +177,7 @@ function Stat({ label, value, accent, dim }: { label: string; value: number; acc
       <span
         className={[
           "text-2xl font-bold",
-          accent ? "text-emerald-400" : dim ? "text-slate-500" : "text-white",
+          accent ? "text-emerald-600" : dim ? "text-slate-400" : "text-slate-900",
         ].join(" ")}
       >
         {value}
@@ -195,20 +195,20 @@ function Stat({ label, value, accent, dim }: { label: string; value: number; acc
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    live: "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]",
+    live: "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]",
     scheduled: "bg-amber-400",
-    finished: "bg-slate-600",
+    finished: "bg-slate-300",
   };
-  return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colors[status] ?? "bg-slate-600"}`} />;
+  return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colors[status] ?? "bg-slate-300"}`} />;
 }
 
 function ScorePair({ a, b, label, accent }: { a: string | number; b: string | number; label: string; accent?: boolean }) {
   return (
     <div className="text-right">
-      <div className={`tabular-nums ${accent ? "text-amber-400" : "text-slate-200"}`}>
-        {a} <span className="text-slate-600">·</span> {b}
+      <div className={`tabular-nums ${accent ? "text-amber-600" : "text-slate-700"}`}>
+        {a} <span className="text-slate-400">·</span> {b}
       </div>
-      <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
+      <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
     </div>
   );
 }

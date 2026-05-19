@@ -40,7 +40,7 @@ export default async function EditTournamentPage({
     <div className="mx-auto max-w-2xl">
       <Link
         href={`/admin/tournaments/${id}`}
-        className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
       >
         <ChevronLeftIcon className="h-4 w-4" />
         {tournament.name}
@@ -48,7 +48,7 @@ export default async function EditTournamentPage({
       <h1 className="mt-3 text-3xl font-bold tracking-tight">Editar torneio</h1>
 
       {sp.error && (
-        <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {sp.error}
         </div>
       )}
@@ -56,7 +56,7 @@ export default async function EditTournamentPage({
       <form action={updateBound} className="mt-8 space-y-6">
         <Fieldset legend="Identificação">
           <div>
-            <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-200">
+            <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-700">
               Nome
             </label>
             <Input id="name" name="name" required defaultValue={tournament.name} />
@@ -67,7 +67,7 @@ export default async function EditTournamentPage({
           {/* Preview do logo actual */}
           <div className="flex items-center gap-4">
             <div
-              className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 bg-slate-900"
+              className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 bg-slate-50"
               style={{ borderColor: (tournament.primary_color ?? "#10b981") + "50" }}
             >
               {tournament.logo_url ? (
@@ -79,7 +79,7 @@ export default async function EditTournamentPage({
                 </span>
               )}
             </div>
-            <div className="flex-1 text-xs text-slate-400">
+            <div className="flex-1 text-xs text-slate-500">
               {tournament.logo_url ? (
                 <>
                   <p>Logo actual ao lado.</p>
@@ -93,7 +93,7 @@ export default async function EditTournamentPage({
 
           <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
             <div>
-              <label htmlFor="logo" className="mb-1.5 block text-sm font-medium text-slate-200">
+              <label htmlFor="logo" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Novo logo (opcional)
               </label>
               <input
@@ -101,13 +101,13 @@ export default async function EditTournamentPage({
                 name="logo"
                 type="file"
                 accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                className="block w-full cursor-pointer rounded-lg border border-slate-700 bg-slate-900 text-sm text-slate-400 outline-none transition hover:border-slate-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-800 file:px-4 file:py-3 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-700"
+                className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-500 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-100 file:px-4 file:py-3 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
               />
               <p className="mt-1.5 text-xs text-slate-500">PNG, SVG, JPG · ~256×256 fica óptimo</p>
             </div>
 
             <div>
-              <label htmlFor="primary_color" className="mb-1.5 block text-sm font-medium text-slate-200">
+              <label htmlFor="primary_color" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Cor
               </label>
               <input
@@ -115,17 +115,17 @@ export default async function EditTournamentPage({
                 name="primary_color"
                 type="color"
                 defaultValue={tournament.primary_color ?? "#10b981"}
-                className="h-[46px] w-20 cursor-pointer rounded-lg border border-slate-700 bg-slate-900"
+                className="h-[46px] w-20 cursor-pointer rounded-lg border border-slate-300 bg-white"
               />
             </div>
           </div>
 
           {tournament.logo_url && (
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-300 transition hover:border-slate-700">
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 transition hover:border-slate-300">
               <input
                 type="checkbox"
                 name="remove_logo"
-                className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                className="h-4 w-4 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500"
               />
               <TrashIcon className="h-4 w-4 text-slate-500" />
               Remover logo (deixa só a inicial do nome)
@@ -133,10 +133,10 @@ export default async function EditTournamentPage({
           )}
 
           {/* TV Background */}
-          <div className="border-t border-slate-800 pt-5">
+          <div className="border-t border-slate-200 pt-5">
             <div className="flex items-start gap-4">
               <div
-                className="grid h-24 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-700 bg-slate-900"
+                className="grid h-24 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-300 bg-slate-50"
               >
                 {tournament.tv_background_url ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -151,7 +151,7 @@ export default async function EditTournamentPage({
                   </span>
                 )}
               </div>
-              <div className="flex-1 text-xs text-slate-400">
+              <div className="flex-1 text-xs text-slate-500">
                 {tournament.tv_background_url ? (
                   <>
                     <p>Fundo TV actual à esquerda.</p>
@@ -164,7 +164,7 @@ export default async function EditTournamentPage({
             </div>
 
             <div className="mt-3">
-              <label htmlFor="tv_background" className="mb-1.5 block text-sm font-medium text-slate-200">
+              <label htmlFor="tv_background" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Novo fundo TV (opcional)
               </label>
               <input
@@ -172,7 +172,7 @@ export default async function EditTournamentPage({
                 name="tv_background"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="block w-full cursor-pointer rounded-lg border border-slate-700 bg-slate-900 text-sm text-slate-400 outline-none transition hover:border-slate-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-800 file:px-4 file:py-3 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-700"
+                className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-500 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-100 file:px-4 file:py-3 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
               />
               <p className="mt-1.5 text-xs text-slate-500">
                 Imagem full-screen do scoreboard TV. Os dados dinâmicos (score, sets, tempo, fotos) são sobrepostos nas posições.
@@ -180,11 +180,11 @@ export default async function EditTournamentPage({
             </div>
 
             {tournament.tv_background_url && (
-              <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-300 transition hover:border-slate-700">
+              <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 transition hover:border-slate-300">
                 <input
                   type="checkbox"
                   name="remove_tv_background"
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500"
                 />
                 <TrashIcon className="h-4 w-4 text-slate-500" />
                 Remover fundo TV
@@ -193,9 +193,9 @@ export default async function EditTournamentPage({
           </div>
 
           {/* Imagem do ecrã de espera */}
-          <div className="border-t border-slate-800 pt-5">
+          <div className="border-t border-slate-200 pt-5">
             <div className="flex items-start gap-4">
-              <div className="grid h-24 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-700 bg-slate-900">
+              <div className="grid h-24 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
                 {tournament.tv_standby_url ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
@@ -209,7 +209,7 @@ export default async function EditTournamentPage({
                   </span>
                 )}
               </div>
-              <div className="flex-1 text-xs text-slate-400">
+              <div className="flex-1 text-xs text-slate-500">
                 <p>
                   Imagem mostrada na TV <strong>entre jogos</strong> (&ldquo;AGUARDE
                   O PRÓXIMO JOGO&rdquo;).
@@ -223,7 +223,7 @@ export default async function EditTournamentPage({
             </div>
 
             <div className="mt-3">
-              <label htmlFor="tv_standby" className="mb-1.5 block text-sm font-medium text-slate-200">
+              <label htmlFor="tv_standby" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Imagem do ecrã de espera (opcional)
               </label>
               <input
@@ -231,7 +231,7 @@ export default async function EditTournamentPage({
                 name="tv_standby"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="block w-full cursor-pointer rounded-lg border border-slate-700 bg-slate-900 text-sm text-slate-400 outline-none transition hover:border-slate-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-800 file:px-4 file:py-3 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-700"
+                className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-500 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-100 file:px-4 file:py-3 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
               />
               <p className="mt-1.5 text-xs text-slate-500">
                 Full-screen, ideal 1920×1080. Igual à imagem que desenhaste com
@@ -240,11 +240,11 @@ export default async function EditTournamentPage({
             </div>
 
             {tournament.tv_standby_url && (
-              <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-sm text-slate-300 transition hover:border-slate-700">
+              <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 transition hover:border-slate-300">
                 <input
                   type="checkbox"
                   name="remove_tv_standby"
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500"
                 />
                 <TrashIcon className="h-4 w-4 text-slate-500" />
                 Remover ecrã de espera

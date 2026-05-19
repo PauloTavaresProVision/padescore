@@ -122,30 +122,30 @@ function BigPointButton({
         "group relative overflow-hidden rounded-2xl border p-5 text-left transition",
         "disabled:cursor-not-allowed disabled:opacity-50",
         team === "A"
-          ? "border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40 hover:bg-emerald-500/10"
-          : "border-cyan-500/20 bg-cyan-500/5 hover:border-cyan-500/40 hover:bg-cyan-500/10",
+          ? "border-emerald-200 bg-emerald-50 hover:border-emerald-300 hover:bg-emerald-100"
+          : "border-cyan-200 bg-cyan-50 hover:border-cyan-300 hover:bg-cyan-100",
       ].join(" ")}
     >
       <div className="flex items-center justify-between">
         <span
           className={[
             "text-[11px] font-semibold uppercase tracking-widest",
-            team === "A" ? "text-emerald-300/70" : "text-cyan-300/70",
+            team === "A" ? "text-emerald-600" : "text-cyan-600",
           ].join(" ")}
         >
           Equipa {team}
         </span>
         <span
           className={[
-            "text-2xl font-bold transition group-hover:scale-110",
-            team === "A" ? "text-emerald-400" : "text-cyan-400",
+            "text-2xl font-extrabold transition group-hover:scale-110",
+            team === "A" ? "text-emerald-600" : "text-cyan-600",
           ].join(" ")}
         >
           +1
         </span>
       </div>
-      <div className="mt-2 truncate text-base font-semibold text-white">{name}</div>
-      <div className="mt-1 text-xs text-slate-400">Clica para adicionar ponto</div>
+      <div className="mt-2 truncate text-base font-bold text-slate-900">{name}</div>
+      <div className="mt-1 text-xs text-slate-500">Clica para adicionar ponto</div>
     </button>
   );
 }
@@ -162,9 +162,9 @@ function SecondaryButton({
   variant?: "default" | "warn" | "danger";
 }) {
   const styles = {
-    default: "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600 hover:bg-slate-800",
-    warn: "border-amber-500/30 bg-amber-500/5 text-amber-300 hover:border-amber-500/50 hover:bg-amber-500/10",
-    danger: "border-red-500/30 bg-red-500/5 text-red-300 hover:border-red-500/50 hover:bg-red-500/10",
+    default: "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50",
+    warn: "border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100",
+    danger: "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100",
   }[variant];
 
   return (

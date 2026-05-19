@@ -77,19 +77,19 @@ export default async function EditMatchPage({
     <div className="mx-auto max-w-3xl">
       <Link
         href={`/admin/tournaments/${tournamentId}/matches/${matchId}`}
-        className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-slate-200"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
       >
         <ChevronLeftIcon className="h-4 w-4" />
         Voltar ao jogo
       </Link>
       <h1 className="mt-3 text-3xl font-bold tracking-tight">Editar jogo</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-slate-500">
         Corrige court, categoria, jogadores ou fotos. As fotos actuais
         mantêm-se a não ser que recomponhas.
       </p>
 
       {sp.error && (
-        <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {sp.error}
         </div>
       )}
@@ -98,20 +98,20 @@ export default async function EditMatchPage({
         <Fieldset legend="Informação geral">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="court_name" className="mb-1.5 block text-sm font-medium text-slate-200">
+              <label htmlFor="court_name" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Court
               </label>
               <Input id="court_name" name="court_name" defaultValue={match.court_name} />
             </div>
             <div>
-              <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-slate-200">
+              <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Categoria
               </label>
               <select
                 id="category"
                 name="category"
                 defaultValue={match.category ?? ""}
-                className="w-full rounded-lg border border-slate-700/80 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition hover:border-slate-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
               >
                 <option value="">— Sem categoria —</option>
                 {CATEGORIES.map((c) => (
@@ -170,17 +170,17 @@ function Toggle({
   defaultChecked?: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4 transition hover:border-slate-700 hover:bg-slate-900/60">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-slate-100">
       <input
         type="checkbox"
         name={name}
         defaultChecked={defaultChecked}
         className="peer sr-only"
       />
-      <span className="relative mt-0.5 inline-block h-5 w-9 shrink-0 rounded-full bg-slate-700 transition before:absolute before:left-0.5 before:top-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:shadow-sm before:transition peer-checked:bg-emerald-500 peer-checked:before:translate-x-4" />
+      <span className="relative mt-0.5 inline-block h-5 w-9 shrink-0 rounded-full bg-slate-300 transition before:absolute before:left-0.5 before:top-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:shadow-sm before:transition peer-checked:bg-emerald-500 peer-checked:before:translate-x-4" />
       <span className="flex-1">
-        <span className="block text-sm font-medium text-white">{label}</span>
-        <span className="mt-0.5 block text-xs text-slate-400">{description}</span>
+        <span className="block text-sm font-semibold text-slate-900">{label}</span>
+        <span className="mt-0.5 block text-xs text-slate-500">{description}</span>
       </span>
     </label>
   );
@@ -201,7 +201,7 @@ function NumberField({
 }) {
   return (
     <div>
-      <label htmlFor={name} className="mb-1.5 block text-xs font-medium text-slate-300">
+      <label htmlFor={name} className="mb-1.5 block text-xs font-medium text-slate-600">
         {label}
       </label>
       <Input id={name} name={name} type="number" defaultValue={defaultValue} min={min} max={max} />
