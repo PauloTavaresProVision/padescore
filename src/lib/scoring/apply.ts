@@ -182,18 +182,25 @@ async function swapServerFast(
   supabase: SupabaseClient,
   matchId: string,
 ): Promise<ApplyResult | ApplyError> {
-  const { data: stateRow, error: stateErr } = await supabase
-    .from("match_state")
-    .select("*")
-    .eq("match_id", matchId)
-    .single();
+  const [{ data: stateRow, error: stateErr }, maxSeqRes] = await Promise.all([
+    supabase.from("match_state").select("*").eq("match_id", matchId).single(),
+    supabase
+      .from("match_events")
+      .select("seq")
+      .eq("match_id", matchId)
+      .order("seq", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (stateErr || !stateRow) {
     return { ok: false, error: stateErr?.message ?? "Estado não encontrado" };
   }
 
   const newServer: TeamSide = stateRow.server === "A" ? "B" : "A";
-  const nextSeq = stateRow.last_event_seq + 1;
+  const maxEventSeq =
+    !maxSeqRes.error && maxSeqRes.data ? (maxSeqRes.data.seq as number) : 0;
+  const nextSeq = Math.max(maxEventSeq, stateRow.last_event_seq ?? 0) + 1;
 
   const insRes = await supabase.from("match_events").insert({
     match_id: matchId,
@@ -404,9 +411,16 @@ async function applyPointFast(
   matchId: string,
   team: TeamSide,
 ): Promise<ApplyResult | ApplyError> {
-  const [matchRes, stateRes] = await Promise.all([
+  const [matchRes, stateRes, maxSeqRes] = await Promise.all([
     supabase.from("matches").select(MATCH_COLS).eq("id", matchId).single(),
     supabase.from("match_state").select("*").eq("match_id", matchId).single(),
+    supabase
+      .from("match_events")
+      .select("seq")
+      .eq("match_id", matchId)
+      .order("seq", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (matchRes.error || !matchRes.data) {
@@ -424,7 +438,14 @@ async function applyPointFast(
   }
 
   const newState = applyEvent(current, { type: "point", team }, config);
-  const nextSeq = stateRes.data.last_event_seq + 1;
+  // Seq autoritativo: o MAIOR entre o seq real dos eventos e o last_event_seq
+  // do estado. Auto-cura drift (correções manuais/undo deixaram o estado
+  // atrás do log) sem reset — a unique constraint + retry tratam da
+  // concorrência genuína.
+  const maxEventSeq =
+    !maxSeqRes.error && maxSeqRes.data ? (maxSeqRes.data.seq as number) : 0;
+  const nextSeq =
+    Math.max(maxEventSeq, stateRes.data.last_event_seq ?? 0) + 1;
 
   // Sequencial: insert primeiro (a unique constraint em (match_id, seq)
   // serializa cliques concorrentes — só um vence o seq). Só se passar,
