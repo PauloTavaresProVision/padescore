@@ -24,29 +24,26 @@ export default async function AdminLayout({
   const initials = displayName.trim().slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex min-h-dvh bg-[#0a0c12] text-slate-100">
+    <div className="flex min-h-dvh bg-[#f4f5f9] text-slate-900">
       {/* Sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-[256px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0e15] lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-[256px] shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
         <div className="px-5 py-6">
           <Link href="/admin" className="block">
-            {/* O logo já contém o lettering "Game vision" — sem texto extra. */}
-            <span className="inline-grid place-items-center rounded-2xl bg-white px-3 py-2 shadow-lg shadow-black/40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="GameVision" className="h-10 w-auto object-contain" />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="GameVision" className="h-11 w-auto object-contain" />
           </Link>
         </div>
 
         <Nav />
 
         <div className="p-3">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-lime-400 to-emerald-500 text-xs font-extrabold text-slate-950">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-lime-400 to-emerald-500 text-xs font-extrabold text-slate-900">
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-bold">{displayName}</div>
+                <div className="truncate text-sm font-bold text-slate-900">{displayName}</div>
                 {user.email && displayName !== user.email && (
                   <div className="truncate text-[11px] text-slate-500">{user.email}</div>
                 )}
@@ -55,7 +52,7 @@ export default async function AdminLayout({
             <form action={logout} className="mt-2.5">
               <button
                 type="submit"
-                className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-500 transition hover:bg-red-500/10 hover:text-red-300"
+                className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
               >
                 Terminar sessão
               </button>
@@ -65,32 +62,21 @@ export default async function AdminLayout({
       </aside>
 
       {/* Topbar mobile */}
-      <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-white/[0.06] bg-[#0c0e15]/95 px-4 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
         <Link href="/admin" className="flex items-center">
-          <span className="inline-grid place-items-center rounded-xl bg-white px-2 py-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="GameVision" className="h-7 w-auto object-contain" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="GameVision" className="h-8 w-auto object-contain" />
         </Link>
         <form action={logout}>
-          <button type="submit" className="text-xs font-semibold text-slate-400 hover:text-slate-100">
+          <button type="submit" className="text-xs font-semibold text-slate-500 hover:text-slate-900">
             Sair
           </button>
         </form>
       </header>
 
       {/* Main */}
-      <main className="relative flex-1 min-w-0 overflow-hidden">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(900px 500px at 85% -10%, rgba(163,230,53,0.06), transparent 60%), radial-gradient(700px 500px at 0% 110%, rgba(56,189,248,0.05), transparent 55%)",
-          }}
-        />
-        <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-12">
-          {children}
-        </div>
+      <main className="flex-1 min-w-0">
+        <div className="mx-auto max-w-6xl px-6 py-9 lg:px-10">{children}</div>
       </main>
     </div>
   );

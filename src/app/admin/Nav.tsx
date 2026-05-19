@@ -31,17 +31,17 @@ export function Nav() {
             className={[
               "group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition",
               active
-                ? "bg-lime-400/[0.12] text-white"
-                : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-100",
+                ? "bg-emerald-50 text-emerald-700"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
             ].join(" ")}
           >
             {active && (
-              <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-lime-400 shadow-[0_0_12px_#a3e635]" />
+              <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-emerald-500" />
             )}
             <Icon
               className={[
                 "h-[18px] w-[18px] transition",
-                active ? "text-lime-400" : "text-slate-500 group-hover:text-slate-300",
+                active ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600",
               ].join(" ")}
             />
             {item.label}
