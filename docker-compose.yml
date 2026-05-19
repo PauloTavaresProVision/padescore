@@ -1,0 +1,36 @@
+# =====================================================================
+# Padescore — docker compose para self-host (Contabo, Coolify, Dokploy...)
+#
+# 1. Cria um ficheiro .env ao lado deste (NÃO vai para o git):
+#      NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+#      NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+#      SUPABASE_SERVICE_ROLE_KEY=eyJ...
+# 2. docker compose up -d --build
+# 3. Reverse-proxy (Nginx/Caddy/Traefik) → http://127.0.0.1:3000 com HTTPS
+# =====================================================================
+
+services:
+  padescore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* são embebidas no build (têm de estar aqui).
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    image: padescore:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      # Runtime (server-side). A service role NUNCA é embebida no bundle.
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
