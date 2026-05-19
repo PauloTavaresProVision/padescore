@@ -2,19 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutIcon, UsersIcon, KeyIcon } from "@/components/icons";
+import { LayoutIcon, TrophyIcon, UsersIcon, KeyIcon } from "@/components/icons";
 
 const ITEMS = [
-  { href: "/admin", label: "Painel", icon: LayoutIcon, match: ["/admin", "/admin/tournaments"] },
-  { href: "/admin/players", label: "Jogadores", icon: UsersIcon, match: ["/admin/players"] },
-  { href: "/admin/users", label: "Utilizadores", icon: KeyIcon, match: ["/admin/users"] },
+  { href: "/admin", label: "Painel", icon: LayoutIcon },
+  { href: "/admin/tournaments", label: "Torneios", icon: TrophyIcon },
+  { href: "/admin/players", label: "Jogadores", icon: UsersIcon },
+  { href: "/admin/users", label: "Utilizadores", icon: KeyIcon },
 ];
 
-function isActive(path: string, item: (typeof ITEMS)[number]) {
-  if (item.href === "/admin") {
-    return path === "/admin" || path.startsWith("/admin/tournaments");
-  }
-  return item.match.some((m) => path === m || path.startsWith(m + "/"));
+function isActive(path: string, href: string) {
+  if (href === "/admin") return path === "/admin";
+  return path === href || path.startsWith(href + "/");
 }
 
 export function Nav() {
@@ -22,7 +21,7 @@ export function Nav() {
   return (
     <nav className="flex-1 space-y-1 px-3">
       {ITEMS.map((item) => {
-        const active = isActive(path, item);
+        const active = isActive(path, item.href);
         const Icon = item.icon;
         return (
           <Link

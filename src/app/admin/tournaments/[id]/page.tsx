@@ -55,7 +55,7 @@ export default async function TournamentDetailPage({
   return (
     <div>
       <Link
-        href="/admin"
+        href="/admin/tournaments"
         className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
       >
         <ChevronLeftIcon className="h-4 w-4" />

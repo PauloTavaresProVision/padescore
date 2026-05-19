@@ -105,7 +105,7 @@ export function SinglePlayerPhotoUpload({
   return (
     <div className="space-y-3">
       {error && (
-        <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -113,7 +113,7 @@ export function SinglePlayerPhotoUpload({
       <div className="flex items-center gap-4">
         <label
           htmlFor="player-photo-input"
-          className="bg-checker group relative grid aspect-[3/4] w-32 cursor-pointer place-items-center overflow-hidden rounded-xl border border-dashed border-slate-700 bg-slate-950/60 text-xs text-slate-500 transition hover:border-slate-600"
+          className="bg-checker group relative grid aspect-[3/4] w-32 cursor-pointer place-items-center overflow-hidden rounded-xl border border-dashed border-slate-300 text-xs text-slate-400 transition hover:border-slate-400"
         >
           {bgRemovedUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -131,7 +131,7 @@ export function SinglePlayerPhotoUpload({
             />
           ) : null}
           {processing && (
-            <div className="absolute inset-0 grid place-items-center bg-slate-950/70 text-center text-[11px] font-semibold uppercase tracking-widest text-cyan-300">
+            <div className="absolute inset-0 grid place-items-center bg-white/80 text-center text-[11px] font-semibold uppercase tracking-widest text-emerald-600">
               A processar
               <br />
               IA…
@@ -153,15 +153,15 @@ export function SinglePlayerPhotoUpload({
           />
         </label>
 
-        <div className="flex-1 text-xs text-slate-400">
+        <div className="flex-1 text-xs text-slate-500">
           {bgRemovedBlob ? (
             <>
-              <div className="font-medium text-emerald-400">Foto pronta</div>
+              <div className="font-semibold text-emerald-600">Foto pronta</div>
               <div className="mt-1">Fundo removido. Vai ser guardada como PNG transparente.</div>
               <button
                 type="button"
                 onClick={reset}
-                className="mt-2 text-cyan-400 hover:underline"
+                className="mt-2 font-semibold text-emerald-600 hover:underline"
               >
                 Trocar foto
               </button>
@@ -179,12 +179,12 @@ export function SinglePlayerPhotoUpload({
               className={[
                 "mt-2 block rounded border px-2 py-1 text-[11px] font-medium",
                 facingKind === "detecting"
-                  ? "border-slate-700 bg-slate-900 text-slate-400"
+                  ? "border-slate-200 bg-slate-50 text-slate-500"
                   : facingKind === "error"
-                    ? "border-red-500/40 bg-red-500/10 text-red-300"
+                    ? "border-red-200 bg-red-50 text-red-700"
                     : facingKind === "unknown"
-                      ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
-                      : "border-cyan-500/40 bg-cyan-500/10 text-cyan-200",
+                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      : "border-cyan-200 bg-cyan-50 text-cyan-700",
               ].join(" ")}
             >
               {facingLabel}
@@ -198,13 +198,13 @@ export function SinglePlayerPhotoUpload({
       <style>{`
         .bg-checker {
           background-image:
-            linear-gradient(45deg, #1f2937 25%, transparent 25%),
-            linear-gradient(-45deg, #1f2937 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #1f2937 75%),
-            linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+            linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+            linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
           background-size: 16px 16px;
           background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-          background-color: #0f172a;
+          background-color: #f1f5f9;
         }
       `}</style>
     </div>
