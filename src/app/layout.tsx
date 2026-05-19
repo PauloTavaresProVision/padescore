@@ -19,8 +19,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Padescore",
-  description: "Sistema de scoring para padel — backoffice, transmissão e marcador mobile.",
+  title: "GameVision",
+  description: "Sistema de scoring desportivo — backoffice, transmissão e marcador mobile.",
 };
 
 export default function RootLayout({

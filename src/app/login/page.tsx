@@ -19,11 +19,9 @@ export default async function LoginPage({
         <div className="absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-cyan-500/15 blur-3xl" />
 
         <div className="relative flex h-full flex-col justify-between p-12">
-          <div className="flex items-center gap-3 text-xl font-semibold tracking-tight">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 text-slate-950 shadow-lg shadow-emerald-500/20">
-              P
-            </span>
-            Padescore
+          <div className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="GameVision" className="h-14 w-auto object-contain" />
           </div>
 
           <div className="max-w-md">
@@ -44,9 +42,7 @@ export default async function LoginPage({
             </ul>
           </div>
 
-          <div className="text-xs text-slate-600">
-            Powered by Next.js · Supabase · Realtime
-          </div>
+          <div className="text-xs text-slate-600">GameVision · Scoring desportivo</div>
         </div>
       </div>
 
@@ -54,11 +50,9 @@ export default async function LoginPage({
       <div className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           {/* Brand mobile only */}
-          <div className="mb-10 flex items-center gap-2 lg:hidden">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 text-slate-950">
-              P
-            </span>
-            <span className="text-lg font-semibold tracking-tight">Padescore</span>
+          <div className="mb-10 flex items-center lg:hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="GameVision" className="h-11 w-auto object-contain" />
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight">
