@@ -28,13 +28,11 @@ export default async function AdminLayout({
       {/* Sidebar */}
       <aside className="sticky top-0 hidden h-dvh w-[256px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0e15] lg:flex">
         <div className="px-5 py-6">
-          <Link href="/admin" className="flex items-center gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-lg shadow-black/40">
+          <Link href="/admin" className="block">
+            {/* O logo já contém o lettering "Game vision" — sem texto extra. */}
+            <span className="inline-grid place-items-center rounded-2xl bg-white px-3 py-2 shadow-lg shadow-black/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="" className="h-full w-full object-contain p-1" />
-            </span>
-            <span className="text-[17px] font-extrabold tracking-tight">
-              Game<span className="text-lime-400">Vision</span>
+              <img src="/logo.png" alt="GameVision" className="h-10 w-auto object-contain" />
             </span>
           </Link>
         </div>
@@ -68,13 +66,10 @@ export default async function AdminLayout({
 
       {/* Topbar mobile */}
       <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-white/[0.06] bg-[#0c0e15]/95 px-4 py-3 backdrop-blur lg:hidden">
-        <Link href="/admin" className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
+        <Link href="/admin" className="flex items-center">
+          <span className="inline-grid place-items-center rounded-xl bg-white px-2 py-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="" className="h-full w-full object-contain p-0.5" />
-          </span>
-          <span className="text-base font-extrabold tracking-tight">
-            Game<span className="text-lime-400">Vision</span>
+            <img src="/logo.png" alt="GameVision" className="h-7 w-auto object-contain" />
           </span>
         </Link>
         <form action={logout}>
