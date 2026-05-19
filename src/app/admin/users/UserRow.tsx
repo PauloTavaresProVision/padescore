@@ -29,28 +29,28 @@ export function UserRow({
   return (
     <li
       className={[
-        "rounded-xl border border-slate-800/80 bg-slate-900/40 p-4 transition",
+        "rounded-xl bg-white p-4 ring-1 ring-slate-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition",
         pending ? "opacity-50" : "",
       ].join(" ")}
     >
       <div className="flex flex-wrap items-center gap-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-bold uppercase text-slate-300">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-bold uppercase text-slate-600">
           {(name || email).trim().slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-white">
-              {name || <span className="italic text-slate-500">sem nome</span>}
+            <span className="truncate text-sm font-bold text-slate-900">
+              {name || <span className="italic text-slate-400">sem nome</span>}
             </span>
             {isSelf && (
-              <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                 tu
               </span>
             )}
           </div>
           <div className="truncate text-xs text-slate-500">{email}</div>
         </div>
-        <div className="text-[11px] text-slate-600">
+        <div className="text-[11px] text-slate-400">
           {new Date(createdAt).toLocaleDateString("pt-PT", {
             day: "numeric",
             month: "short",
@@ -64,7 +64,7 @@ export function UserRow({
               setEditing((v) => !v);
               setResetting(false);
             }}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
           >
             Nome
           </button>
@@ -74,7 +74,7 @@ export function UserRow({
               setResetting((v) => !v);
               setEditing(false);
             }}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
           >
             Password
           </button>
@@ -83,7 +83,7 @@ export function UserRow({
             onClick={onDelete}
             disabled={isSelf || pending}
             title={isSelf ? "Não te podes apagar" : "Apagar utilizador"}
-            className="grid h-8 w-8 place-items-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-25"
+            className="grid h-8 w-8 place-items-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-25"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
@@ -93,22 +93,22 @@ export function UserRow({
       {editing && (
         <form
           action={renameUser.bind(null, id)}
-          className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-800 pt-3"
+          className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3"
         >
           <div className="flex-1">
-            <label className="mb-1 block text-[11px] font-medium text-slate-400">
+            <label className="mb-1 block text-[11px] font-medium text-slate-500">
               Nome a mostrar
             </label>
             <input
               name="name"
               defaultValue={name}
               autoComplete="off"
-              className="w-full rounded-md border border-slate-700/80 bg-slate-900 px-2.5 py-1.5 text-sm text-white outline-none focus:border-emerald-400"
+              className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
             />
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-950 transition hover:bg-emerald-400"
+            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-emerald-500"
           >
             Guardar
           </button>
@@ -118,10 +118,10 @@ export function UserRow({
       {resetting && (
         <form
           action={resetUserPassword.bind(null, id)}
-          className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-800 pt-3"
+          className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3"
         >
           <div className="flex-1">
-            <label className="mb-1 block text-[11px] font-medium text-slate-400">
+            <label className="mb-1 block text-[11px] font-medium text-slate-500">
               Nova password (mín. 6)
             </label>
             <input
@@ -130,12 +130,12 @@ export function UserRow({
               required
               autoComplete="off"
               placeholder="nova password"
-              className="w-full rounded-md border border-slate-700/80 bg-slate-900 px-2.5 py-1.5 text-sm text-white outline-none focus:border-emerald-400"
+              className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
             />
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-950 transition hover:bg-amber-400"
+            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-amber-600"
           >
             Redefinir
           </button>

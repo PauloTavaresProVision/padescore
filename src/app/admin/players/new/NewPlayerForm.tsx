@@ -79,19 +79,19 @@ export function NewPlayerForm() {
 
       <Fieldset legend="Foto (a IA remove o fundo no upload)">
         {/* Modo de orientação: IA automática vs manual */}
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Direcção:
           </span>
-          <div className="flex overflow-hidden rounded-lg border border-slate-700">
+          <div className="flex overflow-hidden rounded-lg border border-slate-300">
             <button
               type="button"
               onClick={() => setAiMode(true)}
               className={[
                 "px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
                 aiMode
-                  ? "bg-cyan-600 text-white"
-                  : "bg-slate-900 text-slate-400 hover:text-slate-200",
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white text-slate-500 hover:text-slate-800",
               ].join(" ")}
             >
               🤖 IA automática
@@ -102,8 +102,8 @@ export function NewPlayerForm() {
               className={[
                 "px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
                 !aiMode
-                  ? "bg-slate-600 text-white"
-                  : "bg-slate-900 text-slate-400 hover:text-slate-200",
+                  ? "bg-slate-700 text-white"
+                  : "bg-white text-slate-500 hover:text-slate-800",
               ].join(" ")}
             >
               ✋ Manual
@@ -119,9 +119,9 @@ export function NewPlayerForm() {
         <SinglePlayerPhotoUpload onFacing={onFacing} detectEnabled />
 
         {aiMode && aiFacing && (
-          <div className="mt-3 text-[11px] text-slate-400">
+          <div className="mt-3 text-[11px] text-slate-500">
             Resultado IA:{" "}
-            <strong className="text-slate-200">
+            <strong className="text-slate-800">
               {aiFacing === "left"
                 ? "virado para a esquerda → espelhei"
                 : aiFacing === "right"
@@ -134,24 +134,24 @@ export function NewPlayerForm() {
 
         {/* checkbox de mirror controlado (hidden input garante o submit "on") */}
         {mirror && <input type="hidden" name="mirror" value="on" />}
-        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3 transition hover:border-slate-700">
+        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-slate-300">
           <input
             type="checkbox"
             checked={mirror}
             onChange={(e) => setMirror(e.target.checked)}
             className="peer sr-only"
           />
-          <span className="relative mt-0.5 inline-block h-5 w-9 shrink-0 rounded-full bg-slate-700 transition peer-checked:bg-cyan-500" >
+          <span className="relative mt-0.5 inline-block h-5 w-9 shrink-0 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500" >
             <span
               className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition"
               style={{ transform: mirror ? "translateX(16px)" : "none" }}
             />
           </span>
           <span className="flex-1">
-            <span className="block text-sm font-medium text-white">
-              Espelhar foto {mirror && <span className="text-cyan-400">(activo)</span>}
+            <span className="block text-sm font-semibold text-slate-900">
+              Espelhar foto {mirror && <span className="text-emerald-600">(activo)</span>}
             </span>
-            <span className="mt-0.5 block text-xs text-slate-400">
+            <span className="mt-0.5 block text-xs text-slate-500">
               {aiMode
                 ? "A IA já decidiu — só mexe aqui se a IA se enganou."
                 : "Marca se o jogador foi fotografado a olhar para o lado errado."}

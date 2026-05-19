@@ -6,12 +6,12 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-br from-emerald-400 to-emerald-500 text-slate-950 hover:from-emerald-300 hover:to-emerald-400 shadow-lg shadow-emerald-500/20",
+    "bg-lime-400 text-slate-900 hover:bg-lime-300 shadow-sm",
   secondary:
-    "border border-slate-700 bg-slate-900 text-slate-100 hover:border-slate-600 hover:bg-slate-800",
-  ghost: "text-slate-300 hover:bg-slate-900 hover:text-white",
+    "border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50",
+  ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
   danger:
-    "border border-red-500/40 bg-red-500/10 text-red-300 hover:border-red-500/60 hover:bg-red-500/20",
+    "border border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100",
 };
 
 const sizes: Record<Size, string> = {
@@ -21,7 +21,7 @@ const sizes: Record<Size, string> = {
 };
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-400/30 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;

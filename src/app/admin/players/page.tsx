@@ -23,9 +23,11 @@ export default async function PlayersPage({
       {/* Header */}
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-400">Backoffice</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Jogadores</h1>
-          <p className="mt-2 max-w-xl text-sm text-slate-400">
+          <p className="text-sm text-slate-500">Backoffice</p>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
+            Jogadores
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-slate-500">
             Carrega cada jogador uma vez. A IA remove o fundo no upload e a foto
             fica pronta para reutilizar em qualquer jogo.
           </p>
@@ -37,7 +39,7 @@ export default async function PlayersPage({
       </div>
 
       {(sp.error || error) && (
-        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {sp.error ?? error?.message}
         </div>
       )}

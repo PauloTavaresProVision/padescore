@@ -27,26 +27,26 @@ export default async function UsersPage({
   return (
     <div>
       <div className="mb-8">
-        <p className="text-sm text-slate-400">Backoffice</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">Utilizadores</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-400">
+        <p className="text-sm text-slate-500">Backoffice</p>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">Utilizadores</h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-500">
           Contas que podem entrar no backoffice. Sem níveis de permissão — todas
           têm acesso total.
         </p>
       </div>
 
       {sp.error && (
-        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {sp.error}
         </div>
       )}
       {sp.info && (
-        <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {sp.info}
         </div>
       )}
 
-      <div className="mb-6 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-4 py-3 text-xs text-amber-200/90">
+      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
         <strong>Nota:</strong> torneios e jogadores são privados de cada conta.
         Um utilizador novo começa com um espaço vazio — não vê os torneios já
         criados por outra conta. Para vários operadores partilharem o mesmo
@@ -57,19 +57,19 @@ export default async function UsersPage({
       <Fieldset legend="Novo utilizador">
         <form action={createUser} className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-200">
+            <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-700">
               Nome
             </label>
             <Input id="name" name="name" placeholder="Ex: Paulo Tavares" autoComplete="off" />
           </div>
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-200">
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
               Email
             </label>
             <Input id="email" name="email" type="email" required placeholder="pessoa@exemplo.com" autoComplete="off" />
           </div>
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-200">
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
               Password
             </label>
             <Input id="password" name="password" type="text" required placeholder="mín. 6 caracteres" autoComplete="off" />
@@ -82,7 +82,7 @@ export default async function UsersPage({
 
       <div className="mt-8">
         {error ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             Falha a listar utilizadores: {error.message}
           </div>
         ) : (

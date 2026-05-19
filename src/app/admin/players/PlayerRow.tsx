@@ -32,11 +32,11 @@ export function PlayerRow({ player }: { player: Player }) {
   return (
     <li
       className={[
-        "group relative flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3 transition",
-        pending ? "opacity-50" : "hover:border-slate-700 hover:bg-slate-900",
+        "group relative flex items-center gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200/80 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition",
+        pending ? "opacity-50" : "hover:ring-slate-300 hover:shadow-md",
       ].join(" ")}
     >
-      <div className="bg-checker grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-800">
+      <div className="bg-checker grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg ring-1 ring-slate-200">
         {player.photo_url ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -46,18 +46,18 @@ export function PlayerRow({ player }: { player: Player }) {
             style={{ transform: mirror ? "scaleX(-1)" : undefined }}
           />
         ) : (
-          <span className="text-lg font-bold text-slate-500">
+          <span className="text-lg font-bold text-slate-400">
             {player.name.slice(0, 1).toUpperCase()}
           </span>
         )}
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-white">{player.name}</div>
+        <div className="truncate text-sm font-bold text-slate-900">{player.name}</div>
         <div className="truncate text-[11px] text-slate-500">
           OBS:{" "}
           <span
-            className={player.short_name ? "text-slate-400" : "italic text-slate-600"}
+            className={player.short_name ? "text-slate-600" : "italic text-slate-400"}
             title={
               player.short_name
                 ? undefined
@@ -72,10 +72,10 @@ export function PlayerRow({ player }: { player: Player }) {
           onClick={onToggleMirror}
           disabled={pending}
           className={[
-            "mt-1 inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider transition",
+            "mt-1 inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition",
             mirror
-              ? "border-cyan-500/60 bg-cyan-500/20 text-cyan-200"
-              : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600",
+              ? "border-cyan-300 bg-cyan-50 text-cyan-700"
+              : "border-slate-300 bg-white text-slate-500 hover:border-slate-400 hover:text-slate-700",
           ].join(" ")}
           title="Espelhar foto"
         >
@@ -86,7 +86,7 @@ export function PlayerRow({ player }: { player: Player }) {
       <div className="flex items-center gap-1.5">
         <Link
           href={`/admin/players/${player.id}/edit`}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
           title="Editar jogador"
         >
           <PencilIcon className="h-4 w-4" />
@@ -95,7 +95,7 @@ export function PlayerRow({ player }: { player: Player }) {
           type="button"
           onClick={onDelete}
           disabled={pending}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-50"
           title="Apagar jogador"
         >
           <TrashIcon className="h-4 w-4" />
@@ -105,13 +105,13 @@ export function PlayerRow({ player }: { player: Player }) {
       <style>{`
         .bg-checker {
           background-image:
-            linear-gradient(45deg, #1f2937 25%, transparent 25%),
-            linear-gradient(-45deg, #1f2937 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #1f2937 75%),
-            linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+            linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+            linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
           background-size: 16px 16px;
           background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-          background-color: #0f172a;
+          background-color: #f1f5f9;
         }
       `}</style>
     </li>
