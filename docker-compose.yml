@@ -21,7 +21,10 @@ services:
     image: padescore:latest
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # Porto do HOST configurável (o container ouve sempre no 3000 por dentro).
+      # Se o 3000 do host estiver ocupado, define APP_PORT=8080 (ou outro) nas
+      # env vars do Portainer.
+      - "${APP_PORT:-3000}:3000"
     environment:
       NODE_ENV: production
       # Runtime (server-side). A service role NUNCA é embebida no bundle.
