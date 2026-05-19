@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrophyIcon, UsersIcon, KeyIcon } from "@/components/icons";
+import { LayoutIcon, UsersIcon, KeyIcon } from "@/components/icons";
 
 const ITEMS = [
-  { href: "/admin", label: "Torneios", icon: TrophyIcon, match: ["/admin", "/admin/tournaments"] },
+  { href: "/admin", label: "Painel", icon: LayoutIcon, match: ["/admin", "/admin/tournaments"] },
   { href: "/admin/players", label: "Jogadores", icon: UsersIcon, match: ["/admin/players"] },
   { href: "/admin/users", label: "Utilizadores", icon: KeyIcon, match: ["/admin/users"] },
 ];
