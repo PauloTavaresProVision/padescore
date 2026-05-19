@@ -247,21 +247,21 @@ export function MatchPlayerPicker({
   const hasComposite = compose.teamA !== null || compose.teamB !== null;
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800/80 bg-slate-900/30 p-5">
+    <div className="space-y-4 rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Jogadores
         </div>
         <p className="mt-1 text-xs text-slate-500">
-          <strong className="text-slate-300">Nome (TV)</strong> aparece no
-          scoreboard grande. <strong className="text-slate-300">OBS</strong> é a
+          <strong className="text-slate-700">Nome (TV)</strong> aparece no
+          scoreboard grande. <strong className="text-slate-700">OBS</strong> é a
           versão curta para a overlay. Foto é opcional — só precisas dela para
           o scoreboard TV.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -272,9 +272,9 @@ export function MatchPlayerPicker({
           return (
             <fieldset
               key={t.side}
-              className="space-y-3 rounded-xl border border-slate-800/80 bg-slate-950/30 p-3"
+              className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
             >
-              <legend className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <legend className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-600">
                 <span className="h-2 w-2 rounded-full" style={{ background: t.color }} />
                 {t.label}
               </legend>
@@ -303,20 +303,20 @@ export function MatchPlayerPicker({
               type="button"
               onClick={buildComposites}
               disabled={!anyPhoto || processing !== null}
-              className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {processing === "compose" ? "A compor..." : "Compor duplas para TV"}
             </button>
             {processing && processing !== "compose" && (
-              <span className="text-xs text-cyan-400">A carregar foto…</span>
+              <span className="text-xs font-medium text-cyan-600">A carregar foto…</span>
             )}
             {hasComposite && (
-              <span className="text-xs text-emerald-400">
+              <span className="text-xs font-medium text-emerald-600">
                 ✓ Composites novos prontos — submete o jogo.
               </span>
             )}
             {!hasComposite && keepComposites && (
-              <span className="text-xs text-cyan-400">
+              <span className="text-xs font-medium text-cyan-600">
                 As fotos actuais do jogo mantêm-se. Só recompõe se quiseres
                 trocá-las.
               </span>
@@ -372,13 +372,13 @@ export function MatchPlayerPicker({
       <style>{`
         .bg-checker {
           background-image:
-            linear-gradient(45deg, #1f2937 25%, transparent 25%),
-            linear-gradient(-45deg, #1f2937 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #1f2937 75%),
-            linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+            linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+            linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
           background-size: 16px 16px;
           background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-          background-color: #0f172a;
+          background-color: #f1f5f9;
         }
       `}</style>
     </div>
@@ -427,9 +427,9 @@ function SlotRow({
   const shortId = `slot-${id}-short`;
 
   return (
-    <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2.5">
-      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-        {isPlayer1 ? "Jogador 1" : <>Jogador 2 <span className="text-slate-600">(opcional)</span></>}
+    <div className="rounded-lg border border-slate-200 bg-white p-2.5">
+      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        {isPlayer1 ? "Jogador 1" : <>Jogador 2 <span className="text-slate-400">(opcional)</span></>}
       </div>
       <div className="flex items-stretch gap-2">
         {/* Thumbnail / botão para abrir picker */}
@@ -441,8 +441,8 @@ function SlotRow({
           className={[
             "bg-checker group relative grid h-20 w-16 shrink-0 place-items-center overflow-hidden rounded-md border transition",
             catalogueAvailable
-              ? "border-slate-700 hover:border-emerald-400"
-              : "cursor-not-allowed border-slate-800 opacity-50",
+              ? "border-slate-300 hover:border-emerald-500"
+              : "cursor-not-allowed border-slate-200 opacity-50",
           ].join(" ")}
         >
           {photoUrl ? (
@@ -454,7 +454,7 @@ function SlotRow({
               style={{ transform: state.mirror ? "scaleX(-1)" : undefined }}
             />
           ) : processing ? (
-            <span className="text-[9px] font-semibold text-cyan-300">…</span>
+            <span className="text-[9px] font-semibold text-emerald-600">…</span>
           ) : (
             <div className="flex flex-col items-center gap-0.5 text-[9px] font-medium uppercase tracking-wider text-slate-500">
               <span className="text-base leading-none">📷</span>
@@ -462,7 +462,7 @@ function SlotRow({
             </div>
           )}
           {photoUrl && (
-            <div className="absolute inset-x-0 bottom-0 bg-slate-950/80 py-0.5 text-center text-[9px] font-semibold uppercase tracking-wider text-emerald-300 opacity-0 transition group-hover:opacity-100">
+            <div className="absolute inset-x-0 bottom-0 bg-slate-900/80 py-0.5 text-center text-[9px] font-semibold uppercase tracking-wider text-white opacity-0 transition group-hover:opacity-100">
               Trocar
             </div>
           )}
@@ -477,7 +477,7 @@ function SlotRow({
             placeholder="Nome (TV) — ex: Paulo Tavares"
             required={isPlayer1}
             autoComplete="off"
-            className="w-full rounded-md border border-slate-700/80 bg-slate-900 px-2.5 py-1.5 text-sm text-white outline-none transition hover:border-slate-600 focus:border-emerald-400"
+            className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
           />
           <div className="flex items-center gap-2">
             <input
@@ -487,7 +487,7 @@ function SlotRow({
               onChange={(e) => onShortNameChange(e.target.value)}
               placeholder="Curto (OBS) — ex: Paulo T"
               autoComplete="off"
-              className="flex-1 rounded-md border border-slate-700/80 bg-slate-900/60 px-2.5 py-1 text-xs text-slate-200 outline-none transition hover:border-slate-600 focus:border-emerald-400"
+              className="flex-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-700 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
             />
             {state.photoBlob && (
               <button
@@ -496,8 +496,8 @@ function SlotRow({
                 className={[
                   "shrink-0 rounded border px-2 py-1 text-[10px] font-medium uppercase tracking-wider transition",
                   state.mirror
-                    ? "border-cyan-500/60 bg-cyan-500/20 text-cyan-200"
-                    : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600",
+                    ? "border-cyan-300 bg-cyan-50 text-cyan-700"
+                    : "border-slate-300 bg-white text-slate-500 hover:border-slate-400",
                 ].join(" ")}
                 title="Espelhar foto"
               >
@@ -514,10 +514,10 @@ function SlotRow({
 function PreviewCard({ label, url }: { label: string; url: string }) {
   return (
     <div>
-      <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+      <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
         {label}
       </div>
-      <div className="bg-checker overflow-hidden rounded-lg border border-slate-700">
+      <div className="bg-checker overflow-hidden rounded-lg border border-slate-200">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt="" className="block w-full" />
       </div>
