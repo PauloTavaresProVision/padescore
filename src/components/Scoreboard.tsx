@@ -323,8 +323,13 @@ export function Scoreboard({
 
   return (
     <div
-      className="inline-flex select-none flex-col gap-1.5"
-      style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
+      style={{
+        display: "inline-flex",
+        flexDirection: "column",
+        gap: s(6),
+        userSelect: "none",
+        fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
+      }}
     >
       <style>{`
         @keyframes scoreboard-pulse {
@@ -337,11 +342,18 @@ export function Scoreboard({
             filter: drop-shadow(0 0 10px rgba(255,255,255,1)) drop-shadow(0 0 20px rgba(255,255,255,0.6));
           }
         }
+        @keyframes scoreboard-ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes scoreboard-blink {
+          50% { opacity: 0.5; }
+        }
       `}</style>
 
       <div
-        className="grid text-white"
         style={{
+          display: "grid",
+          color: "#ffffff",
           position: "relative",
           gridTemplateColumns: `${COL_LOGO}px ${COL_MAIN}px`,
           gridTemplateRows: `${ROW_HEADER}px ${ROW_TEAM}px ${ROW_TEAM}px ${ROW_FOOTER}px`,
@@ -366,8 +378,9 @@ export function Scoreboard({
         )}
         {/* HEADER — linha 1, atravessa toda a largura (sem L-notch) */}
         <div
-          className="flex items-center"
           style={{
+            display: "flex",
+            alignItems: "center",
             position: "relative",
             gridColumn: "1 / 3",
             gridRow: "1 / 2",
@@ -382,7 +395,6 @@ export function Scoreboard({
           }}
         >
           <div
-            className="truncate"
             style={{
               flex: 1,
               paddingLeft: s(20),
@@ -391,6 +403,9 @@ export function Scoreboard({
               color: "#768091",
               letterSpacing: "0.5px",
               textTransform: "uppercase",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {tournament.name}
@@ -410,8 +425,11 @@ export function Scoreboard({
             return (
               <div
                 key={i}
-                className="flex h-full items-center justify-center"
                 style={{
+                  display: "flex",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
                   width: w,
                   borderLeft: borderDivider,
                   fontSize: s(11),
@@ -429,8 +447,10 @@ export function Scoreboard({
 
         {/* LOGO BOX — linhas 2-4, col 1 (por baixo do header full-width) */}
         <div
-          className="flex items-center justify-center"
           style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             gridColumn: "1 / 2",
             gridRow: "2 / 5",
             background: "#0a0d12",
@@ -458,8 +478,10 @@ export function Scoreboard({
             />
           ) : (
             <div
-              className="flex items-center justify-center"
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 width: s(75),
                 height: s(75),
                 background: accent,
@@ -519,8 +541,9 @@ export function Scoreboard({
 
         {/* FOOTER — linha 4, col 2 */}
         <div
-          className="flex items-center"
           style={{
+            display: "flex",
+            alignItems: "center",
             gridColumn: "2 / 3",
             gridRow: "4 / 5",
             background: "#090b0e",
@@ -533,8 +556,9 @@ export function Scoreboard({
         >
           {liveStatus === "finished" ? (
             <div
-              className="flex items-center"
               style={{
+                display: "flex",
+                alignItems: "center",
                 color: "#c4f600",
                 fontSize: s(14),
                 fontWeight: 900,
@@ -544,8 +568,11 @@ export function Scoreboard({
             >
               TERMINADO
               <span
-                className="flex items-center justify-center rounded-full"
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "50%",
                   width: s(18),
                   height: s(18),
                   background: "#c4f600",
@@ -557,8 +584,9 @@ export function Scoreboard({
             </div>
           ) : liveStatus === "live" ? (
             <div
-              className="flex items-center"
               style={{
+                display: "flex",
+                alignItems: "center",
                 color: "#c4f600",
                 fontSize: s(14),
                 fontWeight: 900,
@@ -567,11 +595,30 @@ export function Scoreboard({
               }}
             >
               <span
-                className="relative inline-block"
-                style={{ width: s(8), height: s(8) }}
+                style={{
+                  position: "relative",
+                  display: "inline-block",
+                  width: s(8),
+                  height: s(8),
+                }}
               >
-                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
-                <span className="absolute inset-0 rounded-full bg-emerald-400" />
+                <span
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "50%",
+                    background: "rgba(52, 211, 153, 0.7)",
+                    animation: "scoreboard-ping 1s cubic-bezier(0,0,0.2,1) infinite",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "50%",
+                    background: "#34d399",
+                  }}
+                />
               </span>
               LIVE
             </div>
@@ -589,14 +636,23 @@ export function Scoreboard({
           )}
 
           {/* Moment label (golden point, match point, tiebreak...) centrado */}
-          <div className="flex flex-1 items-center justify-center">
+          <div
+            style={{
+              display: "flex",
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             {moment && <InlineMoment moment={moment} scale={scale} />}
           </div>
 
           {elapsed !== null && (
             <div
-              className="flex items-center tabular-nums"
               style={{
+                display: "flex",
+                alignItems: "center",
+                fontVariantNumeric: "tabular-nums",
                 color: "#768091",
                 fontSize: s(15),
                 fontWeight: 800,
@@ -699,8 +755,8 @@ function TeamRow({
   const s = (n: number) => n * scale;
   return (
     <div
-      className="flex"
       style={{
+        display: "flex",
         position: "relative",
         gridColumn: "2 / 3",
         gridRow,
@@ -715,21 +771,53 @@ function TeamRow({
     >
       {/* Nome + server indicator + badge */}
       <div
-        className="flex h-full items-center"
-        style={{ flex: 1, paddingLeft: s(20), gap: s(10) }}
+        style={{
+          display: "flex",
+          height: "100%",
+          alignItems: "center",
+          flex: 1,
+          paddingLeft: s(20),
+          gap: s(10),
+        }}
       >
         {serving ? (
           <span
-            className="relative inline-block shrink-0"
-            style={{ width: s(10), height: s(10) }}
+            style={{
+              position: "relative",
+              display: "inline-block",
+              flexShrink: 0,
+              width: s(10),
+              height: s(10),
+            }}
           >
-            <span className="absolute inset-0 animate-ping rounded-full bg-yellow-400/70" />
-            <span className="absolute inset-0 rounded-full bg-yellow-400" />
+            <span
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background: "rgba(250, 204, 21, 0.7)",
+                animation: "scoreboard-ping 1s cubic-bezier(0,0,0.2,1) infinite",
+              }}
+            />
+            <span
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background: "#facc15",
+              }}
+            />
           </span>
         ) : (
           <span
-            className="inline-block shrink-0 rounded-full"
-            style={{ width: s(10), height: s(10), background: "rgba(255,255,255,0.1)" }}
+            style={{
+              display: "inline-block",
+              flexShrink: 0,
+              borderRadius: "50%",
+              width: s(10),
+              height: s(10),
+              background: "rgba(255,255,255,0.1)",
+            }}
           />
         )}
         <span
@@ -811,8 +899,12 @@ function TeamRow({
         return (
           <div
             key={i}
-            className="flex h-full items-center justify-center tabular-nums"
             style={{
+              display: "flex",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              fontVariantNumeric: "tabular-nums",
               width: w,
               borderLeft: borderDivider,
               fontSize,
@@ -904,8 +996,9 @@ function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number })
   const c = colors[moment.color];
   return (
     <div
-      className="flex items-center"
       style={{
+        display: "flex",
+        alignItems: "center",
         gap: s(6),
         background: c.bg,
         color: c.fg,
@@ -920,7 +1013,13 @@ function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number })
       {moment.team !== "both" && (
         <span style={{ opacity: 0.7 }}>{moment.team}</span>
       )}
-      <span className="animate-pulse">{moment.label}</span>
+      <span
+        style={{
+          animation: "scoreboard-blink 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        }}
+      >
+        {moment.label}
+      </span>
     </div>
   );
 }
