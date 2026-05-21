@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Scoreboard } from "@/components/Scoreboard";
+import {
+  Scoreboard,
+  SCOREBOARD_BASE_W,
+  SCOREBOARD_BASE_H,
+} from "@/components/Scoreboard";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
 import { configFromMatch } from "@/lib/scoring/apply";
 
@@ -8,10 +12,24 @@ export const dynamic = "force-dynamic";
 
 export default async function ObsOverlayPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ scale?: string }>;
 }) {
   const { code } = await params;
+  const { scale: scaleRaw } = await searchParams;
+  // ?scale=N → multiplica TODOS os pixels do scoreboard nativamente.
+  // Default 2.6 → 1911×541, ocupa exactamente metade inferior de um
+  // broadcast 1920×1080 (estilo referência). Para mais pequeno: ?scale=1.5
+  // (nativo seria scale=1 = 735×208).
+  const scale = (() => {
+    const n = Number(scaleRaw);
+    if (!Number.isFinite(n)) return 2.6;
+    return Math.min(4, Math.max(0.5, n));
+  })();
+  const w = Math.round(SCOREBOARD_BASE_W * scale);
+  const h = Math.round(SCOREBOARD_BASE_H * scale);
   const supabase = createAdminClient();
 
   const { data: matchRaw } = await supabase
@@ -45,20 +63,16 @@ export default async function ObsOverlayPage({
   if (!tournament) notFound();
 
   return (
-    // Setup MÍNIMO possível: scoreboard no tamanho nativo (735×208),
-    // body exactamente desse tamanho. Sem transforms, sem zoom, sem
-    // padding inventado. Render previsível em qualquer webview.
-    //
-    // Para escalar no broadcast: usar o slider Scale do YoloBox.
-    // (Pequena pixelação ao aumentar — limitação do YoloBox, não do
-    // overlay.)
+    // O scoreboard renderiza em PIXELS REAIS escalados (não CSS scale/zoom).
+    // Com scale=2.6 sai naturalmente em ~1911×541 — o YoloBox capta nessa
+    // resolução, fica nítido, sem transformações nem ambiguidades.
     <>
       <style>{`
         html, body {
           margin: 0 !important;
           padding: 0 !important;
-          width: 735px !important;
-          height: 208px !important;
+          width: ${w}px !important;
+          height: ${h}px !important;
           overflow: hidden !important;
           background: transparent !important;
         }
@@ -85,6 +99,7 @@ export default async function ObsOverlayPage({
         }
         variant="overlay"
         preferShortNames
+        scale={scale}
       />
     </>
   );

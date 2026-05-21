@@ -40,16 +40,22 @@ export interface ScoreboardState {
   winner: "A" | "B" | null;
 }
 
-const COL_SCORE = 70;     // largura normal de uma coluna de score
-const COL_SCORE_LAST = 95; // largura da última coluna (mais espaço para o glow)
-const COL_LOGO = 115;     // largura do logo box
-const COL_MAIN = 620;     // largura da área principal
-const ROW_HEADER = 36;
-const ROW_TEAM = 64;
-const ROW_FOOTER = 44;
+// Valores BASE em pixels (scale=1). Para renderizar maior nativamente (sem
+// CSS scale/zoom que falham em capture devices), o componente aceita um
+// prop `scale` que multiplica TODOS os pixels — assim os elementos saem em
+// pixels reais maiores, em vez de pixels pequenos esticados.
+const BASE_COL_SCORE = 70;
+const BASE_COL_SCORE_LAST = 95;
+const BASE_COL_LOGO = 115;
+const BASE_COL_MAIN = 620;
+const BASE_ROW_HEADER = 36;
+const BASE_ROW_TEAM = 64;
+const BASE_ROW_FOOTER = 44;
+const BASE_TOTAL_W = BASE_COL_LOGO + BASE_COL_MAIN; // 735
+const BASE_TOTAL_H = BASE_ROW_HEADER + BASE_ROW_TEAM * 2 + BASE_ROW_FOOTER; // 208
 
-const TOTAL_W = COL_LOGO + COL_MAIN;
-const TOTAL_H = ROW_HEADER + ROW_TEAM * 2 + ROW_FOOTER;
+export const SCOREBOARD_BASE_W = BASE_TOTAL_W;
+export const SCOREBOARD_BASE_H = BASE_TOTAL_H;
 
 // Payload do realtime / refetch traz todos os campos da row, incluindo
 // _short. Aceitamos parcial para sermos defensivos.
@@ -75,6 +81,7 @@ export function Scoreboard({
   config,
   initialState,
   preferShortNames,
+  scale = 1,
 }: {
   match: ScoreboardMatch;
   tournament: ScoreboardTournament;
@@ -86,7 +93,24 @@ export function Scoreboard({
    * overlay activa isto para nunca cair no nome longo após uma actualização.
    */
   preferShortNames?: boolean;
+  /**
+   * Multiplica TODOS os pixels do scoreboard. Default 1 (nativo 735×208).
+   * No OBS overlay usa-se ~2.6 para sair em 1911×541 — pixels reais grandes,
+   * o YoloBox capta nessa resolução sem precisar de re-amostrar.
+   */
+  scale?: number;
 }) {
+  // Pixels escalados — usados em vez das constantes BASE_*.
+  const COL_SCORE = BASE_COL_SCORE * scale;
+  const COL_SCORE_LAST = BASE_COL_SCORE_LAST * scale;
+  const COL_LOGO = BASE_COL_LOGO * scale;
+  const COL_MAIN = BASE_COL_MAIN * scale;
+  const ROW_HEADER = BASE_ROW_HEADER * scale;
+  const ROW_TEAM = BASE_ROW_TEAM * scale;
+  const ROW_FOOTER = BASE_ROW_FOOTER * scale;
+  const TOTAL_W = COL_LOGO + COL_MAIN;
+  const TOTAL_H = ROW_HEADER + ROW_TEAM * 2 + ROW_FOOTER;
+  const s = (n: number) => n * scale;
   const [match, setMatch] = useState<ScoreboardMatch>(initialMatch);
   const [state, setState] = useState<ScoreboardState>(initialState);
   const [flashTeam, setFlashTeam] = useState<"A" | "B" | null>(null);
@@ -255,9 +279,9 @@ export function Scoreboard({
   const completedSets = state.sets_history;
   const lastSetIdx = completedSets.length - 1;
 
-  // Border styles
-  const borderBright = `2px solid ${accentGlow}`;
-  const borderDivider = "1px solid rgba(255, 255, 255, 0.08)";
+  // Border styles — também escalam
+  const borderBright = `${s(2)}px solid ${accentGlow}`;
+  const borderDivider = `${s(1)}px solid rgba(255, 255, 255, 0.08)`;
 
   // Calcula as colunas de score que vão aparecer
   type ScoreCol =
@@ -321,7 +345,7 @@ export function Scoreboard({
           position: "relative",
           gridTemplateColumns: `${COL_LOGO}px ${COL_MAIN}px`,
           gridTemplateRows: `${ROW_HEADER}px ${ROW_TEAM}px ${ROW_TEAM}px ${ROW_FOOTER}px`,
-          filter: `drop-shadow(0 0 10px ${accentGlow}80) drop-shadow(0 0 30px ${accentGlow}33)`,
+          filter: `drop-shadow(0 0 ${s(10)}px ${accentGlow}80) drop-shadow(0 0 ${s(30)}px ${accentGlow}33)`,
         }}
       >
         {!online && (
@@ -329,14 +353,14 @@ export function Scoreboard({
             title="Sem ligação — a reconectar"
             style={{
               position: "absolute",
-              top: 4,
-              right: 6,
+              top: s(4),
+              right: s(6),
               zIndex: 20,
-              width: 8,
-              height: 8,
+              width: s(8),
+              height: s(8),
               borderRadius: "50%",
               background: "#ff5d5d",
-              boxShadow: "0 0 6px #ff5d5d",
+              boxShadow: `0 0 ${s(6)}px #ff5d5d`,
             }}
           />
         )}
@@ -349,7 +373,7 @@ export function Scoreboard({
             gridRow: "1 / 2",
             background: "#2b313d",
             backgroundImage: "linear-gradient(180deg, #2b313d 0%, #1c2029 100%)",
-            borderRadius: "12px 12px 0 0",
+            borderRadius: `${s(12)}px ${s(12)}px 0 0`,
             borderTop: borderBright,
             borderLeft: borderBright,
             borderRight: borderBright,
@@ -361,8 +385,8 @@ export function Scoreboard({
             className="truncate"
             style={{
               flex: 1,
-              paddingLeft: 20,
-              fontSize: 11,
+              paddingLeft: s(20),
+              fontSize: s(11),
               fontWeight: 700,
               color: "#768091",
               letterSpacing: "0.5px",
@@ -390,7 +414,7 @@ export function Scoreboard({
                 style={{
                   width: w,
                   borderLeft: borderDivider,
-                  fontSize: 11,
+                  fontSize: s(11),
                   fontWeight: 700,
                   color: "#768091",
                   letterSpacing: "0.5px",
@@ -411,13 +435,13 @@ export function Scoreboard({
             gridRow: "2 / 5",
             background: "#0a0d12",
             backgroundImage: `radial-gradient(ellipse at center, ${accent}1f 0%, transparent 55%), linear-gradient(180deg, #1d2330 0%, #0a0d12 100%)`,
-            borderRadius: "0 0 0 12px",
+            borderRadius: `0 0 0 ${s(12)}px`,
             borderTop: borderDivider,
             borderLeft: borderBright,
             borderBottom: borderBright,
             borderRight: borderDivider,
             boxShadow:
-              "inset 0 0 35px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,255,255,0.04)",
+              `inset 0 0 ${s(35)}px rgba(0,0,0,0.55), inset 0 ${s(2)}px 0 rgba(255,255,255,0.04)`,
           }}
         >
           {tournament.logo_url ? (
@@ -426,24 +450,24 @@ export function Scoreboard({
               src={tournament.logo_url}
               alt=""
               style={{
-                width: 75,
-                height: 75,
+                width: s(75),
+                height: s(75),
                 objectFit: "contain",
-                filter: `drop-shadow(0 0 8px ${accentGlow}cc)`,
+                filter: `drop-shadow(0 0 ${s(8)}px ${accentGlow}cc)`,
               }}
             />
           ) : (
             <div
               className="flex items-center justify-center"
               style={{
-                width: 75,
-                height: 75,
+                width: s(75),
+                height: s(75),
                 background: accent,
-                borderRadius: 12,
-                fontSize: 32,
+                borderRadius: s(12),
+                fontSize: s(32),
                 fontWeight: 900,
                 color: "#fff",
-                filter: `drop-shadow(0 0 8px ${accentGlow}cc)`,
+                filter: `drop-shadow(0 0 ${s(8)}px ${accentGlow}cc)`,
               }}
             >
               {tournament.name.slice(0, 2).toUpperCase()}
@@ -467,6 +491,9 @@ export function Scoreboard({
           borderBright={borderBright}
           isBottomRow={false}
           accentGlow={accentGlow}
+          colScore={COL_SCORE}
+          colScoreLast={COL_SCORE_LAST}
+          scale={scale}
         />
 
         {/* TEAM 2 — linha 3, col 2 */}
@@ -485,6 +512,9 @@ export function Scoreboard({
           borderBright={borderBright}
           isBottomRow={true}
           accentGlow={accentGlow}
+          colScore={COL_SCORE}
+          colScoreLast={COL_SCORE_LAST}
+          scale={scale}
         />
 
         {/* FOOTER — linha 4, col 2 */}
@@ -494,11 +524,11 @@ export function Scoreboard({
             gridColumn: "2 / 3",
             gridRow: "4 / 5",
             background: "#090b0e",
-            borderRadius: "0 0 12px 0",
+            borderRadius: `0 0 ${s(12)}px 0`,
             borderRight: borderBright,
             borderBottom: borderBright,
-            padding: "0 20px",
-            gap: 12,
+            padding: `0 ${s(20)}px`,
+            gap: s(12),
           }}
         >
           {liveStatus === "finished" ? (
@@ -506,9 +536,9 @@ export function Scoreboard({
               className="flex items-center"
               style={{
                 color: "#c4f600",
-                fontSize: 14,
+                fontSize: s(14),
                 fontWeight: 900,
-                gap: 6,
+                gap: s(6),
                 letterSpacing: "0.5px",
               }}
             >
@@ -516,13 +546,13 @@ export function Scoreboard({
               <span
                 className="flex items-center justify-center rounded-full"
                 style={{
-                  width: 18,
-                  height: 18,
+                  width: s(18),
+                  height: s(18),
                   background: "#c4f600",
                   color: "#000",
                 }}
               >
-                <CheckIcon className="h-3 w-3" />
+                <CheckIcon style={{ width: s(12), height: s(12) }} />
               </span>
             </div>
           ) : liveStatus === "live" ? (
@@ -530,13 +560,16 @@ export function Scoreboard({
               className="flex items-center"
               style={{
                 color: "#c4f600",
-                fontSize: 14,
+                fontSize: s(14),
                 fontWeight: 900,
-                gap: 8,
+                gap: s(8),
                 letterSpacing: "0.5px",
               }}
             >
-              <span className="relative inline-block h-2 w-2">
+              <span
+                className="relative inline-block"
+                style={{ width: s(8), height: s(8) }}
+              >
                 <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
                 <span className="absolute inset-0 rounded-full bg-emerald-400" />
               </span>
@@ -546,7 +579,7 @@ export function Scoreboard({
             <span
               style={{
                 color: "#768091",
-                fontSize: 14,
+                fontSize: s(14),
                 fontWeight: 900,
                 letterSpacing: "0.5px",
               }}
@@ -557,7 +590,7 @@ export function Scoreboard({
 
           {/* Moment label (golden point, match point, tiebreak...) centrado */}
           <div className="flex flex-1 items-center justify-center">
-            {moment && <InlineMoment moment={moment} />}
+            {moment && <InlineMoment moment={moment} scale={scale} />}
           </div>
 
           {elapsed !== null && (
@@ -565,12 +598,12 @@ export function Scoreboard({
               className="flex items-center tabular-nums"
               style={{
                 color: "#768091",
-                fontSize: 15,
+                fontSize: s(15),
                 fontWeight: 800,
-                gap: 6,
+                gap: s(6),
               }}
             >
-              <ClockIcon className="h-[15px] w-[15px]" />
+              <ClockIcon style={{ width: s(15), height: s(15) }} />
               {formatElapsed(elapsed)}
             </div>
           )}
@@ -590,7 +623,7 @@ export function Scoreboard({
         >
           <path
             d={(() => {
-              const r = 12; // raio dos cantos (igual ao border-radius)
+              const r = s(12); // raio dos cantos (igual ao border-radius)
               return [
                 // Rectângulo simples com cantos arredondados (header full-width)
                 `M ${r},0`,
@@ -607,7 +640,7 @@ export function Scoreboard({
             })()}
             fill="none"
             stroke="#ffffff"
-            strokeWidth={2}
+            strokeWidth={s(2)}
             strokeLinejoin="round"
             style={{
               animation: "scoreboard-pulse 2.2s ease-in-out infinite",
@@ -637,6 +670,9 @@ function TeamRow({
   borderBright,
   isBottomRow,
   accentGlow,
+  colScore,
+  colScoreLast,
+  scale,
 }: {
   gridRow: string;
   name: string;
@@ -656,7 +692,11 @@ function TeamRow({
   borderBright: string;
   isBottomRow: boolean;
   accentGlow: string;
+  colScore: number;
+  colScoreLast: number;
+  scale: number;
 }) {
+  const s = (n: number) => n * scale;
   return (
     <div
       className="flex"
@@ -668,7 +708,7 @@ function TeamRow({
         backgroundImage: "linear-gradient(180deg, #1c2029 0%, #12151b 100%)",
         borderRight: borderBright,
         borderBottom: isBottomRow
-          ? "2px solid rgba(0,0,0,0.6)"
+          ? `${s(2)}px solid rgba(0,0,0,0.6)`
           : borderDivider,
         overflow: "hidden",
       }}
@@ -676,22 +716,25 @@ function TeamRow({
       {/* Nome + server indicator + badge */}
       <div
         className="flex h-full items-center"
-        style={{ flex: 1, paddingLeft: 20, gap: 10 }}
+        style={{ flex: 1, paddingLeft: s(20), gap: s(10) }}
       >
         {serving ? (
-          <span className="relative inline-block h-2.5 w-2.5 shrink-0">
+          <span
+            className="relative inline-block shrink-0"
+            style={{ width: s(10), height: s(10) }}
+          >
             <span className="absolute inset-0 animate-ping rounded-full bg-yellow-400/70" />
             <span className="absolute inset-0 rounded-full bg-yellow-400" />
           </span>
         ) : (
           <span
-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ background: "rgba(255,255,255,0.1)" }}
+            className="inline-block shrink-0 rounded-full"
+            style={{ width: s(10), height: s(10), background: "rgba(255,255,255,0.1)" }}
           />
         )}
         <span
           style={{
-            fontSize: 22,
+            fontSize: s(22),
             fontWeight: 800,
             color: "#ffffff",
             letterSpacing: "-0.5px",
@@ -705,13 +748,13 @@ function TeamRow({
             style={{
               background: "linear-gradient(90deg, #c4f600, #a0d100)",
               color: "#000",
-              fontSize: 11,
+              fontSize: s(11),
               fontWeight: 900,
-              padding: "5px 9px",
-              borderRadius: 5,
-              marginLeft: 14,
+              padding: `${s(5)}px ${s(9)}px`,
+              borderRadius: s(5),
+              marginLeft: s(14),
               letterSpacing: "0.5px",
-              boxShadow: "0 0 15px rgba(196,246,0,0.35)",
+              boxShadow: `0 0 ${s(15)}px rgba(196,246,0,0.35)`,
             }}
           >
             VENCEDOR
@@ -722,18 +765,18 @@ function TeamRow({
       {/* Score columns */}
       {scoreCols.map((col, i) => {
         const isLast = i === lastColIdx;
-        const w = isLast ? COL_SCORE_LAST : COL_SCORE;
+        const w = isLast ? colScoreLast : colScore;
 
         let value: string | number = "";
         let scoreState: "dim" | "active" | "glow" | "tiebreak" = "dim";
-        let fontSize = 30;
+        let fontSize = s(30);
 
         if (col.kind === "set") {
           value = col.value;
           const won = col.value > col.opponentValue;
           if (isMatchOver && col.index === lastSetIdx && won) {
             scoreState = "glow";
-            fontSize = 34;
+            fontSize = s(34);
           } else if (won) {
             scoreState = "active";
           } else {
@@ -752,13 +795,13 @@ function TeamRow({
           styleColor.color = "#3b4252";
         } else if (scoreState === "active") {
           styleColor.color = "#ffffff";
-          styleColor.textShadow = "0 0 12px rgba(255,255,255,0.4)";
+          styleColor.textShadow = `0 0 ${s(12)}px rgba(255,255,255,0.4)`;
         } else if (scoreState === "glow") {
           styleColor.color = "#ffffff";
-          styleColor.textShadow = `0 0 10px #ffffff, 0 0 25px ${accentGlow}, 0 0 50px ${accentGlow}`;
+          styleColor.textShadow = `0 0 ${s(10)}px #ffffff, 0 0 ${s(25)}px ${accentGlow}, 0 0 ${s(50)}px ${accentGlow}`;
         } else if (scoreState === "tiebreak") {
           styleColor.color = "#fbbf24";
-          styleColor.textShadow = "0 0 12px rgba(251,191,36,0.6)";
+          styleColor.textShadow = `0 0 ${s(12)}px rgba(251,191,36,0.6)`;
         }
 
         if (flash && col.kind === "points") {
@@ -850,7 +893,8 @@ function useCriticalMoment(
   return null;
 }
 
-function InlineMoment({ moment }: { moment: Moment }) {
+function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number }) {
+  const s = (n: number) => n * scale;
   const colors: Record<MomentColor, { bg: string; fg: string }> = {
     red: { bg: "rgba(239,68,68,0.2)", fg: "#fca5a5" },
     orange: { bg: "rgba(249,115,22,0.2)", fg: "#fdba74" },
@@ -862,12 +906,12 @@ function InlineMoment({ moment }: { moment: Moment }) {
     <div
       className="flex items-center"
       style={{
-        gap: 6,
+        gap: s(6),
         background: c.bg,
         color: c.fg,
         borderRadius: 999,
-        padding: "3px 10px",
-        fontSize: 11,
+        padding: `${s(3)}px ${s(10)}px`,
+        fontSize: s(11),
         fontWeight: 900,
         letterSpacing: "0.18em",
         textTransform: "uppercase",
