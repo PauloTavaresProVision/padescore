@@ -15,11 +15,13 @@ export default async function ObsOverlayPage({
 }) {
   const { code } = await params;
   const { zoom: zoomRaw } = await searchParams;
-  // ?zoom=N  → re-rasteriza o scoreboard a N×. Default 2 (recomendado p/
-  // YoloBox / OBS Browser Source). 1 = tamanho nativo, 3 = jumbo.
+  // ?zoom=N  → re-rasteriza o scoreboard a N×. Default 1.5 (1102×312,
+  // encaixa em qualquer viewport HD sem cortar à direita).
+  // ?zoom=2 = 1470×416 — recomendado se o YoloBox renderiza a 1920+.
+  // ?zoom=1 = nativo 735×208 (mini).
   const zoom = (() => {
     const n = Number(zoomRaw);
-    if (!Number.isFinite(n)) return 2;
+    if (!Number.isFinite(n)) return 1.5;
     return Math.min(4, Math.max(0.5, n));
   })();
   const supabase = createAdminClient();
@@ -55,16 +57,14 @@ export default async function ObsOverlayPage({
   if (!tournament) notFound();
 
   return (
-    // Renderiza no canto superior-esquerdo. O `zoom` re-rasteriza com
-    // densidade correcta (NÃO uses transform:scale aqui — ficaria borrado
-    // depois do YoloBox/OBS capturarem). Tamanho nativo é 735×208; com
-    // zoom=2 (default) ocupa 1470×416, suficientemente grande para o
-    // YoloBox capturar e re-escalar sem perda. Para mais pequeno usa
-    // `?zoom=1`, para jumbo `?zoom=3`.
+    // Ancorado no canto inferior-esquerdo (convenção broadcast de
+    // padel/ténis). O `zoom` re-rasteriza com densidade correcta — NÃO
+    // uses transform:scale, ficaria borrado depois do YoloBox capturar.
+    // Default zoom=1.5 → 1102×312, encaixa em viewports HD sem cortar.
     <div
       style={{
         position: "fixed",
-        top: 0,
+        bottom: 0,
         left: 0,
         background: "transparent",
         zoom,
