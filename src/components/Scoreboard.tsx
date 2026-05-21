@@ -376,7 +376,9 @@ export function Scoreboard({
           position: "relative",
           gridTemplateColumns: `${COL_LOGO}px ${COL_MAIN}px`,
           gridTemplateRows: `${ROW_HEADER}px ${ROW_TEAM}px ${ROW_TEAM}px ${ROW_FOOTER}px`,
-          filter: `drop-shadow(0 0 ${s(10)}px ${accentGlow}80) drop-shadow(0 0 ${s(30)}px ${accentGlow}33)`,
+          // Drop-shadow reduzido — o halo grande virava "ringing" nas
+          // edges depois da compressão de vídeo.
+          filter: `drop-shadow(0 0 ${s(4)}px rgba(0,0,0,0.6))`,
         }}
       >
         {!online && (
@@ -417,9 +419,9 @@ export function Scoreboard({
             style={{
               flex: 1,
               paddingLeft: s(20),
-              fontSize: s(14),
-              fontWeight: 800,
-              color: "#a3b0c2",
+              fontSize: s(18),
+              fontWeight: 900,
+              color: "#ffffff",
               letterSpacing: "0.5px",
               textTransform: "uppercase",
               overflow: "hidden",
@@ -451,9 +453,9 @@ export function Scoreboard({
                   justifyContent: "center",
                   width: w,
                   borderLeft: borderDivider,
-                  fontSize: s(13),
-                  fontWeight: 800,
-                  color: "#a3b0c2",
+                  fontSize: s(16),
+                  fontWeight: 900,
+                  color: "#ffffff",
                   letterSpacing: "0.5px",
                   textTransform: "uppercase",
                 }}
@@ -901,16 +903,16 @@ function TeamRow({
 
         const styleColor: React.CSSProperties = {};
         if (scoreState === "dim") {
-          styleColor.color = "#3b4252";
+          styleColor.color = "#64748b"; // cinzento mais claro p/ contraste pós-compressão
         } else if (scoreState === "active") {
           styleColor.color = "#ffffff";
-          styleColor.textShadow = `0 0 ${s(12)}px rgba(255,255,255,0.4)`;
+          // Sem text-shadow — virava halo borrado depois da compressão
         } else if (scoreState === "glow") {
           styleColor.color = "#ffffff";
-          styleColor.textShadow = `0 0 ${s(10)}px #ffffff, 0 0 ${s(25)}px ${accentGlow}, 0 0 ${s(50)}px ${accentGlow}`;
+          // Glow só no vencedor — mais subtil para sobreviver à compressão
+          styleColor.textShadow = `0 0 ${s(6)}px ${accentGlow}`;
         } else if (scoreState === "tiebreak") {
           styleColor.color = "#fbbf24";
-          styleColor.textShadow = `0 0 ${s(12)}px rgba(251,191,36,0.6)`;
         }
 
         if (flash && col.kind === "points") {
@@ -1008,11 +1010,12 @@ function useCriticalMoment(
 
 function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number }) {
   const s = (n: number) => n * scale;
+  // Cores mais saturadas + texto branco para legibilidade pós-compressão.
   const colors: Record<MomentColor, { bg: string; fg: string }> = {
-    red: { bg: "rgba(239,68,68,0.2)", fg: "#fca5a5" },
-    orange: { bg: "rgba(249,115,22,0.2)", fg: "#fdba74" },
-    yellow: { bg: "rgba(234,179,8,0.22)", fg: "#fde68a" },
-    amber: { bg: "rgba(245,158,11,0.2)", fg: "#fcd34d" },
+    red: { bg: "#dc2626", fg: "#ffffff" },
+    orange: { bg: "#ea580c", fg: "#ffffff" },
+    yellow: { bg: "#eab308", fg: "#0a0d12" },
+    amber: { bg: "#f59e0b", fg: "#0a0d12" },
   };
   const c = colors[moment.color];
   return (
@@ -1023,11 +1026,11 @@ function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number })
         gap: s(6),
         background: c.bg,
         color: c.fg,
-        borderRadius: 999,
-        padding: `${s(3)}px ${s(10)}px`,
-        fontSize: s(11),
+        borderRadius: s(4),
+        padding: `${s(4)}px ${s(12)}px`,
+        fontSize: s(14),
         fontWeight: 900,
-        letterSpacing: "0.18em",
+        letterSpacing: "0.1em",
         textTransform: "uppercase",
       }}
     >
