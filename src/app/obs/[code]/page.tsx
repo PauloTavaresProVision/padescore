@@ -8,22 +8,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ObsOverlayPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ zoom?: string }>;
 }) {
   const { code } = await params;
-  const { zoom: zoomRaw } = await searchParams;
-  // ?zoom=N  → re-rasteriza o scoreboard a N×. Default 1.5 (1102×312,
-  // encaixa em qualquer viewport HD sem cortar à direita).
-  // ?zoom=2 = 1470×416 — recomendado se o YoloBox renderiza a 1920+.
-  // ?zoom=1 = nativo 735×208 (mini).
-  const zoom = (() => {
-    const n = Number(zoomRaw);
-    if (!Number.isFinite(n)) return 1.5;
-    return Math.min(4, Math.max(0.5, n));
-  })();
   const supabase = createAdminClient();
 
   const { data: matchRaw } = await supabase
@@ -56,73 +44,48 @@ export default async function ObsOverlayPage({
   ]);
   if (!tournament) notFound();
 
-  // Dimensões nativas do scoreboard (sincronizadas com Scoreboard.tsx)
-  const baseW = 735;
-  const baseH = 208;
-  // BUFFER vertical extra para acomodar o drop-shadow do componente
-  // (~30-40px abaixo do conteúdo) + gap-1.5 do flex-col. Sem este
-  // buffer, o team B e o footer ficavam cortados ao fundo do body.
-  const padX = 8;
-  const padY = 40;
-  const innerW = baseW + padX * 2;
-  const innerH = baseH + padY * 2;
-  const outerW = Math.round(innerW * zoom);
-  const outerH = Math.round(innerH * zoom);
-
   return (
-    // `transform: scale` (NÃO `zoom`) — `zoom` está a falhar no webview
-    // do YoloBox e cortar verticalmente. `transform: scale` é estável
-    // em todos os webviews modernos. Pequena perda de nitidez vs zoom
-    // mas previsível.
+    // Setup MÍNIMO possível: scoreboard no tamanho nativo (735×208),
+    // body exactamente desse tamanho. Sem transforms, sem zoom, sem
+    // padding inventado. Render previsível em qualquer webview.
     //
-    // html/body apertados ao tamanho final escalado → YoloBox captura
-    // apenas o scoreboard, sem rectângulo morto à volta.
+    // Para escalar no broadcast: usar o slider Scale do YoloBox.
+    // (Pequena pixelação ao aumentar — limitação do YoloBox, não do
+    // overlay.)
     <>
       <style>{`
         html, body {
           margin: 0 !important;
           padding: 0 !important;
-          width: ${outerW}px !important;
-          height: ${outerH}px !important;
+          width: 735px !important;
+          height: 208px !important;
           overflow: hidden !important;
           background: transparent !important;
         }
       `}</style>
-      <div
-        style={{
-          width: innerW,
-          height: innerH,
-          background: "transparent",
-          transform: `scale(${zoom})`,
-          transformOrigin: "top left",
-          padding: `${padY}px ${padX}px`,
-          boxSizing: "border-box",
-        }}
-      >
-        <Scoreboard
-          match={match}
-          tournament={tournament}
-          config={configFromMatch(match)}
-          initialState={
-            state ?? {
-              points_a: "0",
-              points_b: "0",
-              games_a: 0,
-              games_b: 0,
-              sets_a: 0,
-              sets_b: 0,
-              sets_history: [],
-              server: "A",
-              in_tiebreak: false,
-              in_super_tiebreak: false,
-              is_finished: false,
-              winner: null,
-            }
+      <Scoreboard
+        match={match}
+        tournament={tournament}
+        config={configFromMatch(match)}
+        initialState={
+          state ?? {
+            points_a: "0",
+            points_b: "0",
+            games_a: 0,
+            games_b: 0,
+            sets_a: 0,
+            sets_b: 0,
+            sets_history: [],
+            server: "A",
+            in_tiebreak: false,
+            in_super_tiebreak: false,
+            is_finished: false,
+            winner: null,
           }
-          variant="overlay"
-          preferShortNames
-        />
-      </div>
+        }
+        variant="overlay"
+        preferShortNames
+      />
     </>
   );
 }
