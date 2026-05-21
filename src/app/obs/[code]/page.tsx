@@ -20,11 +20,13 @@ export default async function ObsOverlayPage({
   const { code } = await params;
   const { scale: scaleRaw } = await searchParams;
   // ?scale=N → multiplica TODOS os pixels do scoreboard nativamente.
-  // Default 3.0 → 2205×624. Mais pixels nativos = melhor resistência à
-  // compressão de vídeo do YoloBox (que ataca primeiro o texto fino).
+  // Default 2.6 → 1911×541, encaixa exactamente num canvas 1920×1080
+  // (sem overflow à direita). O texto pequeno (tournament name, column
+  // labels) foi aumentado nativamente para resistir à compressão de
+  // vídeo do YoloBox — não é preciso scale ainda maior.
   const scale = (() => {
     const n = Number(scaleRaw);
-    if (!Number.isFinite(n)) return 3.0;
+    if (!Number.isFinite(n)) return 2.6;
     return Math.min(5, Math.max(0.5, n));
   })();
   const w = Math.round(SCOREBOARD_BASE_W * scale);
