@@ -376,13 +376,13 @@ export function Scoreboard({
             }}
           />
         )}
-        {/* HEADER — linha 1, atravessa toda a largura (sem L-notch) */}
+        {/* HEADER — linha 1, col 2 (L-shape original — sai por cima do logo) */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             position: "relative",
-            gridColumn: "1 / 3",
+            gridColumn: "2 / 3",
             gridRow: "1 / 2",
             background: "#2b313d",
             backgroundImage: "linear-gradient(180deg, #2b313d 0%, #1c2029 100%)",
@@ -445,7 +445,7 @@ export function Scoreboard({
           })}
         </div>
 
-        {/* LOGO BOX — linhas 2-4, col 1 (por baixo do header full-width) */}
+        {/* LOGO BOX — linhas 2-4, col 1 (L-shape — mais curta que a main) */}
         <div
           style={{
             display: "flex",
@@ -455,8 +455,8 @@ export function Scoreboard({
             gridRow: "2 / 5",
             background: "#0a0d12",
             backgroundImage: `radial-gradient(ellipse at center, ${accent}1f 0%, transparent 55%), linear-gradient(180deg, #1d2330 0%, #0a0d12 100%)`,
-            borderRadius: `0 0 0 ${s(12)}px`,
-            borderTop: borderDivider,
+            borderRadius: `${s(12)}px 0 0 ${s(12)}px`,
+            borderTop: borderBright,
             borderLeft: borderBright,
             borderBottom: borderBright,
             borderRight: borderDivider,
@@ -679,18 +679,20 @@ export function Scoreboard({
         >
           <path
             d={(() => {
-              const r = s(12); // raio dos cantos (igual ao border-radius)
+              const r = s(12); // raio dos cantos exteriores (igual ao border-radius)
               return [
-                // Rectângulo simples com cantos arredondados (header full-width)
-                `M ${r},0`,
+                // L-shape original — contorna a forma com entalho acima do logo
+                `M ${COL_LOGO},${r}`,
+                `A ${r},${r} 0 0 1 ${COL_LOGO + r},0`,
                 `L ${TOTAL_W - r},0`,
                 `A ${r},${r} 0 0 1 ${TOTAL_W},${r}`,
                 `L ${TOTAL_W},${TOTAL_H - r}`,
                 `A ${r},${r} 0 0 1 ${TOTAL_W - r},${TOTAL_H}`,
                 `L ${r},${TOTAL_H}`,
                 `A ${r},${r} 0 0 1 0,${TOTAL_H - r}`,
-                `L 0,${r}`,
-                `A ${r},${r} 0 0 1 ${r},0`,
+                `L 0,${ROW_HEADER + r}`,
+                `A ${r},${r} 0 0 1 ${r},${ROW_HEADER}`,
+                `L ${COL_LOGO},${ROW_HEADER}`,
                 `Z`,
               ].join(" ");
             })()}
