@@ -673,13 +673,13 @@ export function Scoreboard({
                 display: "flex",
                 alignItems: "center",
                 fontVariantNumeric: "tabular-nums",
-                color: "#768091",
-                fontSize: s(15),
-                fontWeight: 800,
-                gap: s(6),
+                color: "#ffffff",
+                fontSize: s(18),
+                fontWeight: 900,
+                gap: s(7),
               }}
             >
-              <ClockIcon style={{ width: s(15), height: s(15) }} />
+              <ClockIcon style={{ width: s(18), height: s(18) }} />
               {formatElapsed(elapsed)}
             </div>
           )}
@@ -1014,12 +1014,13 @@ function useCriticalMoment(
 
 function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number }) {
   const s = (n: number) => n * scale;
-  // Cores mais saturadas + texto branco para legibilidade pós-compressão.
+  // Cores sólidas saturadas + texto preto/branco em alto contraste para
+  // sobreviver à compressão H.264.
   const colors: Record<MomentColor, { bg: string; fg: string }> = {
-    red: { bg: "#dc2626", fg: "#ffffff" },
-    orange: { bg: "#ea580c", fg: "#ffffff" },
-    yellow: { bg: "#eab308", fg: "#0a0d12" },
-    amber: { bg: "#f59e0b", fg: "#0a0d12" },
+    red: { bg: "#ef4444", fg: "#ffffff" },
+    orange: { bg: "#f97316", fg: "#ffffff" },
+    yellow: { bg: "#facc15", fg: "#0a0d12" },
+    amber: { bg: "#fbbf24", fg: "#0a0d12" },
   };
   const c = colors[moment.color];
   return (
@@ -1031,11 +1032,14 @@ function InlineMoment({ moment, scale = 1 }: { moment: Moment; scale?: number })
         background: c.bg,
         color: c.fg,
         borderRadius: s(4),
-        padding: `${s(4)}px ${s(12)}px`,
-        fontSize: s(14),
+        padding: `${s(6)}px ${s(14)}px`,
+        fontSize: s(17),
         fontWeight: 900,
-        letterSpacing: "0.1em",
+        // Letter-spacing muito apertado — antes era 0.18em (largo) que
+        // a compressão tornava ilegível ao "espalhar" cada letra.
+        letterSpacing: "0.02em",
         textTransform: "uppercase",
+        whiteSpace: "nowrap",
       }}
     >
       {moment.team !== "both" && (
