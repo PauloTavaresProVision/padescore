@@ -56,38 +56,47 @@ export default async function ObsOverlayPage({
   ]);
   if (!tournament) notFound();
 
-  // Dimensões do scoreboard nativo (TEM de ficar sincronizado com os
-  // constantes em Scoreboard.tsx — COL_LOGO+COL_MAIN × ROW_HEADER+ROW_TEAM*2+ROW_FOOTER).
+  // Dimensões nativas do scoreboard (sincronizadas com Scoreboard.tsx)
   const baseW = 735;
   const baseH = 208;
-  const w = Math.round(baseW * zoom);
-  const h = Math.round(baseH * zoom);
+  // BUFFER vertical extra para acomodar o drop-shadow do componente
+  // (~30-40px abaixo do conteúdo) + gap-1.5 do flex-col. Sem este
+  // buffer, o team B e o footer ficavam cortados ao fundo do body.
+  const padX = 8;
+  const padY = 40;
+  const innerW = baseW + padX * 2;
+  const innerH = baseH + padY * 2;
+  const outerW = Math.round(innerW * zoom);
+  const outerH = Math.round(innerH * zoom);
 
   return (
-    // CHAVE: html/body sized EXACTAMENTE ao scoreboard. Sem isto, o
-    // browser dá-lhe 1920×1080 e o YoloBox captura uma "caixa" enorme
-    // (com o scoreboard num cantinho) que desenha como rectângulo
-    // branco vazio em volta do overlay. Com o body apertado, o YoloBox
-    // captura apenas o scoreboard.
+    // `transform: scale` (NÃO `zoom`) — `zoom` está a falhar no webview
+    // do YoloBox e cortar verticalmente. `transform: scale` é estável
+    // em todos os webviews modernos. Pequena perda de nitidez vs zoom
+    // mas previsível.
+    //
+    // html/body apertados ao tamanho final escalado → YoloBox captura
+    // apenas o scoreboard, sem rectângulo morto à volta.
     <>
       <style>{`
         html, body {
           margin: 0 !important;
           padding: 0 !important;
-          width: ${w}px !important;
-          height: ${h}px !important;
+          width: ${outerW}px !important;
+          height: ${outerH}px !important;
           overflow: hidden !important;
           background: transparent !important;
         }
       `}</style>
       <div
         style={{
-          width: w,
-          height: h,
+          width: innerW,
+          height: innerH,
           background: "transparent",
-          zoom,
-          // Reset zoom para os filhos — o wrapper é o ÚNICO que tem zoom,
-          // o Scoreboard renderiza no seu tamanho nativo dentro deste box.
+          transform: `scale(${zoom})`,
+          transformOrigin: "top left",
+          padding: `${padY}px ${padX}px`,
+          boxSizing: "border-box",
         }}
       >
         <Scoreboard
