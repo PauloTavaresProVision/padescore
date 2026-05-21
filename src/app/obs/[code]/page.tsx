@@ -56,43 +56,64 @@ export default async function ObsOverlayPage({
   ]);
   if (!tournament) notFound();
 
+  // Dimensões do scoreboard nativo (TEM de ficar sincronizado com os
+  // constantes em Scoreboard.tsx — COL_LOGO+COL_MAIN × ROW_HEADER+ROW_TEAM*2+ROW_FOOTER).
+  const baseW = 735;
+  const baseH = 208;
+  const w = Math.round(baseW * zoom);
+  const h = Math.round(baseH * zoom);
+
   return (
-    // Ancorado no canto inferior-esquerdo (convenção broadcast de
-    // padel/ténis). O `zoom` re-rasteriza com densidade correcta — NÃO
-    // uses transform:scale, ficaria borrado depois do YoloBox capturar.
-    // Default zoom=1.5 → 1102×312, encaixa em viewports HD sem cortar.
-    <div
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        background: "transparent",
-        zoom,
-      }}
-    >
-      <Scoreboard
-        match={match}
-        tournament={tournament}
-        config={configFromMatch(match)}
-        initialState={
-          state ?? {
-            points_a: "0",
-            points_b: "0",
-            games_a: 0,
-            games_b: 0,
-            sets_a: 0,
-            sets_b: 0,
-            sets_history: [],
-            server: "A",
-            in_tiebreak: false,
-            in_super_tiebreak: false,
-            is_finished: false,
-            winner: null,
-          }
+    // CHAVE: html/body sized EXACTAMENTE ao scoreboard. Sem isto, o
+    // browser dá-lhe 1920×1080 e o YoloBox captura uma "caixa" enorme
+    // (com o scoreboard num cantinho) que desenha como rectângulo
+    // branco vazio em volta do overlay. Com o body apertado, o YoloBox
+    // captura apenas o scoreboard.
+    <>
+      <style>{`
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: ${w}px !important;
+          height: ${h}px !important;
+          overflow: hidden !important;
+          background: transparent !important;
         }
-        variant="overlay"
-        preferShortNames
-      />
-    </div>
+      `}</style>
+      <div
+        style={{
+          width: w,
+          height: h,
+          background: "transparent",
+          zoom,
+          // Reset zoom para os filhos — o wrapper é o ÚNICO que tem zoom,
+          // o Scoreboard renderiza no seu tamanho nativo dentro deste box.
+        }}
+      >
+        <Scoreboard
+          match={match}
+          tournament={tournament}
+          config={configFromMatch(match)}
+          initialState={
+            state ?? {
+              points_a: "0",
+              points_b: "0",
+              games_a: 0,
+              games_b: 0,
+              sets_a: 0,
+              sets_b: 0,
+              sets_history: [],
+              server: "A",
+              in_tiebreak: false,
+              in_super_tiebreak: false,
+              is_finished: false,
+              winner: null,
+            }
+          }
+          variant="overlay"
+          preferShortNames
+        />
+      </div>
+    </>
   );
 }
