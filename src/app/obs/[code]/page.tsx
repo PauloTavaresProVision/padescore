@@ -20,13 +20,23 @@ export default async function ObsOverlayPage({
   const { code } = await params;
   const { scale: scaleRaw } = await searchParams;
   // ?scale=N → multiplica TODOS os pixels do scoreboard nativamente.
-  // Default 2.6 → 1911×541, encaixa exactamente num canvas 1920×1080
-  // (sem overflow à direita). O texto pequeno (tournament name, column
-  // labels) foi aumentado nativamente para resistir à compressão de
-  // vídeo do YoloBox — não é preciso scale ainda maior.
+  //
+  // REGRA DE OURO p/ qualidade: o render TEM de sair do tamanho final
+  // que terá na transmissão. Qualquer downscale (no YoloBox ou em
+  // qualquer lado) destrói qualidade — esticar e encolher imagens
+  // pixeliza.
+  //
+  // Default scale=1 → 735×208 nativo (≈38% width × 19% height de um
+  // broadcast 1920×1080). Configura o YoloBox com Scale slider a 100%
+  // (sem mexer) — captura exactamente esses 735×208 e renderiza-os 1:1
+  // no broadcast. Resultado: nitidez nativa.
+  //
+  // Se quiseres maior na transmissão, NÃO uses Scale no YoloBox —
+  // muda o ?scale=N do URL para algo maior (ex: ?scale=1.5 = 1102×312)
+  // e mantém o YoloBox a 100%.
   const scale = (() => {
     const n = Number(scaleRaw);
-    if (!Number.isFinite(n)) return 2.6;
+    if (!Number.isFinite(n)) return 1;
     return Math.min(5, Math.max(0.5, n));
   })();
   const w = Math.round(SCOREBOARD_BASE_W * scale);
