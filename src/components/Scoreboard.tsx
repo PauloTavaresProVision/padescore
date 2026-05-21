@@ -82,6 +82,7 @@ export function Scoreboard({
   initialState,
   preferShortNames,
   scale = 1,
+  initialElapsedSeconds,
 }: {
   match: ScoreboardMatch;
   tournament: ScoreboardTournament;
@@ -99,6 +100,12 @@ export function Scoreboard({
    * o YoloBox capta nessa resolução sem precisar de re-amostrar.
    */
   scale?: number;
+  /**
+   * Tempo decorrido em segundos (calculado no servidor a cada request).
+   * Usado para o relógio render server-side em webviews sem JS — o JS,
+   * quando hidrata, assume o controlo e tica de segundo a segundo.
+   */
+  initialElapsedSeconds?: number | null;
 }) {
   // Pixels escalados — usados em vez das constantes BASE_*.
   const COL_SCORE = BASE_COL_SCORE * scale;
@@ -281,7 +288,11 @@ export function Scoreboard({
     }
   }, [hasProgress, inferredStartedAt, match.started_at]);
 
-  const elapsed = useElapsedSeconds(inferredStartedAt, match.finished_at);
+  const elapsed = useElapsedSeconds(
+    inferredStartedAt,
+    match.finished_at,
+    initialElapsedSeconds ?? null,
+  );
 
   const moment = useCriticalMoment(state, config);
   const completedSets = state.sets_history;
@@ -1099,9 +1110,12 @@ function formatTeam(p1: string, p2: string | null): string {
 function useElapsedSeconds(
   startedAt: string | null,
   finishedAt: string | null,
+  fallback: number | null = null,
 ): number | null {
-  // null inicial garante que SSR e cliente renderizam o mesmo (nada).
-  // Só a partir do useEffect (client-only) é que o timer arranca.
+  // `fallback` é calculado no servidor (Date.now() - started_at) e usado
+  // até o JS hidratar e o useEffect arrancar. Crítico para webviews sem
+  // JS (YoloBox) — o tempo no HTML inicial já vem com o valor certo, e
+  // a cada meta-refresh é re-calculado.
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -1115,7 +1129,8 @@ function useElapsedSeconds(
     return () => clearInterval(id);
   }, [startedAt, finishedAt]);
 
-  if (!startedAt || now === null) return null;
+  if (!startedAt) return null;
+  if (now === null) return fallback; // SSR / webview sem JS: usa o valor do servidor
   const end = finishedAt ? new Date(finishedAt).getTime() : now;
   return Math.max(0, Math.floor((end - new Date(startedAt).getTime()) / 1000));
 }

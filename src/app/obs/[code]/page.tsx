@@ -31,6 +31,9 @@ export default async function ObsOverlayPage({
   const w = Math.round(SCOREBOARD_BASE_W * scale);
   const h = Math.round(SCOREBOARD_BASE_H * scale);
   const supabase = createAdminClient();
+  // `serverNow` é capturado no início do request para o tempo decorrido
+  // ser calculado server-side (sem precisar de JS no client).
+  const serverNow = Date.now();
 
   const { data: matchRaw } = await supabase
     .from("matches")
@@ -61,6 +64,20 @@ export default async function ObsOverlayPage({
     supabase.from("match_state").select("*").eq("match_id", match.id).single(),
   ]);
   if (!tournament) notFound();
+
+  // Calcula elapsed seconds NO SERVIDOR a cada request — para o YoloBox
+  // (sem JS) ver o tempo. Cada meta-refresh dispara um novo request e
+  // este valor é recalculado.
+  const initialElapsedSeconds = match.started_at
+    ? Math.max(
+        0,
+        Math.floor(
+          ((match.finished_at ? new Date(match.finished_at).getTime() : serverNow) -
+            new Date(match.started_at).getTime()) /
+            1000,
+        ),
+      )
+    : null;
 
   return (
     // O scoreboard renderiza em PIXELS REAIS escalados (não CSS scale/zoom).
@@ -100,6 +117,7 @@ export default async function ObsOverlayPage({
         variant="overlay"
         preferShortNames
         scale={scale}
+        initialElapsedSeconds={initialElapsedSeconds}
       />
     </>
   );

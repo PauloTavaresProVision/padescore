@@ -14,7 +14,7 @@ export default function ObsLayout({
           do HTML) e o reload é cancelado — passa a usar polling JS.
           Se o JS NÃO correr, a meta tag fica activa e o browser
           recarrega a página cada 3 segundos, trazendo o estado novo. */}
-      <meta id="obs-refresh" httpEquiv="refresh" content="3" />
+      <meta id="obs-refresh" httpEquiv="refresh" content="1" />
       <script
         dangerouslySetInnerHTML={{
           __html: "document.getElementById('obs-refresh')?.remove();",
