@@ -417,9 +417,9 @@ export function Scoreboard({
             style={{
               flex: 1,
               paddingLeft: s(20),
-              fontSize: s(11),
-              fontWeight: 700,
-              color: "#768091",
+              fontSize: s(14),
+              fontWeight: 800,
+              color: "#a3b0c2",
               letterSpacing: "0.5px",
               textTransform: "uppercase",
               overflow: "hidden",
@@ -451,9 +451,9 @@ export function Scoreboard({
                   justifyContent: "center",
                   width: w,
                   borderLeft: borderDivider,
-                  fontSize: s(11),
-                  fontWeight: 700,
-                  color: "#768091",
+                  fontSize: s(13),
+                  fontWeight: 800,
+                  color: "#a3b0c2",
                   letterSpacing: "0.5px",
                   textTransform: "uppercase",
                 }}
@@ -579,7 +579,7 @@ export function Scoreboard({
                 display: "flex",
                 alignItems: "center",
                 color: "#c4f600",
-                fontSize: s(14),
+                fontSize: s(16),
                 fontWeight: 900,
                 gap: s(6),
                 letterSpacing: "0.5px",
@@ -607,7 +607,7 @@ export function Scoreboard({
                 display: "flex",
                 alignItems: "center",
                 color: "#c4f600",
-                fontSize: s(14),
+                fontSize: s(16),
                 fontWeight: 900,
                 gap: s(8),
                 letterSpacing: "0.5px",
@@ -644,8 +644,8 @@ export function Scoreboard({
           ) : (
             <span
               style={{
-                color: "#768091",
-                fontSize: s(14),
+                color: "#a3b0c2",
+                fontSize: s(16),
                 fontWeight: 900,
                 letterSpacing: "0.5px",
               }}
@@ -857,9 +857,9 @@ function TeamRow({
             style={{
               background: "linear-gradient(90deg, #c4f600, #a0d100)",
               color: "#000",
-              fontSize: s(11),
+              fontSize: s(14),
               fontWeight: 900,
-              padding: `${s(5)}px ${s(9)}px`,
+              padding: `${s(6)}px ${s(11)}px`,
               borderRadius: s(5),
               marginLeft: s(14),
               letterSpacing: "0.5px",
