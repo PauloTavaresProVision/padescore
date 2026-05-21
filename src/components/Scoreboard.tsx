@@ -474,15 +474,16 @@ export function Scoreboard({
             justifyContent: "center",
             gridColumn: "1 / 2",
             gridRow: "2 / 5",
+            // Background sólido — sem gradiente radial (criava halo)
             background: "#0a0d12",
-            backgroundImage: `radial-gradient(ellipse at center, ${accent}1f 0%, transparent 55%), linear-gradient(180deg, #1d2330 0%, #0a0d12 100%)`,
             borderRadius: `${s(12)}px 0 0 ${s(12)}px`,
             borderTop: borderBright,
             borderLeft: borderBright,
             borderBottom: borderBright,
             borderRight: borderDivider,
-            boxShadow:
-              `inset 0 0 ${s(35)}px rgba(0,0,0,0.55), inset 0 ${s(2)}px 0 rgba(255,255,255,0.04)`,
+            // Inset shadow reduzido (era 35px → era a noise principal)
+            boxShadow: `inset 0 ${s(2)}px 0 rgba(255,255,255,0.05)`,
+            padding: s(8),
           }}
         >
           {tournament.logo_url ? (
@@ -491,10 +492,10 @@ export function Scoreboard({
               src={tournament.logo_url}
               alt=""
               style={{
-                width: s(75),
-                height: s(75),
+                width: s(95),
+                height: s(95),
                 objectFit: "contain",
-                filter: `drop-shadow(0 0 ${s(8)}px ${accentGlow}cc)`,
+                // Drop-shadow removido — era halo colorido que comprimia mal
               }}
             />
           ) : (
@@ -503,14 +504,13 @@ export function Scoreboard({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: s(75),
-                height: s(75),
+                width: s(95),
+                height: s(95),
                 background: accent,
                 borderRadius: s(12),
-                fontSize: s(32),
+                fontSize: s(38),
                 fontWeight: 900,
                 color: "#fff",
-                filter: `drop-shadow(0 0 ${s(8)}px ${accentGlow}cc)`,
               }}
             >
               {tournament.name.slice(0, 2).toUpperCase()}
