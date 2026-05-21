@@ -8,10 +8,20 @@ export const dynamic = "force-dynamic";
 
 export default async function ObsOverlayPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ zoom?: string }>;
 }) {
   const { code } = await params;
+  const { zoom: zoomRaw } = await searchParams;
+  // ?zoom=N  → re-rasteriza o scoreboard a N×. Default 2 (recomendado p/
+  // YoloBox / OBS Browser Source). 1 = tamanho nativo, 3 = jumbo.
+  const zoom = (() => {
+    const n = Number(zoomRaw);
+    if (!Number.isFinite(n)) return 2;
+    return Math.min(4, Math.max(0.5, n));
+  })();
   const supabase = createAdminClient();
 
   const { data: matchRaw } = await supabase
@@ -45,11 +55,21 @@ export default async function ObsOverlayPage({
   if (!tournament) notFound();
 
   return (
-    // Sem padding, sem scale, sem flex — o scoreboard renderiza no canto
-    // superior-esquerdo, no seu tamanho nativo. O OBS Browser Source / YoloBox
-    // deve usar Largura=735 Altura=208 para um fit perfeito (depois escalam à
-    // vontade na cena, sem perda de definição).
-    <div style={{ position: "fixed", top: 0, left: 0, background: "transparent" }}>
+    // Renderiza no canto superior-esquerdo. O `zoom` re-rasteriza com
+    // densidade correcta (NÃO uses transform:scale aqui — ficaria borrado
+    // depois do YoloBox/OBS capturarem). Tamanho nativo é 735×208; com
+    // zoom=2 (default) ocupa 1470×416, suficientemente grande para o
+    // YoloBox capturar e re-escalar sem perda. Para mais pequeno usa
+    // `?zoom=1`, para jumbo `?zoom=3`.
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        background: "transparent",
+        zoom,
+      }}
+    >
       <Scoreboard
         match={match}
         tournament={tournament}
