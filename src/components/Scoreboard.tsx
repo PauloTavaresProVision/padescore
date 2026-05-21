@@ -127,41 +127,39 @@ export function Scoreboard({
   // ponto chegar antes de 500ms — senão o flash do 2º ponto seria limpo cedo).
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Catch-up após queda de rede.
+  // Catch-up — usa `fetch()` para o endpoint HTTP `/api/match-poll/[id]` em
+  // vez do cliente Supabase JS, porque alguns webviews (YoloBox, etc.) não
+  // suportam o cliente Supabase mas suportam fetch normal.
   const refetch = useCallback(async () => {
-    const supabase = createClient();
-    const [{ data: st }, { data: m }] = await Promise.all([
-      supabase
-        .from("match_state")
-        .select("*")
-        .eq("match_id", initialMatch.id)
-        .single(),
-      supabase
-        .from("matches")
-        .select(
-          "court_name, team_a_player1, team_a_player2, team_b_player1, team_b_player2, team_a_player1_short, team_a_player2_short, team_b_player1_short, team_b_player2_short, status, started_at, finished_at",
-        )
-        .eq("id", initialMatch.id)
-        .single(),
-    ]);
-    if (st) setState(st as unknown as ScoreboardState);
-    if (m) {
-      const row = m as MatchRow;
-      const a1 = pickName(row.team_a_player1, row.team_a_player1_short, preferShortNames);
-      const a2 = pickName(row.team_a_player2, row.team_a_player2_short, preferShortNames);
-      const b1 = pickName(row.team_b_player1, row.team_b_player1_short, preferShortNames);
-      const b2 = pickName(row.team_b_player2, row.team_b_player2_short, preferShortNames);
-      setMatch((prev) => ({
-        ...prev,
-        court_name: row.court_name ?? prev.court_name,
-        team_a_player1: a1 ?? prev.team_a_player1,
-        team_a_player2: a2 ?? null,
-        team_b_player1: b1 ?? prev.team_b_player1,
-        team_b_player2: b2 ?? null,
-        status: row.status ?? prev.status,
-        started_at: row.started_at ?? prev.started_at,
-        finished_at: row.finished_at ?? prev.finished_at,
-      }));
+    try {
+      const res = await fetch(`/api/match-poll/${initialMatch.id}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const { state: st, match: m } = (await res.json()) as {
+        state: ScoreboardState | null;
+        match: MatchRow | null;
+      };
+      if (st) setState(st);
+      if (m) {
+        const a1 = pickName(m.team_a_player1, m.team_a_player1_short, preferShortNames);
+        const a2 = pickName(m.team_a_player2, m.team_a_player2_short, preferShortNames);
+        const b1 = pickName(m.team_b_player1, m.team_b_player1_short, preferShortNames);
+        const b2 = pickName(m.team_b_player2, m.team_b_player2_short, preferShortNames);
+        setMatch((prev) => ({
+          ...prev,
+          court_name: m.court_name ?? prev.court_name,
+          team_a_player1: a1 ?? prev.team_a_player1,
+          team_a_player2: a2 ?? null,
+          team_b_player1: b1 ?? prev.team_b_player1,
+          team_b_player2: b2 ?? null,
+          status: m.status ?? prev.status,
+          started_at: m.started_at ?? prev.started_at,
+          finished_at: m.finished_at ?? prev.finished_at,
+        }));
+      }
+    } catch {
+      // network error — próximo polling tenta de novo
     }
   }, [initialMatch.id, preferShortNames]);
 
