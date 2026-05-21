@@ -51,17 +51,41 @@ const ROW_FOOTER = 44;
 const TOTAL_W = COL_LOGO + COL_MAIN;
 const TOTAL_H = ROW_HEADER + ROW_TEAM * 2 + ROW_FOOTER;
 
+// Payload do realtime / refetch traz todos os campos da row, incluindo
+// _short. Aceitamos parcial para sermos defensivos.
+type MatchRow = Partial<ScoreboardMatch> & {
+  team_a_player1_short?: string | null;
+  team_a_player2_short?: string | null;
+  team_b_player1_short?: string | null;
+  team_b_player2_short?: string | null;
+};
+
+function pickName(
+  long: string | null | undefined,
+  short: string | null | undefined,
+  preferShort: boolean | undefined,
+): string | null | undefined {
+  if (preferShort && short) return short;
+  return long;
+}
+
 export function Scoreboard({
   match: initialMatch,
   tournament,
   config,
   initialState,
+  preferShortNames,
 }: {
   match: ScoreboardMatch;
   tournament: ScoreboardTournament;
   config: MatchConfig;
   initialState: ScoreboardState;
   variant?: "full" | "overlay";
+  /**
+   * Se `true`, o realtime/refetch usam `*_short` quando disponíveis. O OBS
+   * overlay activa isto para nunca cair no nome longo após uma actualização.
+   */
+  preferShortNames?: boolean;
 }) {
   const [match, setMatch] = useState<ScoreboardMatch>(initialMatch);
   const [state, setState] = useState<ScoreboardState>(initialState);
@@ -91,27 +115,31 @@ export function Scoreboard({
       supabase
         .from("matches")
         .select(
-          "court_name, team_a_player1, team_a_player2, team_b_player1, team_b_player2, status, started_at, finished_at",
+          "court_name, team_a_player1, team_a_player2, team_b_player1, team_b_player2, team_a_player1_short, team_a_player2_short, team_b_player1_short, team_b_player2_short, status, started_at, finished_at",
         )
         .eq("id", initialMatch.id)
         .single(),
     ]);
     if (st) setState(st as unknown as ScoreboardState);
     if (m) {
-      const row = m as Partial<ScoreboardMatch>;
+      const row = m as MatchRow;
+      const a1 = pickName(row.team_a_player1, row.team_a_player1_short, preferShortNames);
+      const a2 = pickName(row.team_a_player2, row.team_a_player2_short, preferShortNames);
+      const b1 = pickName(row.team_b_player1, row.team_b_player1_short, preferShortNames);
+      const b2 = pickName(row.team_b_player2, row.team_b_player2_short, preferShortNames);
       setMatch((prev) => ({
         ...prev,
         court_name: row.court_name ?? prev.court_name,
-        team_a_player1: row.team_a_player1 ?? prev.team_a_player1,
-        team_a_player2: row.team_a_player2 ?? null,
-        team_b_player1: row.team_b_player1 ?? prev.team_b_player1,
-        team_b_player2: row.team_b_player2 ?? null,
+        team_a_player1: a1 ?? prev.team_a_player1,
+        team_a_player2: a2 ?? null,
+        team_b_player1: b1 ?? prev.team_b_player1,
+        team_b_player2: b2 ?? null,
         status: row.status ?? prev.status,
         started_at: row.started_at ?? prev.started_at,
         finished_at: row.finished_at ?? prev.finished_at,
       }));
     }
-  }, [initialMatch.id]);
+  }, [initialMatch.id, preferShortNames]);
 
   const { online, handleStatus } = useReconnect(refetch);
 
@@ -157,14 +185,18 @@ export function Scoreboard({
           filter: `id=eq.${match.id}`,
         },
         (payload) => {
-          const m = payload.new as Partial<ScoreboardMatch>;
+          const m = payload.new as MatchRow;
+          const a1 = pickName(m.team_a_player1, m.team_a_player1_short, preferShortNames);
+          const a2 = pickName(m.team_a_player2, m.team_a_player2_short, preferShortNames);
+          const b1 = pickName(m.team_b_player1, m.team_b_player1_short, preferShortNames);
+          const b2 = pickName(m.team_b_player2, m.team_b_player2_short, preferShortNames);
           setMatch((prev) => ({
             ...prev,
             court_name: m.court_name ?? prev.court_name,
-            team_a_player1: m.team_a_player1 ?? prev.team_a_player1,
-            team_a_player2: m.team_a_player2 ?? null,
-            team_b_player1: m.team_b_player1 ?? prev.team_b_player1,
-            team_b_player2: m.team_b_player2 ?? null,
+            team_a_player1: a1 ?? prev.team_a_player1,
+            team_a_player2: a2 ?? null,
+            team_b_player1: b1 ?? prev.team_b_player1,
+            team_b_player2: b2 ?? null,
             status: m.status ?? prev.status,
             started_at: m.started_at ?? prev.started_at,
             finished_at: m.finished_at ?? prev.finished_at,

@@ -91,6 +91,7 @@ export default async function ObsOverlayPage({
           }
         }
         variant="overlay"
+        preferShortNames
       />
     </div>
   );
