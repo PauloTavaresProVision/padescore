@@ -167,6 +167,16 @@ export function Scoreboard({
 
   const { online, handleStatus } = useReconnect(refetch);
 
+  // Polling de backup: alguns webviews (YoloBox, etc.) bloqueiam WebSockets
+  // → o realtime do Supabase falha silenciosamente. Polling cada 3s garante
+  // que o estado fica em dia mesmo sem realtime.
+  useEffect(() => {
+    const id = setInterval(() => {
+      void refetch();
+    }, 3000);
+    return () => clearInterval(id);
+  }, [refetch]);
+
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
