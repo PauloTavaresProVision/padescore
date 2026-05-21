@@ -45,34 +45,33 @@ export default async function ObsOverlayPage({
   if (!tournament) notFound();
 
   return (
-    <div
-      className="fixed inset-0 flex items-start justify-start p-4"
-      style={{ backgroundColor: "transparent" }}
-    >
-      <div style={{ transform: "scale(0.7)", transformOrigin: "top left" }}>
-        <Scoreboard
-          match={match}
-          tournament={tournament}
-          config={configFromMatch(match)}
-          initialState={
-            state ?? {
-              points_a: "0",
-              points_b: "0",
-              games_a: 0,
-              games_b: 0,
-              sets_a: 0,
-              sets_b: 0,
-              sets_history: [],
-              server: "A",
-              in_tiebreak: false,
-              in_super_tiebreak: false,
-              is_finished: false,
-              winner: null,
-            }
+    // Sem padding, sem scale, sem flex — o scoreboard renderiza no canto
+    // superior-esquerdo, no seu tamanho nativo. O OBS Browser Source / YoloBox
+    // deve usar Largura=735 Altura=208 para um fit perfeito (depois escalam à
+    // vontade na cena, sem perda de definição).
+    <div style={{ position: "fixed", top: 0, left: 0, background: "transparent" }}>
+      <Scoreboard
+        match={match}
+        tournament={tournament}
+        config={configFromMatch(match)}
+        initialState={
+          state ?? {
+            points_a: "0",
+            points_b: "0",
+            games_a: 0,
+            games_b: 0,
+            sets_a: 0,
+            sets_b: 0,
+            sets_history: [],
+            server: "A",
+            in_tiebreak: false,
+            in_super_tiebreak: false,
+            is_finished: false,
+            winner: null,
           }
-          variant="overlay"
-        />
-      </div>
+        }
+        variant="overlay"
+      />
     </div>
   );
 }

@@ -308,14 +308,15 @@ export function Scoreboard({
             }}
           />
         )}
-        {/* HEADER — linha 1, col 2 (sai por cima do logo) */}
+        {/* HEADER — linha 1, atravessa toda a largura (sem L-notch) */}
         <div
           className="flex items-center"
           style={{
             position: "relative",
-            gridColumn: "2 / 3",
+            gridColumn: "1 / 3",
             gridRow: "1 / 2",
-            background: "linear-gradient(180deg, #2b313d 0%, #1c2029 100%)",
+            background: "#2b313d",
+            backgroundImage: "linear-gradient(180deg, #2b313d 0%, #1c2029 100%)",
             borderRadius: "12px 12px 0 0",
             borderTop: borderBright,
             borderLeft: borderBright,
@@ -370,15 +371,16 @@ export function Scoreboard({
           })}
         </div>
 
-        {/* LOGO BOX — linhas 2-4, col 1 (mais curta que a main) */}
+        {/* LOGO BOX — linhas 2-4, col 1 (por baixo do header full-width) */}
         <div
           className="flex items-center justify-center"
           style={{
             gridColumn: "1 / 2",
             gridRow: "2 / 5",
-            background: `radial-gradient(ellipse at center, ${accent}1f 0%, transparent 55%), linear-gradient(180deg, #1d2330 0%, #0a0d12 100%)`,
-            borderRadius: "12px 0 0 12px",
-            borderTop: borderBright,
+            background: "#0a0d12",
+            backgroundImage: `radial-gradient(ellipse at center, ${accent}1f 0%, transparent 55%), linear-gradient(180deg, #1d2330 0%, #0a0d12 100%)`,
+            borderRadius: "0 0 0 12px",
+            borderTop: borderDivider,
             borderLeft: borderBright,
             borderBottom: borderBright,
             borderRight: borderDivider,
@@ -556,31 +558,18 @@ export function Scoreboard({
         >
           <path
             d={(() => {
-              const r = 12; // raio dos cantos exteriores (igual ao border-radius)
+              const r = 12; // raio dos cantos (igual ao border-radius)
               return [
-                // Começa no fim do arco superior-esquerdo do header (no eixo Y, a r px do topo)
-                `M ${COL_LOGO},${r}`,
-                // Arco superior-esquerdo do header (curva para o topo)
-                `A ${r},${r} 0 0 1 ${COL_LOGO + r},0`,
-                // Top do header até antes do canto superior-direito
+                // Rectângulo simples com cantos arredondados (header full-width)
+                `M ${r},0`,
                 `L ${TOTAL_W - r},0`,
-                // Arco superior-direito
                 `A ${r},${r} 0 0 1 ${TOTAL_W},${r}`,
-                // Lateral direita
                 `L ${TOTAL_W},${TOTAL_H - r}`,
-                // Arco inferior-direito
                 `A ${r},${r} 0 0 1 ${TOTAL_W - r},${TOTAL_H}`,
-                // Bottom até antes do canto inferior-esquerdo
                 `L ${r},${TOTAL_H}`,
-                // Arco inferior-esquerdo
                 `A ${r},${r} 0 0 1 0,${TOTAL_H - r}`,
-                // Lateral esquerda do logo box subindo
-                `L 0,${ROW_HEADER + r}`,
-                // Arco superior-esquerdo do logo
-                `A ${r},${r} 0 0 1 ${r},${ROW_HEADER}`,
-                // Topo do logo box até ao canto interior côncavo
-                `L ${COL_LOGO},${ROW_HEADER}`,
-                // Fecha: linha vertical do canto interior côncavo subindo até ao M inicial
+                `L 0,${r}`,
+                `A ${r},${r} 0 0 1 ${r},0`,
                 `Z`,
               ].join(" ");
             })()}
@@ -643,7 +632,8 @@ function TeamRow({
         position: "relative",
         gridColumn: "2 / 3",
         gridRow,
-        background: "linear-gradient(180deg, #1c2029 0%, #12151b 100%)",
+        background: "#17191f",
+        backgroundImage: "linear-gradient(180deg, #1c2029 0%, #12151b 100%)",
         borderRight: borderBright,
         borderBottom: isBottomRow
           ? "2px solid rgba(0,0,0,0.6)"
