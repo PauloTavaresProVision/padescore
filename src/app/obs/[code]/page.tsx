@@ -95,31 +95,35 @@ export default async function ObsOverlayPage({
           background: transparent !important;
         }
       `}</style>
-      <Scoreboard
-        match={match}
-        tournament={tournament}
-        config={configFromMatch(match)}
-        initialState={
-          state ?? {
-            points_a: "0",
-            points_b: "0",
-            games_a: 0,
-            games_b: 0,
-            sets_a: 0,
-            sets_b: 0,
-            sets_history: [],
-            server: "A",
-            in_tiebreak: false,
-            in_super_tiebreak: false,
-            is_finished: false,
-            winner: null,
+      {/* sb-mount: o script no layout substitui este innerHTML a cada 1s
+          com o HTML novo vindo de uma nova requisição à mesma URL. */}
+      <div id="sb-mount">
+        <Scoreboard
+          match={match}
+          tournament={tournament}
+          config={configFromMatch(match)}
+          initialState={
+            state ?? {
+              points_a: "0",
+              points_b: "0",
+              games_a: 0,
+              games_b: 0,
+              sets_a: 0,
+              sets_b: 0,
+              sets_history: [],
+              server: "A",
+              in_tiebreak: false,
+              in_super_tiebreak: false,
+              is_finished: false,
+              winner: null,
+            }
           }
-        }
-        variant="overlay"
-        preferShortNames
-        scale={scale}
-        initialElapsedSeconds={initialElapsedSeconds}
-      />
+          variant="overlay"
+          preferShortNames
+          scale={scale}
+          initialElapsedSeconds={initialElapsedSeconds}
+        />
+      </div>
     </>
   );
 }
