@@ -376,9 +376,8 @@ export function Scoreboard({
           position: "relative",
           gridTemplateColumns: `${COL_LOGO}px ${COL_MAIN}px`,
           gridTemplateRows: `${ROW_HEADER}px ${ROW_TEAM}px ${ROW_TEAM}px ${ROW_FOOTER}px`,
-          // Drop-shadow reduzido — o halo grande virava "ringing" nas
-          // edges depois da compressão de vídeo.
-          filter: `drop-shadow(0 0 ${s(4)}px rgba(0,0,0,0.6))`,
+          // Sem drop-shadow — qualquer halo, mesmo pequeno, vira borrão
+          // depois da compressão H.264 contra fundos saturados.
         }}
       >
         {!online && (
@@ -850,6 +849,11 @@ function TeamRow({
             color: "#ffffff",
             letterSpacing: "-0.5px",
             textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            minWidth: 0,
+            flexShrink: 1,
           }}
         >
           {name}
@@ -857,15 +861,16 @@ function TeamRow({
         {winner && (
           <span
             style={{
-              background: "linear-gradient(90deg, #c4f600, #a0d100)",
-              color: "#000",
+              background: "#c4f600",
+              color: "#0a0d12",
               fontSize: s(14),
               fontWeight: 900,
               padding: `${s(6)}px ${s(11)}px`,
               borderRadius: s(5),
               marginLeft: s(14),
               letterSpacing: "0.5px",
-              boxShadow: `0 0 ${s(15)}px rgba(196,246,0,0.35)`,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             VENCEDOR
@@ -908,9 +913,8 @@ function TeamRow({
           styleColor.color = "#ffffff";
           // Sem text-shadow — virava halo borrado depois da compressão
         } else if (scoreState === "glow") {
-          styleColor.color = "#ffffff";
-          // Glow só no vencedor — mais subtil para sobreviver à compressão
-          styleColor.textShadow = `0 0 ${s(6)}px ${accentGlow}`;
+          // Vencedor: cor lime sólida em vez de glow — sobrevive melhor
+          styleColor.color = "#c4f600";
         } else if (scoreState === "tiebreak") {
           styleColor.color = "#fbbf24";
         }
