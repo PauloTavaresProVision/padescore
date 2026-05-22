@@ -132,6 +132,7 @@ export default async function ObsOverlayPage({
           preferShortNames
           scale={scale}
           initialElapsedSeconds={initialElapsedSeconds}
+          live={false}
         />
       </div>
     </>

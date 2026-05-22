@@ -83,6 +83,7 @@ export function Scoreboard({
   preferShortNames,
   scale = 1,
   initialElapsedSeconds,
+  live = true,
 }: {
   match: ScoreboardMatch;
   tournament: ScoreboardTournament;
@@ -106,6 +107,15 @@ export function Scoreboard({
    * quando hidrata, assume o controlo e tica de segundo a segundo.
    */
   initialElapsedSeconds?: number | null;
+  /**
+   * Se `false`, o componente NÃO faz NENHUM update client-side (sem
+   * realtime, sem polling, sem relógio a ticar). Usado no OBS overlay,
+   * onde o polling vanilla-JS do layout troca o HTML inteiro a cada
+   * segundo — ter o React a mexer no mesmo DOM ao mesmo tempo dava
+   * conflito (o React reescrevia nós que o vanilla-JS já tinha trocado).
+   * Default `true` (admin preview, etc. — comportamento normal).
+   */
+  live?: boolean;
 }) {
   // Pixels escalados — usados em vez das constantes BASE_*.
   const COL_SCORE = BASE_COL_SCORE * scale;
@@ -175,14 +185,17 @@ export function Scoreboard({
   // Polling de backup: alguns webviews (YoloBox, etc.) bloqueiam WebSockets
   // → o realtime do Supabase falha silenciosamente. Polling cada 3s garante
   // que o estado fica em dia mesmo sem realtime.
+  // Desligado quando `live === false` (OBS overlay — actualizado por fora).
   useEffect(() => {
+    if (!live) return;
     const id = setInterval(() => {
       void refetch();
     }, 3000);
     return () => clearInterval(id);
-  }, [refetch]);
+  }, [refetch, live]);
 
   useEffect(() => {
+    if (!live) return;
     const supabase = createClient();
     const channel = supabase
       .channel(`match_state:${match.id}`)
@@ -248,7 +261,7 @@ export function Scoreboard({
       supabase.removeChannel(channel);
       if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
     };
-  }, [match.id]);
+  }, [match.id, live]);
 
   const teamA = formatTeam(match.team_a_player1, match.team_a_player2);
   const teamB = formatTeam(match.team_b_player1, match.team_b_player2);
@@ -278,6 +291,7 @@ export function Scoreboard({
     match.started_at,
   );
   useEffect(() => {
+    if (!live) return;
     if (inferredStartedAt) return; // já bloqueado — nunca volta a null
     if (match.started_at) {
       setInferredStartedAt(match.started_at);
@@ -286,12 +300,13 @@ export function Scoreboard({
     if (hasProgress) {
       setInferredStartedAt(new Date().toISOString());
     }
-  }, [hasProgress, inferredStartedAt, match.started_at]);
+  }, [hasProgress, inferredStartedAt, match.started_at, live]);
 
   const elapsed = useElapsedSeconds(
     inferredStartedAt,
     match.finished_at,
     initialElapsedSeconds ?? null,
+    live,
   );
 
   const moment = useCriticalMoment(state, config);
@@ -1122,14 +1137,17 @@ function useElapsedSeconds(
   startedAt: string | null,
   finishedAt: string | null,
   fallback: number | null = null,
+  live = true,
 ): number | null {
-  // `fallback` é calculado no servidor (Date.now() - started_at) e usado
-  // até o JS hidratar e o useEffect arrancar. Crítico para webviews sem
-  // JS (YoloBox) — o tempo no HTML inicial já vem com o valor certo, e
-  // a cada meta-refresh é re-calculado.
+  // `fallback` é calculado no servidor (Date.now() - started_at). Em modo
+  // `live` o useEffect arranca um setInterval que tica de segundo a segundo.
+  // Em modo NÃO-live (OBS overlay) não tica — devolve sempre o `fallback`,
+  // e quem actualiza o tempo é o polling vanilla-JS (que re-renderiza a
+  // página no servidor, recalculando o fallback).
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!live) return;
     if (!startedAt) return;
     if (finishedAt) {
       setNow(new Date(finishedAt).getTime());
@@ -1138,10 +1156,10 @@ function useElapsedSeconds(
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [startedAt, finishedAt]);
+  }, [startedAt, finishedAt, live]);
 
   if (!startedAt) return null;
-  if (now === null) return fallback; // SSR / webview sem JS: usa o valor do servidor
+  if (now === null) return fallback; // SSR / não-live: usa o valor do servidor
   const end = finishedAt ? new Date(finishedAt).getTime() : now;
   return Math.max(0, Math.floor((end - new Date(startedAt).getTime()) / 1000));
 }
