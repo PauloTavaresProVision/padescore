@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PhotoPickerModal, type PhotoOption } from "./PhotoPickerModal";
 import { deriveShortName } from "@/lib/names";
-import { detectFaceBox, type FaceBox } from "@/lib/face-direction";
 
 export interface PlayerOption {
   id: string;
@@ -224,49 +223,14 @@ export function MatchPlayerPicker({
     setError(null);
     setProcessing("compose");
     try {
-      // 1) Carrega as 4 fotos + detecta a cara de cada uma.
-      const load = async (
-        inp: { blob: Blob; mirror: boolean } | null,
-      ): Promise<LoadedPlayer | null> => {
-        if (!inp) return null;
-        const img = await loadImage(inp.blob);
-        const face = await detectFaceBox(img).catch(() => null);
-        return { img, mirror: inp.mirror, face };
-      };
-      const [a1, a2, b1, b2] = await Promise.all([
-        load(slotInput(slots.a1)),
-        load(slotInput(slots.a2)),
-        load(slotInput(slots.b1)),
-        load(slotInput(slots.b2)),
-      ]);
-
-      // 2) Corte PARTILHADO pelos 4 jogadores das duas duplas. Calculamos,
-      //    em unidades de "largura de cara", quanto cada foto mostra acima
-      //    da cabeça e abaixo dos olhos — e usamos o MÍNIMO comum. Assim
-      //    todos os jogadores (Dupla A e B) ficam cortados exactamente ao
-      //    mesmo sítio → mesmo enquadramento, mesmo tamanho de corpo.
-      const withFace = [a1, a2, b1, b2].filter(
-        (p): p is LoadedPlayer => p != null && p.face != null,
+      const teamA = await composeTeam(
+        [slotInput(slots.a1), slotInput(slots.a2)],
+        "left-to-right",
       );
-      let crop: { above: number; below: number } | null = null;
-      if (withFace.length > 0) {
-        const above = Math.min(
-          ...withFace.map((p) => p.face!.eyeLineY / p.face!.eyeSpan),
-        );
-        const below = Math.min(
-          ...withFace.map(
-            (p) => (p.img.height - p.face!.eyeLineY) / p.face!.eyeSpan,
-          ),
-        );
-        crop = {
-          above: Math.min(above, 1.8), // teto de headroom
-          below: Math.min(below, 4.6), // teto de corpo (cabeça → cintura)
-        };
-      }
-
-      // 3) Compõe as duas duplas com o MESMO corte.
-      const teamA = await composeTeam([a1, a2], "left-to-right", crop);
-      const teamB = await composeTeam([b1, b2], "right-to-left", crop);
+      const teamB = await composeTeam(
+        [slotInput(slots.b1), slotInput(slots.b2)],
+        "right-to-left",
+      );
       setCompose({ teamA, teamB });
       setComposeUrls({
         a: teamA ? URL.createObjectURL(teamA) : null,
@@ -341,9 +305,7 @@ export function MatchPlayerPicker({
               disabled={!anyPhoto || processing !== null}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {processing === "compose"
-              ? "IA a alinhar duplas..."
-              : "Compor duplas para TV"}
+              {processing === "compose" ? "A compor..." : "Compor duplas para TV"}
             </button>
             {processing && processing !== "compose" && (
               <span className="text-xs font-medium text-cyan-600">A carregar foto…</span>
@@ -578,162 +540,66 @@ function useObjectURL(blob: Blob | null): string | null {
 }
 
 // ---------------------------------------------------------------------------
-type LoadedPlayer = {
-  img: HTMLImageElement;
-  mirror: boolean;
-  face: FaceBox | null;
-};
-
-// =============================================================================
-// composeTeam — composição INTELIGENTE da dupla para a TV
-// -----------------------------------------------------------------------------
-// Recebe os jogadores JÁ carregados + um `crop` partilhado (calculado em
-// buildComposites a partir das 4 fotos). Cada jogador é cortado exactamente
-// à mesma extensão relativa à cara → todos mostram o mesmo "pedaço" de corpo,
-// com a cara do mesmo tamanho e os olhos na mesma linha. Resultado: Dupla A
-// e Dupla B perfeitamente consistentes.
-//
-// + glow radial suave por trás   + sombra elíptica de contacto
-// Fallback (sem cara detectada): escala a imagem inteira para a altura comum.
-// =============================================================================
 async function composeTeam(
-  players: (LoadedPlayer | null)[],
+  inputs: ({ blob: Blob; mirror: boolean } | null)[],
   direction: "left-to-right" | "right-to-left",
-  crop: { above: number; below: number } | null,
 ): Promise<Blob | null> {
-  const present = players.filter((p): p is LoadedPlayer => p !== null);
-  if (present.length === 0) return null;
+  const players = (
+    await Promise.all(
+      inputs.map(async (i) =>
+        i ? { img: await loadImage(i.blob), mirror: i.mirror } : null,
+      ),
+    )
+  ).filter((p): p is { img: HTMLImageElement; mirror: boolean } => p !== null);
 
-  const drawOrder =
-    direction === "right-to-left" ? [...present].reverse() : present;
+  if (players.length === 0) return null;
 
-  // Largura desejada da cara no canvas (define a escala absoluta).
-  const TARGET_FACE_W = drawOrder.length === 2 ? 230 : 290;
-  // Altura comum a TODOS os jogadores (mesmo enquadramento garantido).
-  const cropU = crop ?? { above: 1.5, below: 4.2 };
-  const rowH = (cropU.above + cropU.below) * TARGET_FACE_W;
+  const targetHeight = 1000;
+  const targetWidth = 1500;
 
-  type Item = {
-    img: HTMLImageElement;
-    mirror: boolean;
-    sx: number;
-    sy: number;
-    sw: number;
-    sh: number; // rectângulo de corte na imagem original
-    dw: number;
-    dh: number; // tamanho de destino (dh = rowH para todos)
-  };
+  const drawOrder = direction === "right-to-left" ? [...players].reverse() : players;
 
-  const items: Item[] = drawOrder.map((p) => {
-    if (p.face && crop) {
-      const { eyeLineY, eyeSpan } = p.face;
-      const scale = TARGET_FACE_W / eyeSpan;
-      const sy = eyeLineY - crop.above * eyeSpan;
-      const sh = (crop.above + crop.below) * eyeSpan;
-      return {
-        img: p.img,
-        mirror: p.mirror,
-        sx: 0,
-        sy,
-        sw: p.img.width,
-        sh,
-        dw: p.img.width * scale,
-        dh: rowH, // = sh * scale — igual para todos
-      };
-    }
-    // Fallback sem cara: imagem inteira escalada à altura comum.
-    const scale = rowH / p.img.height;
-    return {
-      img: p.img,
-      mirror: p.mirror,
-      sx: 0,
-      sy: 0,
-      sw: p.img.width,
-      sh: p.img.height,
-      dw: p.img.width * scale,
-      dh: rowH,
-    };
+  const scaled = drawOrder.map((p) => {
+    const scale = targetHeight / p.img.height;
+    return { ...p, w: p.img.width * scale, h: targetHeight };
   });
 
-  // Layout horizontal — sobreposição 30%.
-  const overlap = 0.3;
-  const groupW = items.reduce(
-    (acc, it, i) => acc + (i === 0 ? it.dw : it.dw * (1 - overlap)),
-    0,
-  );
-
-  // Canvas adaptado ao conteúdo (+ margem p/ glow e sombra). Como rowH é
-  // igual em todas as composições, Dupla A e B saem do mesmo tamanho.
-  const padX = TARGET_FACE_W * 0.55;
-  const padTop = TARGET_FACE_W * 0.3;
-  const padBottom = TARGET_FACE_W * 0.6;
-  const CW = Math.round(groupW + padX * 2);
-  const CH = Math.round(rowH + padTop + padBottom);
+  const overlapFrac = 0.35;
+  const totalW =
+    scaled.length === 1
+      ? scaled[0].w
+      : scaled.reduce(
+          (acc, s, i) => acc + (i === 0 ? s.w : s.w * (1 - overlapFrac)),
+          0,
+        );
+  const fitScale = totalW > targetWidth ? targetWidth / totalW : 1;
+  scaled.forEach((s) => {
+    s.w *= fitScale;
+    s.h *= fitScale;
+  });
+  const finalTotalW = totalW * fitScale;
 
   const canvas = document.createElement("canvas");
-  canvas.width = CW;
-  canvas.height = CH;
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
   const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, CW, CH);
+  ctx.clearRect(0, 0, targetWidth, targetHeight);
 
-  // Glow radial suave por trás.
-  const glowCX = CW / 2;
-  const glowCY = padTop + rowH * 0.42;
-  const glow = ctx.createRadialGradient(
-    glowCX,
-    glowCY,
-    0,
-    glowCX,
-    glowCY,
-    CW * 0.55,
-  );
-  glow.addColorStop(0, "rgba(255,255,255,0.18)");
-  glow.addColorStop(0.6, "rgba(255,255,255,0.05)");
-  glow.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, CW, CH);
-
-  // Posições — grupo centrado horizontalmente, topo em padTop.
-  let x = (CW - groupW) / 2;
-  const placed = items.map((it) => {
-    const dx = x;
-    const dy = padTop;
-    x += it.dw * (1 - overlap);
-    return { ...it, dx, dy };
-  });
-
-  // Sombra elíptica de contacto sob cada jogador.
-  for (const p of placed) {
-    const cx = p.dx + p.dw / 2;
-    const feetY = p.dy + p.dh;
-    const rx = p.dw * 0.4;
-    const ry = rx * 0.15;
-    ctx.save();
-    ctx.translate(cx, feetY);
-    ctx.scale(1, ry / rx);
-    const sh = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-    sh.addColorStop(0, "rgba(0,0,0,0.5)");
-    sh.addColorStop(0.7, "rgba(0,0,0,0.18)");
-    sh.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = sh;
-    ctx.beginPath();
-    ctx.arc(0, 0, rx, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Jogadores — corte da fonte (sx,sy,sw,sh) + mirror per-image.
-  for (const p of placed) {
-    if (p.mirror) {
+  let x = (targetWidth - finalTotalW) / 2;
+  scaled.forEach((p, i) => {
+    const { img, mirror, w, h } = p;
+    const drawY = targetHeight - h;
+    if (mirror) {
       ctx.save();
-      ctx.translate(p.dx + p.dw, p.dy);
+      ctx.translate(x + w, drawY);
       ctx.scale(-1, 1);
-      ctx.drawImage(p.img, p.sx, p.sy, p.sw, p.sh, 0, 0, p.dw, p.dh);
+      ctx.drawImage(img, 0, 0, w, h);
       ctx.restore();
     } else {
-      ctx.drawImage(p.img, p.sx, p.sy, p.sw, p.sh, p.dx, p.dy, p.dw, p.dh);
+      ctx.drawImage(img, x, drawY, w, h);
     }
-  }
+    if (i < scaled.length - 1) x += w * (1 - overlapFrac);
+  });
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
