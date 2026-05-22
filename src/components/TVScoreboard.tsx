@@ -864,7 +864,9 @@ export function TVScoreboard({
           .tv-footer-item svg { width: 2.8vh; height: 2.8vh; }
           /* Separador continua linha fina — só a altura escala. */
           .tv-footer-sep { height: 3vh; }
-          .tv-player-a-1, .tv-player-a-2, .tv-player-b-1, .tv-player-b-2 { font-size: 4vh !important; }
+          /* Nomes dos jogadores: tamanho é definido inline e adaptativo
+             ao comprimento do nome (tvNameFontSize) — não sobrepor aqui
+             com !important, senão nomes longos voltam a rebentar a caixa. */
           .tv-set-score { font-size: 5vh !important; }
         }
       `}</style>
@@ -1064,7 +1066,7 @@ export function TVScoreboard({
               left: "4.5%",
               top: "69.2%",
               width: "25.5%",
-              fontSize: "2.35vw",
+              fontSize: tvNameFontSize(match.team_a_player1),
               textAlign: "left",
               paddingLeft: "1vw",
             }}
@@ -1078,7 +1080,7 @@ export function TVScoreboard({
                 left: "4.5%",
                 top: "75.5%",
                 width: "25.5%",
-                fontSize: "2.35vw",
+                fontSize: tvNameFontSize(match.team_a_player2),
                 textAlign: "left",
                 paddingLeft: "1vw",
               }}
@@ -1094,7 +1096,7 @@ export function TVScoreboard({
               left: "70%",
               top: "69.2%",
               width: "25.5%",
-              fontSize: "2.35vw",
+              fontSize: tvNameFontSize(match.team_b_player1),
               textAlign: "right",
               paddingRight: "1vw",
             }}
@@ -1108,7 +1110,7 @@ export function TVScoreboard({
                 left: "70%",
                 top: "75.5%",
                 width: "25.5%",
-                fontSize: "2.35vw",
+                fontSize: tvNameFontSize(match.team_b_player2),
                 textAlign: "right",
                 paddingRight: "1vw",
               }}
@@ -1478,6 +1480,22 @@ function formatElapsed(s: number): string {
   const sec = s % 60;
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+
+/**
+ * Tamanho de fonte adaptativo para os nomes dos jogadores na TV.
+ * A caixa da dupla tem ~25% de largura. Nomes longos (ex.: "NICOLAU
+ * MONTEIRO") rebentavam a caixa a um tamanho fixo — esta função encolhe
+ * proporcionalmente quando o nome passa de ~12 caracteres, mantendo-o
+ * sempre dentro da caixa.
+ */
+function tvNameFontSize(name: string): string {
+  const len = Math.max(1, (name ?? "").trim().length);
+  const FITS = 12; // nº de caracteres que cabem ao tamanho base
+  const BASE = 2.35; // vw
+  if (len <= FITS) return `${BASE}vw`;
+  const vw = Math.max(1.45, (BASE * FITS) / len);
+  return `${vw.toFixed(2)}vw`;
 }
 
 // ---------------------------------------------------------------------------
