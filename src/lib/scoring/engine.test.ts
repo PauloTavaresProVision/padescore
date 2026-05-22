@@ -173,6 +173,35 @@ describe("scoring engine — tiebreak", () => {
     expect(s.setsA).toBe(1);
     expect(s.setsHistory[0]).toEqual({ a: 7, b: 6 });
   });
+
+  it("set seguinte a um tiebreak: serve o adversário de quem o abriu", () => {
+    // alternated(12) → 6-6 e o servidor volta a A → A serve o 1º ponto
+    // do tiebreak. Regra oficial: quem serve o 1º ponto do tiebreak
+    // RECEBE no 1º game do set seguinte → o set seguinte arranca com B,
+    // independentemente do ponto em que o tiebreak acaba.
+    expect(reduceEvents(setup()).server).toBe("A");
+
+    // Acaba 7-1 (ponto vencedor = nº 8):
+    const end71 = reduceEvents([
+      ...setup(),
+      ...pointA(6),
+      ...pointB(1),
+      ...pointA(1),
+    ]);
+    expect(end71.setsHistory[0]).toEqual({ a: 7, b: 6 });
+    expect(end71.inTiebreak).toBe(false);
+    expect(end71.server).toBe("B");
+
+    // Acaba 7-3 (ponto vencedor = nº 10) — continua a ser B:
+    const end73 = reduceEvents([
+      ...setup(),
+      ...pointA(6),
+      ...pointB(3),
+      ...pointA(1),
+    ]);
+    expect(end73.setsHistory[0]).toEqual({ a: 7, b: 6 });
+    expect(end73.server).toBe("B");
+  });
 });
 
 describe("scoring engine — match", () => {

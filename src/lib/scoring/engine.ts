@@ -212,11 +212,22 @@ function applyPointInTiebreak(
     }
     // Tiebreak normal: o set fecha 7-6 (incrementamos o game do vencedor).
     const myGamesKey = team === "A" ? "gamesA" : "gamesB";
+
+    // Regra de serviço pós-tiebreak: quem serviu o 1º ponto do tiebreak
+    // RECEBE no 1º game do set seguinte → o adversário serve esse game.
+    // `total` é o número do ponto vencedor e `state.server` quem o serviu.
+    // A rotação do tiebreak é 1-2-2-2..., ou seja o serviço inverte-se
+    // ceil(K/2) vezes ao fim de K pontos. Daí derivamos o servidor inicial
+    // (S0) e o set seguinte arranca com other(S0).
+    const groupEven = Math.ceil((total - 1) / 2) % 2 === 0;
+    const firstServer = groupEven ? state.server : other(state.server);
+
     const intermediate: MatchState = {
       ...state,
       [myGamesKey]: state[myGamesKey] + 1,
       pointsA: "0",
       pointsB: "0",
+      server: other(firstServer),
     };
     return winSet(intermediate, team, config);
   }
