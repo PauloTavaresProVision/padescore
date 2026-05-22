@@ -268,6 +268,12 @@ export function Scoreboard({
   const accent = tournament.primary_color ?? "#6faaff";
   const accentGlow = lighten(accent, 0.5);
   const isTiebreak = state.in_tiebreak || state.in_super_tiebreak;
+  // Golden point: 40-40 com a regra de golden point activa (morte súbita).
+  const isGoldenPoint =
+    config.goldenPoint &&
+    !isTiebreak &&
+    state.points_a === "40" &&
+    state.points_b === "40";
 
   const hasProgress =
     state.points_a !== "0" ||
@@ -540,6 +546,7 @@ export function Scoreboard({
           scoreCols={scoreColsA}
           lastColIdx={lastColIdx}
           isTiebreak={isTiebreak}
+          isGoldenPoint={isGoldenPoint}
           isMatchOver={state.is_finished}
           winner={state.is_finished && state.winner === "A"}
           flash={flashTeam === "A"}
@@ -561,6 +568,7 @@ export function Scoreboard({
           scoreCols={scoreColsB}
           lastColIdx={lastColIdx}
           isTiebreak={isTiebreak}
+          isGoldenPoint={isGoldenPoint}
           isMatchOver={state.is_finished}
           winner={state.is_finished && state.winner === "B"}
           flash={flashTeam === "B"}
@@ -755,6 +763,7 @@ function TeamRow({
   scoreCols,
   lastColIdx,
   isTiebreak,
+  isGoldenPoint,
   isMatchOver,
   winner,
   flash,
@@ -777,6 +786,7 @@ function TeamRow({
   >;
   lastColIdx: number;
   isTiebreak: boolean;
+  isGoldenPoint: boolean;
   isMatchOver: boolean;
   winner: boolean;
   flash: boolean;
@@ -899,7 +909,8 @@ function TeamRow({
         const w = isLast ? colScoreLast : colScore;
 
         let value: string | number = "";
-        let scoreState: "dim" | "active" | "glow" | "tiebreak" = "dim";
+        let scoreState: "dim" | "active" | "glow" | "tiebreak" | "golden" =
+          "dim";
         let fontSize = s(30);
 
         if (col.kind === "set") {
@@ -918,7 +929,11 @@ function TeamRow({
           scoreState = "active";
         } else if (col.kind === "points") {
           value = col.value;
-          scoreState = isTiebreak ? "tiebreak" : "active";
+          scoreState = isTiebreak
+            ? "tiebreak"
+            : isGoldenPoint
+              ? "golden"
+              : "active";
         }
 
         const styleColor: React.CSSProperties = {};
@@ -930,6 +945,10 @@ function TeamRow({
         } else if (scoreState === "glow") {
           // Vencedor: cor lime sólida em vez de glow — sobrevive melhor
           styleColor.color = "#c4f600";
+        } else if (scoreState === "golden") {
+          // Golden point (40-40): pontos amarelos a piscar.
+          styleColor.color = "#facc15";
+          styleColor.animation = "scoreboard-blink 0.9s ease-in-out infinite";
         } else if (scoreState === "tiebreak") {
           styleColor.color = "#fbbf24";
         }

@@ -204,6 +204,20 @@ export function TVScoreboard({
     state.sets_b > 0 ||
     state.sets_history.length > 0;
 
+  // Golden point: 40-40 com a regra de golden point activa (morte súbita).
+  const isGoldenPoint =
+    config.goldenPoint &&
+    !state.in_tiebreak &&
+    !state.in_super_tiebreak &&
+    state.points_a === "40" &&
+    state.points_b === "40";
+  const goldenStyle = isGoldenPoint
+    ? {
+        color: "#facc15",
+        animation: "tv-score-golden 0.9s ease-in-out infinite",
+      }
+    : null;
+
   // Pré-jogo: TV ligada mas o jogo ainda não arrancou. Não mostra 0-0 —
   // mostra um ecrã de antevisão (fotos + nomes + "A COMEÇAR"). Sai daqui
   // assim que o primeiro ponto regista (hasProgress via realtime).
@@ -490,6 +504,11 @@ export function TVScoreboard({
         /* Flash override (mesmo nome de animação) — quando flasha, pára o breathe */
         .tv-score-flash {
           animation: score-flash 700ms ease-out !important;
+        }
+        /* Golden point (40-40): pontos amarelos a piscar */
+        @keyframes tv-score-golden {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.35; }
         }
 
         /* Aura cyan nas fotos das duplas */
@@ -975,6 +994,7 @@ export function TVScoreboard({
                   top: "37.2%",
                   transform: "translateX(-50%)",
                   fontSize: "9.1vw",
+                  ...goldenStyle,
                 }}
               >
                 {state.points_a}
@@ -990,6 +1010,7 @@ export function TVScoreboard({
                   top: "37.2%",
                   transform: "translateX(-50%)",
                   fontSize: "9.1vw",
+                  ...goldenStyle,
                 }}
               >
                 {state.points_b}
