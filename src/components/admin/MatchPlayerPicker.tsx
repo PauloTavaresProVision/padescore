@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PhotoPickerModal, type PhotoOption } from "./PhotoPickerModal";
 import { deriveShortName } from "@/lib/names";
+import { detectFaceBox, type FaceBox } from "@/lib/face-direction";
 
 export interface PlayerOption {
   id: string;
@@ -305,7 +306,9 @@ export function MatchPlayerPicker({
               disabled={!anyPhoto || processing !== null}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {processing === "compose" ? "A compor..." : "Compor duplas para TV"}
+              {processing === "compose"
+              ? "IA a alinhar duplas..."
+              : "Compor duplas para TV"}
             </button>
             {processing && processing !== "compose" && (
               <span className="text-xs font-medium text-cyan-600">A carregar foto…</span>
@@ -540,66 +543,164 @@ function useObjectURL(blob: Blob | null): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// =============================================================================
+// composeTeam — composição INTELIGENTE da dupla para a TV
+// -----------------------------------------------------------------------------
+// 1. Detecta o rosto de cada jogador (MediaPipe FaceLandmarker)
+// 2. Escala cada jogador para as CABEÇAS ficarem do mesmo tamanho
+// 3. Alinha as LINHAS DOS OLHOS na mesma altura
+// 4. Desenha um glow radial suave por trás (destaca sem fundo opaco)
+// 5. Desenha uma sombra elíptica de contacto em baixo de cada jogador
+// Fallback: se não detectar cara, escala por altura (comportamento antigo).
+// =============================================================================
 async function composeTeam(
   inputs: ({ blob: Blob; mirror: boolean } | null)[],
   direction: "left-to-right" | "right-to-left",
 ): Promise<Blob | null> {
-  const players = (
-    await Promise.all(
-      inputs.map(async (i) =>
-        i ? { img: await loadImage(i.blob), mirror: i.mirror } : null,
-      ),
-    )
-  ).filter((p): p is { img: HTMLImageElement; mirror: boolean } => p !== null);
-
+  const loaded = await Promise.all(
+    inputs.map(async (i) => {
+      if (!i) return null;
+      const img = await loadImage(i.blob);
+      const face = await detectFaceBox(img).catch(() => null);
+      return { img, mirror: i.mirror, face };
+    }),
+  );
+  const players = loaded.filter(
+    (p): p is { img: HTMLImageElement; mirror: boolean; face: FaceBox | null } =>
+      p !== null,
+  );
   if (players.length === 0) return null;
 
-  const targetHeight = 1000;
-  const targetWidth = 1500;
-
+  const CW = 1500;
+  const CH = 1000;
   const drawOrder = direction === "right-to-left" ? [...players].reverse() : players;
 
-  const scaled = drawOrder.map((p) => {
-    const scale = targetHeight / p.img.height;
-    return { ...p, w: p.img.width * scale, h: targetHeight };
+  // --- 1) Escala inicial: por largura de cara (cabeças iguais) ---
+  // TARGET_FACE_W = largura desejada da cara no canvas. 2 jogadores → menor.
+  const TARGET_FACE_W = drawOrder.length === 2 ? 150 : 200;
+
+  type Item = {
+    img: HTMLImageElement;
+    mirror: boolean;
+    w: number;
+    h: number;
+    eyeY: number; // Y da linha dos olhos relativo ao topo da imagem escalada
+  };
+
+  let items: Item[] = drawOrder.map((p) => {
+    if (p.face) {
+      const sc = TARGET_FACE_W / p.face.eyeSpan;
+      return {
+        img: p.img,
+        mirror: p.mirror,
+        w: p.img.width * sc,
+        h: p.img.height * sc,
+        eyeY: p.face.eyeLineY * sc,
+      };
+    }
+    // Fallback sem cara: escala por altura, olhos estimados a 22% do topo.
+    const sc = (CH * 0.9) / p.img.height;
+    return {
+      img: p.img,
+      mirror: p.mirror,
+      w: p.img.width * sc,
+      h: p.img.height * sc,
+      eyeY: p.img.height * sc * 0.22,
+    };
   });
 
-  const overlapFrac = 0.35;
-  const totalW =
-    scaled.length === 1
-      ? scaled[0].w
-      : scaled.reduce(
-          (acc, s, i) => acc + (i === 0 ? s.w : s.w * (1 - overlapFrac)),
-          0,
-        );
-  const fitScale = totalW > targetWidth ? targetWidth / totalW : 1;
-  scaled.forEach((s) => {
-    s.w *= fitScale;
-    s.h *= fitScale;
-  });
-  const finalTotalW = totalW * fitScale;
+  // --- 2) Layout horizontal: sobreposição 30% ---
+  const overlap = 0.3;
+  const rawGroupW = items.reduce(
+    (acc, it, i) => acc + (i === 0 ? it.w : it.w * (1 - overlap)),
+    0,
+  );
 
+  // --- 3) Extensão vertical (olhos alinhados em y=0 como referência) ---
+  const rawTop = Math.min(...items.map((it) => -it.eyeY));
+  const rawBot = Math.max(...items.map((it) => -it.eyeY + it.h));
+  const rawGroupH = rawBot - rawTop;
+
+  // --- 4) Fit global — garante que o grupo cabe em 92% do canvas ---
+  const fit = Math.min(1, (CW * 0.92) / rawGroupW, (CH * 0.92) / rawGroupH);
+  items = items.map((it) => ({
+    ...it,
+    w: it.w * fit,
+    h: it.h * fit,
+    eyeY: it.eyeY * fit,
+  }));
+  const groupW = rawGroupW * fit;
+  const groupH = rawGroupH * fit;
+  const gTop = rawTop * fit;
+
+  // --- 5) Posições finais ---
+  const groupTopOnCanvas = (CH - groupH) / 2;
+  const eyeLineCanvasY = groupTopOnCanvas - gTop;
+  let x = (CW - groupW) / 2;
+  const placed = items.map((it) => {
+    const drawX = x;
+    const drawY = eyeLineCanvasY - it.eyeY;
+    x += it.w * (1 - overlap);
+    return { ...it, drawX, drawY };
+  });
+
+  // --- 6) Desenho ---
   const canvas = document.createElement("canvas");
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  canvas.width = CW;
+  canvas.height = CH;
   const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, targetWidth, targetHeight);
+  ctx.clearRect(0, 0, CW, CH);
 
-  let x = (targetWidth - finalTotalW) / 2;
-  scaled.forEach((p, i) => {
-    const { img, mirror, w, h } = p;
-    const drawY = targetHeight - h;
-    if (mirror) {
+  // 6a) Glow radial suave por trás (centro do grupo). Branco translúcido —
+  //     "levanta" os jogadores de qualquer fundo sem ser opaco.
+  const glowCX = CW / 2;
+  const glowCY = groupTopOnCanvas + groupH * 0.45;
+  const glow = ctx.createRadialGradient(
+    glowCX,
+    glowCY,
+    0,
+    glowCX,
+    glowCY,
+    CW * 0.5,
+  );
+  glow.addColorStop(0, "rgba(255,255,255,0.20)");
+  glow.addColorStop(0.55, "rgba(255,255,255,0.06)");
+  glow.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // 6b) Sombra elíptica de contacto sob cada jogador (antes de os desenhar).
+  for (const p of placed) {
+    const cx = p.drawX + p.w / 2;
+    const feetY = p.drawY + p.h;
+    const rx = p.w * 0.4;
+    const ry = rx * 0.16;
+    ctx.save();
+    ctx.translate(cx, feetY);
+    ctx.scale(1, ry / rx);
+    const sh = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    sh.addColorStop(0, "rgba(0,0,0,0.5)");
+    sh.addColorStop(0.7, "rgba(0,0,0,0.2)");
+    sh.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = sh;
+    ctx.beginPath();
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 6c) Jogadores (com mirror per-image).
+  for (const p of placed) {
+    if (p.mirror) {
       ctx.save();
-      ctx.translate(x + w, drawY);
+      ctx.translate(p.drawX + p.w, p.drawY);
       ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, w, h);
+      ctx.drawImage(p.img, 0, 0, p.w, p.h);
       ctx.restore();
     } else {
-      ctx.drawImage(img, x, drawY, w, h);
+      ctx.drawImage(p.img, p.drawX, p.drawY, p.w, p.h);
     }
-    if (i < scaled.length - 1) x += w * (1 - overlapFrac);
-  });
+  }
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(

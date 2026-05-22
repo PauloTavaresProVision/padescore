@@ -63,6 +63,52 @@ function loadBitmap(src: Blob | File): Promise<HTMLImageElement> {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Geometria do rosto — para composição inteligente das duplas (TV).
+// Devolve a posição/tamanho da cara em PIXELS da imagem, para podermos
+// escalar todos os jogadores às mesmas cabeças e alinhar os olhos.
+// ---------------------------------------------------------------------------
+export interface FaceBox {
+  /** Y da linha dos olhos, em pixels da imagem. */
+  eyeLineY: number;
+  /** X do centro dos olhos, em pixels. */
+  eyeCenterX: number;
+  /** Largura da cara (span entre cantos externos dos olhos), em pixels. */
+  eyeSpan: number;
+}
+
+export async function detectFaceBox(
+  img: HTMLImageElement,
+): Promise<FaceBox | null> {
+  let landmarker: import("@mediapipe/tasks-vision").FaceLandmarker;
+  try {
+    landmarker = await getLandmarker();
+  } catch {
+    landmarkerPromise = null;
+    return null;
+  }
+  let res: import("@mediapipe/tasks-vision").FaceLandmarkerResult;
+  try {
+    res = landmarker.detect(img);
+  } catch {
+    return null;
+  }
+  const lm = res.faceLandmarks?.[0];
+  if (!lm || lm.length < 264) return null;
+
+  const W = img.naturalWidth || img.width;
+  const H = img.naturalHeight || img.height;
+  const eyeR = lm[33];
+  const eyeL = lm[263];
+  const eyeSpan = Math.abs(eyeL.x - eyeR.x) * W;
+  if (eyeSpan < 4) return null; // cara minúscula → não é fiável
+  return {
+    eyeLineY: ((eyeR.y + eyeL.y) / 2) * H,
+    eyeCenterX: ((eyeR.x + eyeL.x) / 2) * W,
+    eyeSpan,
+  };
+}
+
 export async function detectFacing(src: Blob | File): Promise<FacingResult> {
   let landmarker: import("@mediapipe/tasks-vision").FaceLandmarker;
   try {
