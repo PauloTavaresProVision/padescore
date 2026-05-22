@@ -63,6 +63,7 @@ export function TVScoreboard({
   initialState,
   forceWinner,
   forceStandby,
+  initialElapsedSeconds,
 }: {
   match: TVMatch;
   tournament: TVTournament;
@@ -72,6 +73,12 @@ export function TVScoreboard({
   forceWinner?: "A" | "B" | null;
   /** Preview do ecrã de espera via ?standby=1. */
   forceStandby?: boolean;
+  /**
+   * Tempo decorrido em segundos, calculado no SERVIDOR a cada request.
+   * Garante que o relógio aparece logo no HTML inicial — sem depender do
+   * JS do cliente arrancar. O JS, quando hidrata, assume o tick.
+   */
+  initialElapsedSeconds?: number | null;
 }) {
   // match em estado → reactivo a edições do jogo (nomes, fotos, court,
   // categoria, status) sem refresh, via realtime na tabela `matches`.
@@ -236,7 +243,11 @@ export function TVScoreboard({
     else if (hasProgress) setInferredStartedAt(new Date().toISOString());
   }, [hasProgress, inferredStartedAt, match.started_at]);
 
-  const elapsed = useElapsedSeconds(inferredStartedAt, match.finished_at);
+  const elapsed = useElapsedSeconds(
+    inferredStartedAt,
+    match.finished_at,
+    initialElapsedSeconds ?? null,
+  );
   const moment = useCriticalMoment(state, config);
 
   // Sets a mostrar: completos + corrente. Pad com "—" até 3.
@@ -1457,7 +1468,11 @@ function useCriticalMoment(state: TVState, config: MatchConfig): Moment | null {
 function useElapsedSeconds(
   startedAt: string | null,
   finishedAt: string | null,
+  fallback: number | null = null,
 ): number | null {
+  // `fallback` vem calculado do servidor — usado enquanto o JS do cliente
+  // ainda não ticou (ou se nunca ticar). Sem isto, o relógio ficava preso
+  // em "—" se o useEffect não arrancasse no ambiente da TV.
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     if (!startedAt) return;
@@ -1469,7 +1484,8 @@ function useElapsedSeconds(
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [startedAt, finishedAt]);
-  if (!startedAt || now === null) return null;
+  if (!startedAt) return null;
+  if (now === null) return fallback;
   const end = finishedAt ? new Date(finishedAt).getTime() : now;
   return Math.max(0, Math.floor((end - new Date(startedAt).getTime()) / 1000));
 }

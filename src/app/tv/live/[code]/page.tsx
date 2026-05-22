@@ -82,11 +82,26 @@ export default async function TvLivePage({
     );
   }
 
+  const serverNow = Date.now();
   match.started_at = await resolveStartedAt(
     supabase,
     match.id,
     match.started_at,
   );
+
+  // Tempo decorrido calculado no SERVIDOR (igual a /tv/[code]).
+  const initialElapsedSeconds = match.started_at
+    ? Math.max(
+        0,
+        Math.floor(
+          ((match.finished_at
+            ? new Date(match.finished_at).getTime()
+            : serverNow) -
+            new Date(match.started_at).getTime()) /
+            1000,
+        ),
+      )
+    : null;
 
   const { data: state } = await supabase
     .from("match_state")
@@ -103,6 +118,7 @@ export default async function TvLivePage({
         match={match}
         tournament={tournament}
         config={configFromMatch(match)}
+        initialElapsedSeconds={initialElapsedSeconds}
         initialState={state ?? EMPTY_STATE}
       />
       <FullscreenButton />

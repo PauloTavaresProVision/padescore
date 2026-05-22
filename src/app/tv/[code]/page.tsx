@@ -30,7 +30,23 @@ export default async function TvPage({
     .single();
   if (!match) notFound();
 
+  const serverNow = Date.now();
   match.started_at = await resolveStartedAt(supabase, match.id, match.started_at);
+
+  // Tempo decorrido calculado no SERVIDOR — para o relógio aparecer já no
+  // HTML inicial sem depender do JS do cliente.
+  const initialElapsedSeconds = match.started_at
+    ? Math.max(
+        0,
+        Math.floor(
+          ((match.finished_at
+            ? new Date(match.finished_at).getTime()
+            : serverNow) -
+            new Date(match.started_at).getTime()) /
+            1000,
+        ),
+      )
+    : null;
 
   const [{ data: tournament }, { data: state }] = await Promise.all([
     supabase
@@ -52,6 +68,7 @@ export default async function TvPage({
         config={configFromMatch(match)}
         forceWinner={forceWinner}
         forceStandby={forceStandby}
+        initialElapsedSeconds={initialElapsedSeconds}
         initialState={
           state ?? {
             points_a: "0",
