@@ -233,21 +233,21 @@ function MainScene({ data }: { data: TotemPayload }) {
     <>
       <TopBrand tournament={data.tournament} />
 
-      {/* CAMPO — top: 120, left: 14, w: 164, h: 40 */}
+      {/* CAMPO — empurrado para baixo para acomodar logo maior */}
       <div
         style={{
           position: "absolute",
-          top: 120,
-          left: 14,
-          width: 164,
-          height: 40,
+          top: 160,
+          left: 10,
+          width: 172,
+          height: 44,
           borderRadius: 7,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 24,
+          fontSize: 30,
           fontWeight: 900,
-          letterSpacing: "1px",
+          letterSpacing: "1.5px",
           ...NEON_BLUE,
           ...WHITE_GLOW,
         }}
@@ -258,20 +258,20 @@ function MainScene({ data }: { data: TotemPayload }) {
       {data.currentMatch ? (
         <>
           {/* DUPLA A label */}
-          <Label top={174}>DUPLA A</Label>
+          <Label top={212}>DUPLA A</Label>
           {/* Players A */}
-          <PlayersRow top={194} height={86} team={data.currentMatch.teamA} />
+          <PlayersRow top={226} height={90} team={data.currentMatch.teamA} />
           {/* Names A */}
-          <NamesBox top={279} team={data.currentMatch.teamA} />
-          {/* VS — entre Names A (acaba ~327) e DUPLA B */}
-          <VsLabel top={328} />
-          {/* DUPLA B label — empurrado p/ 364 (era 344) para não chocar com VS */}
-          <Label top={364}>DUPLA B</Label>
-          {/* Players B — cascateia +20 */}
-          <PlayersRow top={384} height={84} team={data.currentMatch.teamB} />
-          {/* Names B — cascateia */}
-          <NamesBox top={470} team={data.currentMatch.teamB} />
-          {/* Time box — cascateia, reduzido p/ caber */}
+          <NamesBox top={318} team={data.currentMatch.teamA} />
+          {/* VS */}
+          <VsLabel top={368} />
+          {/* DUPLA B label */}
+          <Label top={406}>DUPLA B</Label>
+          {/* Players B */}
+          <PlayersRow top={420} height={90} team={data.currentMatch.teamB} />
+          {/* Names B */}
+          <NamesBox top={512} team={data.currentMatch.teamB} />
+          {/* Time box */}
           {data.currentMatch.scheduledAt && (
             <TimeBox scheduledAt={data.currentMatch.scheduledAt} />
           )}
@@ -281,7 +281,14 @@ function MainScene({ data }: { data: TotemPayload }) {
       )}
 
       {/* Next box — top: 579 */}
-      {data.nextMatch && <NextBox match={data.nextMatch} />}
+      {/* NextBox só aparece se NÃO houver TimeBox (não há scheduled_at no
+          current match) — espaço vertical é escasso, prioriza HORÁRIO.
+          Para mostrar o próximo jogo sempre, é melhor passar a uma cena
+          separada no cycler (TODO). */}
+      {data.nextMatch &&
+        !(data.currentMatch && data.currentMatch.scheduledAt) && (
+          <NextBox match={data.nextMatch} />
+        )}
 
       {/* Sponsors — bottom: 4 */}
       <SponsorsRow sponsors={data.sponsors.footer} />
@@ -308,15 +315,14 @@ function TopBrand({
       }}
     >
       {tournament.logoUrl ? (
-        // Tem logo PNG → usa essa (provavelmente já tem todo o branding lá)
+        // Logo PNG do torneio — bump para encher o top do totem
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={tournament.logoUrl}
           alt=""
           style={{
-            width: "auto",
-            maxWidth: "94%",
-            maxHeight: 105,
+            width: "98%",
+            maxHeight: 145,
             objectFit: "contain",
             margin: "0 auto",
             display: "block",
@@ -355,9 +361,9 @@ function Label({ top, children }: { top: number; children: React.ReactNode }) {
         top,
         width: "100%",
         textAlign: "center",
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 900,
-        letterSpacing: "2px",
+        letterSpacing: "3px",
         ...GREEN_TEXT,
       }}
     >
@@ -495,10 +501,10 @@ function NameLine({ name, short }: { name: string; short: string | null }) {
   return (
     <div
       style={{
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 900,
         lineHeight: 1.08,
-        letterSpacing: "0.1px",
+        letterSpacing: "0.2px",
         ...WHITE_GLOW,
       }}
     >
@@ -518,8 +524,9 @@ function VsLabel({ top }: { top: number }) {
         top,
         width: "100%",
         textAlign: "center",
-        fontSize: 36,
+        fontSize: 42,
         fontWeight: 900,
+        fontStyle: "italic",
         lineHeight: 0.9,
         ...GREEN_TEXT,
       }}
@@ -540,10 +547,10 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
     <div
       style={{
         position: "absolute",
-        top: 524,
+        top: 568,
         left: 10,
         width: 172,
-        height: 60,
+        height: 42,
         borderRadius: 8,
         textAlign: "center",
         ...NEON_GREEN,
@@ -551,10 +558,10 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
     >
       <div
         style={{
-          marginTop: 4,
-          fontSize: 9,
+          marginTop: 3,
+          fontSize: 10,
           fontWeight: 900,
-          letterSpacing: "1px",
+          letterSpacing: "1.2px",
           ...GREEN_TEXT,
         }}
       >
@@ -562,7 +569,7 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
       </div>
       <div
         style={{
-          fontSize: 34,
+          fontSize: 24,
           fontWeight: 900,
           lineHeight: 0.95,
           color: "#fff",
@@ -592,13 +599,13 @@ function NextBox({ match }: { match: MatchData }) {
     <div
       style={{
         position: "absolute",
-        top: 590,
+        top: 568,
         left: 10,
         width: 172,
-        height: 32,
+        height: 42,
         borderRadius: 7,
         textAlign: "center",
-        paddingTop: 2,
+        paddingTop: 3,
         ...NEON_BLUE,
       }}
     >
