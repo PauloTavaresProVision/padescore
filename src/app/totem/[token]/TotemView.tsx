@@ -208,18 +208,18 @@ function MainScene({ data }: { data: TotemPayload }) {
       {/* COURT PILL */}
       <div
         style={{
-          margin: "4px 6px",
-          padding: "6px 0",
+          margin: "6px 8px 4px",
+          padding: "10px 0",
           textAlign: "center",
           background:
             "linear-gradient(180deg, rgba(13,40,80,.6) 0%, rgba(5,20,50,.6) 100%)",
-          borderRadius: 5,
-          border: "1px solid rgba(56,189,248,.7)",
+          borderRadius: 6,
+          border: "1.5px solid rgba(56,189,248,.85)",
           boxShadow:
-            "0 0 8px rgba(56,189,248,.4), inset 0 0 6px rgba(56,189,248,.1)",
-          fontSize: 15,
+            "0 0 14px rgba(56,189,248,.55), inset 0 0 10px rgba(56,189,248,.15)",
+          fontSize: 22,
           fontWeight: 900,
-          letterSpacing: "1.5px",
+          letterSpacing: "2.5px",
           color: "#fff",
         }}
       >
@@ -260,15 +260,15 @@ function BrandHeader({
 }) {
   if (!tournament) return null;
   return (
-    <div style={{ textAlign: "center", padding: "4px 8px" }}>
+    <div style={{ textAlign: "center", padding: "8px 6px 4px" }}>
       {tournament.logoUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={tournament.logoUrl}
           alt=""
           style={{
-            maxWidth: "85%",
-            maxHeight: 80,
+            maxWidth: "94%",
+            maxHeight: 130,
             objectFit: "contain",
             margin: "0 auto",
             display: "block",
@@ -277,10 +277,11 @@ function BrandHeader({
       ) : (
         <div
           style={{
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 900,
             color: "#fff",
             textTransform: "uppercase",
+            padding: "20px 4px",
           }}
         >
           {tournament.name}
@@ -298,47 +299,70 @@ function TeamBlock({
   team: { p1: Player | null; p2: Player | null };
 }) {
   return (
-    <div style={{ margin: "3px 5px 0", textAlign: "center" }}>
+    <div style={{ margin: "8px 6px 0", textAlign: "center" }}>
       <div
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 4,
-          fontSize: 8.5,
-          fontWeight: 800,
+          gap: 6,
+          fontSize: 10,
+          fontWeight: 900,
           color: "#84cc16",
-          letterSpacing: "1.5px",
-          marginBottom: 1,
+          letterSpacing: "2px",
+          marginBottom: 4,
         }}
       >
-        <span style={{ width: 12, height: 1, background: "#84cc16" }} />
+        <span
+          style={{
+            width: 18,
+            height: 1.5,
+            background: "#84cc16",
+            boxShadow: "0 0 6px rgba(132,204,22,.6)",
+          }}
+        />
         {label}
-        <span style={{ width: 12, height: 1, background: "#84cc16" }} />
+        <span
+          style={{
+            width: 18,
+            height: 1.5,
+            background: "#84cc16",
+            boxShadow: "0 0 6px rgba(132,204,22,.6)",
+          }}
+        />
       </div>
+
+      {/* Fotos: ABERTAS no fundo azul (sem caixa cinzenta atrás) */}
       <div
         style={{
           display: "flex",
+          alignItems: "flex-end",
           justifyContent: "center",
-          height: 90,
+          gap: 2,
+          height: 130,
           width: "100%",
-          marginTop: 1,
+          padding: "0 4px",
         }}
       >
         <PlayerThumb player={team.p1} />
-        {team.p2 && <PlayerThumb player={team.p2} overlap />}
+        {team.p2 && <PlayerThumb player={team.p2} />}
       </div>
+
+      {/* Nomes em pill com border cyan + glow */}
       <div
         style={{
-          marginTop: 2,
-          padding: "5px 4px",
-          background: "rgba(5,15,40,.6)",
-          border: "1px solid rgba(56,189,248,.25)",
-          borderRadius: 5,
-          fontSize: 10,
-          fontWeight: 800,
+          marginTop: 4,
+          padding: "6px 4px",
+          background:
+            "linear-gradient(180deg, rgba(13,40,80,.7) 0%, rgba(5,15,40,.7) 100%)",
+          border: "1px solid rgba(56,189,248,.55)",
+          borderRadius: 6,
+          fontSize: 11,
+          fontWeight: 900,
           color: "#fff",
-          lineHeight: 1.15,
-          boxShadow: "0 0 6px rgba(56,189,248,.1) inset",
+          lineHeight: 1.2,
+          letterSpacing: "0.5px",
+          boxShadow:
+            "0 0 8px rgba(56,189,248,.25), inset 0 0 6px rgba(56,189,248,.08)",
           textTransform: "uppercase",
         }}
       >
@@ -349,18 +373,16 @@ function TeamBlock({
   );
 }
 
-function PlayerThumb({ player, overlap }: { player: Player | null; overlap?: boolean }) {
+function PlayerThumb({ player }: { player: Player | null }) {
   return (
     <div
       style={{
-        width: 78,
-        height: 90,
-        background: "linear-gradient(180deg, #475569 0%, #334155 100%)",
-        borderRadius: 6,
+        width: 86,
+        height: 130,
         position: "relative",
         flexShrink: 0,
-        marginLeft: overlap ? -12 : 0,
-        overflow: "hidden",
+        display: "grid",
+        placeItems: "end center",
       }}
     >
       {player?.photoUrl ? (
@@ -369,41 +391,45 @@ function PlayerThumb({ player, overlap }: { player: Player | null; overlap?: boo
           src={player.photoUrl}
           alt=""
           style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            objectPosition: "bottom",
           }}
         />
       ) : (
-        // Silhueta placeholder
-        <>
+        // Sem foto: silhueta minimalista no fundo azul, sem caixa
+        <div
+          style={{
+            width: 70,
+            height: 120,
+            opacity: 0.25,
+            display: "grid",
+            placeItems: "end center",
+          }}
+        >
           <div
             style={{
-              position: "absolute",
-              top: 12,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 28,
-              height: 28,
+              width: 32,
+              height: 32,
               borderRadius: "50%",
-              background: "#cbd5e1",
+              background: "#fff",
+              marginBottom: 60,
             }}
           />
           <div
             style={{
               position: "absolute",
-              top: 40,
+              bottom: 0,
               left: "50%",
               transform: "translateX(-50%)",
-              width: 52,
-              height: 60,
-              background: "#1f2937",
-              borderRadius: "12px 12px 0 0",
+              width: 60,
+              height: 70,
+              background: "#fff",
+              borderRadius: "20px 20px 0 0",
             }}
           />
-        </>
+        </div>
       )}
     </div>
   );
@@ -414,34 +440,36 @@ function VsBig() {
     <div
       style={{
         textAlign: "center",
-        fontSize: 24,
+        fontSize: 32,
         fontWeight: 900,
         color: "#84cc16",
         lineHeight: 1,
-        margin: "2px 0 1px",
-        textShadow: "0 0 8px rgba(132,204,22,.5)",
-        letterSpacing: "1px",
+        margin: "6px 0",
+        textShadow:
+          "0 0 10px rgba(132,204,22,.7), 0 0 22px rgba(132,204,22,.35)",
+        letterSpacing: "2px",
+        fontStyle: "italic",
       }}
     >
       <span
         style={{
           display: "inline-block",
-          width: 30,
-          height: 1,
-          background: "rgba(132,204,22,.5)",
+          width: 32,
+          height: 1.5,
+          background: "rgba(132,204,22,.6)",
           verticalAlign: "middle",
-          margin: "0 4px",
+          margin: "0 6px",
         }}
       />
       VS
       <span
         style={{
           display: "inline-block",
-          width: 30,
-          height: 1,
-          background: "rgba(132,204,22,.5)",
+          width: 32,
+          height: 1.5,
+          background: "rgba(132,204,22,.6)",
           verticalAlign: "middle",
-          margin: "0 4px",
+          margin: "0 6px",
         }}
       />
     </div>
@@ -449,42 +477,44 @@ function VsBig() {
 }
 
 function ScheduledBlock({ scheduledAt }: { scheduledAt: string | null }) {
-  if (!scheduledAt) return <div style={{ height: 4 }} />;
+  if (!scheduledAt) return <div style={{ height: 6 }} />;
   const d = new Date(scheduledAt);
   const pad = (n: number) => String(n).padStart(2, "0");
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   return (
     <div
       style={{
-        margin: "4px 5px 3px",
-        padding: "4px 4px 6px",
+        margin: "10px 6px 4px",
+        padding: "8px 4px 10px",
         background:
           "linear-gradient(180deg, rgba(13,40,80,.7) 0%, rgba(5,15,40,.7) 100%)",
-        borderRadius: 5,
+        borderRadius: 6,
         border: "1px solid #84cc16",
-        boxShadow: "0 0 6px rgba(132,204,22,.3)",
+        boxShadow:
+          "0 0 10px rgba(132,204,22,.35), inset 0 0 6px rgba(132,204,22,.08)",
         textAlign: "center",
       }}
     >
       <div
         style={{
-          fontSize: 8.5,
-          fontWeight: 800,
+          fontSize: 10,
+          fontWeight: 900,
           color: "#84cc16",
-          letterSpacing: "1.2px",
-          marginBottom: 1,
+          letterSpacing: "1.5px",
+          marginBottom: 4,
         }}
       >
         HORÁRIO DO JOGO
       </div>
       <div
         style={{
-          fontSize: 28,
+          fontSize: 38,
           fontWeight: 900,
           color: "#fff",
-          letterSpacing: "2px",
+          letterSpacing: "3px",
           lineHeight: 1,
-          textShadow: "0 0 8px rgba(255,255,255,.4)",
+          textShadow: "0 0 10px rgba(255,255,255,.45)",
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {time}
@@ -501,35 +531,83 @@ function NextBlock({ match }: { match: MatchData }) {
   return (
     <div
       style={{
-        margin: "3px 5px",
-        padding: "4px 4px 5px",
-        background: "rgba(5,15,40,.6)",
-        borderRadius: 5,
-        border: "1px solid rgba(56,189,248,.2)",
+        margin: "6px 6px 4px",
+        padding: "6px 4px 7px",
+        background:
+          "linear-gradient(180deg, rgba(5,15,40,.7) 0%, rgba(5,15,40,.5) 100%)",
+        borderRadius: 6,
+        border: "1px solid rgba(56,189,248,.45)",
+        boxShadow:
+          "0 0 8px rgba(56,189,248,.18), inset 0 0 6px rgba(56,189,248,.06)",
         textAlign: "center",
       }}
     >
       <div
         style={{
-          fontSize: 9,
-          fontWeight: 800,
+          fontSize: 10,
+          fontWeight: 900,
           color: "#38bdf8",
-          letterSpacing: "1.5px",
-          marginBottom: 2,
+          letterSpacing: "1.8px",
+          marginBottom: 4,
         }}
       >
-        <span style={{ display: "inline-block", width: 10, height: 1, background: "#38bdf8", verticalAlign: "middle", margin: "0 3px" }} />
+        <span
+          style={{
+            display: "inline-block",
+            width: 14,
+            height: 1.5,
+            background: "#38bdf8",
+            boxShadow: "0 0 4px rgba(56,189,248,.6)",
+            verticalAlign: "middle",
+            margin: "0 4px",
+          }}
+        />
         A SEGUIR
-        <span style={{ display: "inline-block", width: 10, height: 1, background: "#38bdf8", verticalAlign: "middle", margin: "0 3px" }} />
+        <span
+          style={{
+            display: "inline-block",
+            width: 14,
+            height: 1.5,
+            background: "#38bdf8",
+            boxShadow: "0 0 4px rgba(56,189,248,.6)",
+            verticalAlign: "middle",
+            margin: "0 4px",
+          }}
+        />
       </div>
-      <div style={{ fontSize: 9, fontWeight: 700, color: "#fff", lineHeight: 1.2, textTransform: "uppercase" }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 800,
+          color: "#fff",
+          lineHeight: 1.25,
+          textTransform: "uppercase",
+        }}
+      >
         {pa1}
         {pa2}
       </div>
-      <div style={{ fontSize: 9, fontWeight: 900, color: "#84cc16", lineHeight: 1.2, margin: "1px 0" }}>
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 900,
+          color: "#84cc16",
+          lineHeight: 1.2,
+          margin: "2px 0",
+          textShadow: "0 0 4px rgba(132,204,22,.5)",
+        }}
+      >
         VS
       </div>
-      <div style={{ fontSize: 9, fontWeight: 700, color: "#fff", lineHeight: 1.2, textTransform: "uppercase" }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 800,
+          color: "#fff",
+          lineHeight: 1.25,
+          textTransform: "uppercase",
+        }}
+      >
         {pb1}
         {pb2}
       </div>
@@ -542,30 +620,29 @@ function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
     <div
       style={{
         marginTop: "auto",
-        padding: "5px 6px 6px",
+        padding: "6px 4px 8px",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-around",
-        gap: 2,
-        borderTop: "1px solid rgba(56,189,248,.15)",
-        background: "rgba(255,255,255,.04)",
+        justifyContent: "space-evenly",
+        gap: 4,
+        borderTop: "1px solid rgba(56,189,248,.2)",
+        background: "rgba(255,255,255,.05)",
       }}
     >
       {sponsors.length === 0 ? (
-        <span style={{ fontSize: 7, color: "rgba(255,255,255,.3)" }}>—</span>
+        <span style={{ fontSize: 8, color: "rgba(255,255,255,.3)" }}>—</span>
       ) : (
         sponsors.map((s, i) => (
           <div
             key={i}
             style={{
               flex: 1,
-              height: 18,
-              background: "rgba(255,255,255,.92)",
-              borderRadius: 2,
+              minWidth: 0,
+              height: 26,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "0 2px",
+              padding: "2px 2px",
               overflow: "hidden",
             }}
           >
