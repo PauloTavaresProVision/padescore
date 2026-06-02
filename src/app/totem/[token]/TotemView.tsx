@@ -208,19 +208,20 @@ function MainScene({ data }: { data: TotemPayload }) {
       {/* COURT PILL */}
       <div
         style={{
-          margin: "6px 8px 4px",
-          padding: "10px 0",
+          margin: "6px 6px 4px",
+          padding: "12px 0",
           textAlign: "center",
           background:
             "linear-gradient(180deg, rgba(13,40,80,.6) 0%, rgba(5,20,50,.6) 100%)",
-          borderRadius: 6,
-          border: "1.5px solid rgba(56,189,248,.85)",
+          borderRadius: 7,
+          border: "2px solid rgba(56,189,248,.9)",
           boxShadow:
-            "0 0 14px rgba(56,189,248,.55), inset 0 0 10px rgba(56,189,248,.15)",
-          fontSize: 22,
+            "0 0 16px rgba(56,189,248,.65), inset 0 0 12px rgba(56,189,248,.2)",
+          fontSize: 28,
           fontWeight: 900,
-          letterSpacing: "2.5px",
+          letterSpacing: "3px",
           color: "#fff",
+          textShadow: "0 0 8px rgba(255,255,255,.4)",
         }}
       >
         {data.court.toUpperCase()}
@@ -260,15 +261,15 @@ function BrandHeader({
 }) {
   if (!tournament) return null;
   return (
-    <div style={{ textAlign: "center", padding: "8px 6px 4px" }}>
+    <div style={{ textAlign: "center", padding: "8px 4px 2px" }}>
       {tournament.logoUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={tournament.logoUrl}
           alt=""
           style={{
-            maxWidth: "94%",
-            maxHeight: 130,
+            width: "98%",
+            maxHeight: 150,
             objectFit: "contain",
             margin: "0 auto",
             display: "block",
@@ -277,11 +278,11 @@ function BrandHeader({
       ) : (
         <div
           style={{
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: 900,
             color: "#fff",
             textTransform: "uppercase",
-            padding: "20px 4px",
+            padding: "24px 4px",
           }}
         >
           {tournament.name}
@@ -299,34 +300,35 @@ function TeamBlock({
   team: { p1: Player | null; p2: Player | null };
 }) {
   return (
-    <div style={{ margin: "8px 6px 0", textAlign: "center" }}>
+    <div style={{ margin: "6px 6px 0", textAlign: "center" }}>
       <div
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 6,
-          fontSize: 10,
+          gap: 8,
+          fontSize: 14,
           fontWeight: 900,
           color: "#84cc16",
-          letterSpacing: "2px",
+          letterSpacing: "2.5px",
           marginBottom: 4,
+          textShadow: "0 0 6px rgba(132,204,22,.4)",
         }}
       >
         <span
           style={{
-            width: 18,
-            height: 1.5,
+            width: 24,
+            height: 2,
             background: "#84cc16",
-            boxShadow: "0 0 6px rgba(132,204,22,.6)",
+            boxShadow: "0 0 6px rgba(132,204,22,.7)",
           }}
         />
         {label}
         <span
           style={{
-            width: 18,
-            height: 1.5,
+            width: 24,
+            height: 2,
             background: "#84cc16",
-            boxShadow: "0 0 6px rgba(132,204,22,.6)",
+            boxShadow: "0 0 6px rgba(132,204,22,.7)",
           }}
         />
       </div>
@@ -337,10 +339,9 @@ function TeamBlock({
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "center",
-          gap: 2,
-          height: 130,
+          gap: 0,
+          height: 140,
           width: "100%",
-          padding: "0 4px",
         }}
       >
         <PlayerThumb player={team.p1} />
@@ -351,18 +352,18 @@ function TeamBlock({
       <div
         style={{
           marginTop: 4,
-          padding: "6px 4px",
+          padding: "9px 6px",
           background:
             "linear-gradient(180deg, rgba(13,40,80,.7) 0%, rgba(5,15,40,.7) 100%)",
-          border: "1px solid rgba(56,189,248,.55)",
-          borderRadius: 6,
-          fontSize: 11,
+          border: "1.5px solid rgba(56,189,248,.7)",
+          borderRadius: 7,
+          fontSize: 16,
           fontWeight: 900,
           color: "#fff",
           lineHeight: 1.2,
           letterSpacing: "0.5px",
           boxShadow:
-            "0 0 8px rgba(56,189,248,.25), inset 0 0 6px rgba(56,189,248,.08)",
+            "0 0 10px rgba(56,189,248,.35), inset 0 0 8px rgba(56,189,248,.1)",
           textTransform: "uppercase",
         }}
       >
@@ -377,8 +378,8 @@ function PlayerThumb({ player }: { player: Player | null }) {
   return (
     <div
       style={{
-        width: 86,
-        height: 130,
+        width: 90,
+        height: 140,
         position: "relative",
         flexShrink: 0,
         display: "grid",
@@ -440,36 +441,38 @@ function VsBig() {
     <div
       style={{
         textAlign: "center",
-        fontSize: 32,
+        fontSize: 44,
         fontWeight: 900,
         color: "#84cc16",
         lineHeight: 1,
-        margin: "6px 0",
+        margin: "6px 0 4px",
         textShadow:
-          "0 0 10px rgba(132,204,22,.7), 0 0 22px rgba(132,204,22,.35)",
-        letterSpacing: "2px",
+          "0 0 14px rgba(132,204,22,.85), 0 0 32px rgba(132,204,22,.4)",
+        letterSpacing: "3px",
         fontStyle: "italic",
       }}
     >
       <span
         style={{
           display: "inline-block",
-          width: 32,
-          height: 1.5,
-          background: "rgba(132,204,22,.6)",
+          width: 36,
+          height: 2,
+          background: "rgba(132,204,22,.7)",
           verticalAlign: "middle",
-          margin: "0 6px",
+          margin: "0 7px",
+          boxShadow: "0 0 6px rgba(132,204,22,.6)",
         }}
       />
       VS
       <span
         style={{
           display: "inline-block",
-          width: 32,
-          height: 1.5,
-          background: "rgba(132,204,22,.6)",
+          width: 36,
+          height: 2,
+          background: "rgba(132,204,22,.7)",
           verticalAlign: "middle",
-          margin: "0 6px",
+          margin: "0 7px",
+          boxShadow: "0 0 6px rgba(132,204,22,.6)",
         }}
       />
     </div>
@@ -497,23 +500,24 @@ function ScheduledBlock({ scheduledAt }: { scheduledAt: string | null }) {
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: 900,
           color: "#84cc16",
-          letterSpacing: "1.5px",
+          letterSpacing: "1.8px",
           marginBottom: 4,
+          textShadow: "0 0 6px rgba(132,204,22,.4)",
         }}
       >
         HORÁRIO DO JOGO
       </div>
       <div
         style={{
-          fontSize: 38,
+          fontSize: 46,
           fontWeight: 900,
           color: "#fff",
-          letterSpacing: "3px",
+          letterSpacing: "3.5px",
           lineHeight: 1,
-          textShadow: "0 0 10px rgba(255,255,255,.45)",
+          textShadow: "0 0 12px rgba(255,255,255,.55)",
           fontVariantNumeric: "tabular-nums",
         }}
       >
