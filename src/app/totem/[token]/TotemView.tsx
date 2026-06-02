@@ -305,6 +305,11 @@ function TopBrand({
   tournament: TotemPayload["tournament"];
 }) {
   if (!tournament) return null;
+  // TODO: tornar year/country configuráveis via DB (colunas em tournaments
+  // + admin edit form). Por agora hardcoded para o mockup do user.
+  const YEAR = "2026";
+  const COUNTRY = "ANGOLA";
+
   return (
     <div
       style={{
@@ -312,17 +317,17 @@ function TopBrand({
         top: 8,
         width: "100%",
         textAlign: "center",
+        lineHeight: 1,
       }}
     >
       {tournament.logoUrl ? (
-        // Logo PNG do torneio — bump para encher o top do totem
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={tournament.logoUrl}
           alt=""
           style={{
-            width: "98%",
-            maxHeight: 145,
+            width: "92%",
+            maxHeight: 105,
             objectFit: "contain",
             margin: "0 auto",
             display: "block",
@@ -331,21 +336,44 @@ function TopBrand({
           }}
         />
       ) : (
-        // Fallback estilo mockup (sem logo PNG)
-        <>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 900,
-              lineHeight: 0.9,
-              letterSpacing: "0.3px",
-              ...WHITE_GLOW,
-            }}
-          >
-            {tournament.name.toUpperCase()}
-          </div>
-        </>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 900,
+            lineHeight: 0.9,
+            letterSpacing: "0.3px",
+            ...WHITE_GLOW,
+          }}
+        >
+          {tournament.name.toUpperCase()}
+        </div>
       )}
+
+      {/* "2026" — lime grande, como no mockup */}
+      <div
+        style={{
+          marginTop: 2,
+          fontSize: 22,
+          fontWeight: 900,
+          lineHeight: 0.95,
+          ...GREEN_TEXT,
+        }}
+      >
+        {YEAR}
+      </div>
+
+      {/* "ANGOLA" com letter-spacing largo, cyan claro */}
+      <div
+        style={{
+          marginTop: 4,
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: "5px",
+          color: "#e7f4ff",
+        }}
+      >
+        {COUNTRY}
+      </div>
     </div>
   );
 }
