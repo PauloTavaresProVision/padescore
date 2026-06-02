@@ -38,20 +38,42 @@ interface TotemPayload {
 }
 
 // ============================================================================
-// CONSTANTS — exactly como no HTML do user
+// CONSTANTS
 // ============================================================================
 const POLL_INTERVAL_MS = 15_000;
 const MAIN_SCENE_MS = 20_000;
-
 const TOTEM_W = 192;
 const TOTEM_H = 640;
+const CYAN = "#00baff";
+const LIME = "#baff00";
 
-// Cores exactas do mockup
-const CYAN = "#00aaff";
-const LIME = "#b8ff00";
+// Efeitos reutilizáveis (porto das classes neon-blue, neon-green, glows do HTML)
+const NEON_BLUE: React.CSSProperties = {
+  background:
+    "linear-gradient(180deg, rgba(5, 28, 75, .92), rgba(1, 9, 30, .96))",
+  border: `1px solid ${CYAN}`,
+  boxShadow:
+    "0 0 3px rgba(0, 186, 255, .95), 0 0 10px rgba(0, 186, 255, .70), 0 0 18px rgba(0, 90, 255, .35), inset 0 0 12px rgba(0, 160, 255, .28)",
+};
+const NEON_GREEN: React.CSSProperties = {
+  background:
+    "linear-gradient(180deg, rgba(6, 22, 24, .94), rgba(1, 8, 24, .98))",
+  border: `1px solid ${LIME}`,
+  boxShadow:
+    "0 0 4px rgba(186, 255, 0, .95), 0 0 12px rgba(186, 255, 0, .50), inset 0 0 12px rgba(186, 255, 0, .16)",
+};
+const GREEN_TEXT: React.CSSProperties = {
+  color: LIME,
+  textShadow:
+    "0 0 4px rgba(186, 255, 0, .95), 0 0 12px rgba(186, 255, 0, .65)",
+};
+const WHITE_GLOW: React.CSSProperties = {
+  textShadow:
+    "0 0 4px rgba(255,255,255,.75), 0 0 9px rgba(0,170,255,.42)",
+};
 
 // ============================================================================
-// TotemView — polling + cycler + render
+// TotemView — polling + cycler
 // ============================================================================
 export function TotemView({ token }: { token: string }) {
   const [data, setData] = useState<TotemPayload | null>(null);
@@ -92,7 +114,6 @@ export function TotemView({ token }: { token: string }) {
     };
   }, [token]);
 
-  // Cycler entre cena principal e sponsors fullscreen
   const [cycleIdx, setCycleIdx] = useState(0);
   const fsCount = data?.sponsors.fullscreen.length ?? 0;
   useEffect(() => {
@@ -125,7 +146,6 @@ export function TotemView({ token }: { token: string }) {
     );
   }
 
-  // Cena fullscreen do sponsor
   if (cycleIdx > 0) {
     const sp = data.sponsors.fullscreen[cycleIdx - 1];
     if (sp) {
@@ -145,7 +165,7 @@ export function TotemView({ token }: { token: string }) {
 }
 
 // ============================================================================
-// Stage — wraps the totem in a fullscreen viewport, scales to fit
+// Stage — replica do .poster do HTML, com background + textura + light waves
 // ============================================================================
 function Stage({ children }: { children: React.ReactNode }) {
   return (
@@ -168,63 +188,68 @@ function Stage({ children }: { children: React.ReactNode }) {
           position: "relative",
           overflow: "hidden",
           color: "#fff",
-          fontFamily: "Arial, Helvetica, sans-serif",
-          // Background EXACTAMENTE como no mockup
+          // Background: 3 radial + linear gradient (igual ao HTML)
           background:
-            "radial-gradient(circle at top, rgba(0, 110, 255, 0.35), transparent 35%), linear-gradient(180deg, #061b45 0%, #020814 100%)",
-          border: `1px solid rgba(0, 170, 255, 0.45)`,
+            "radial-gradient(circle at 50% 18%, rgba(0, 132, 255, .58), transparent 28%), radial-gradient(circle at 50% 44%, rgba(0, 90, 220, .42), transparent 34%), radial-gradient(circle at 50% 72%, rgba(0, 180, 255, .18), transparent 26%), linear-gradient(180deg, #020814 0%, #041b4d 42%, #020816 100%)",
         }}
       >
-        {/* Overlay ::before do mockup */}
+        {/* ::before — textura de pontos azuis */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "radial-gradient(rgba(0, 185, 255, .35) 1px, transparent 1px)",
+            backgroundSize: "8px 8px",
+            opacity: 0.18,
+            zIndex: 1,
+            pointerEvents: "none",
+          }}
+        />
+        {/* ::after — linhas/ondas de luz diagonais */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(135deg, transparent 0%, rgba(0, 120, 255, 0.18) 50%, transparent 100%), radial-gradient(circle at 50% 40%, rgba(0, 132, 255, 0.25), transparent 35%)",
+              "linear-gradient(125deg, transparent 0%, rgba(0, 174, 255, .16) 44%, transparent 58%), linear-gradient(35deg, transparent 0%, rgba(186, 255, 0, .08) 48%, transparent 62%)",
+            zIndex: 1,
             pointerEvents: "none",
           }}
         />
-        {children}
+        <div style={{ position: "relative", zIndex: 2, width: "100%", height: "100%" }}>
+          {children}
+        </div>
       </div>
     </div>
   );
 }
 
 // ============================================================================
-// MainScene — porto exacto do HTML do mockup
+// MainScene — TODOS os elementos com posicionamento ABSOLUTO pixel-perfect
 // ============================================================================
 function MainScene({ data }: { data: TotemPayload }) {
   return (
-    <div
-      style={{
-        position: "relative",
-        zIndex: 2,
-        padding: "8px 8px 6px",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <BrandLogo tournament={data.tournament} />
+    <>
+      <TopBrand tournament={data.tournament} />
 
-      {/* FIELD (CAMPO) */}
+      {/* CAMPO — top: 120, left: 14, w: 164, h: 40 */}
       <div
         style={{
-          width: "100%",
-          height: 42,
-          border: `1px solid ${CYAN}`,
-          borderRadius: 6,
+          position: "absolute",
+          top: 120,
+          left: 14,
+          width: 164,
+          height: 40,
+          borderRadius: 7,
           display: "flex",
-          justifyContent: "center",
           alignItems: "center",
-          margin: "6px 0 7px",
-          background: "rgba(0, 15, 40, 0.65)",
-          boxShadow: "0 0 12px rgba(0, 145, 255, 0.7)",
-          fontSize: 22,
+          justifyContent: "center",
+          fontSize: 24,
           fontWeight: 900,
-          letterSpacing: 1,
+          letterSpacing: "1px",
+          ...NEON_BLUE,
+          ...WHITE_GLOW,
         }}
       >
         {data.court.toUpperCase()}
@@ -232,9 +257,21 @@ function MainScene({ data }: { data: TotemPayload }) {
 
       {data.currentMatch ? (
         <>
-          <TeamBlock label="DUPLA A" team={data.currentMatch.teamA} />
-          <Vs />
-          <TeamBlock label="DUPLA B" team={data.currentMatch.teamB} />
+          {/* DUPLA A label — top: 174 */}
+          <Label top={174}>DUPLA A</Label>
+          {/* Players A — top: 194, h: 86 */}
+          <PlayersRow top={194} height={86} team={data.currentMatch.teamA} />
+          {/* Names A — top: 279, h: 48 */}
+          <NamesBox top={279} team={data.currentMatch.teamA} />
+          {/* VS — top: 324 */}
+          <VsLabel top={324} />
+          {/* DUPLA B label — top: 344 */}
+          <Label top={344}>DUPLA B</Label>
+          {/* Players B — top: 364, h: 84 */}
+          <PlayersRow top={364} height={84} team={data.currentMatch.teamB} />
+          {/* Names B — top: 447, h: 48 */}
+          <NamesBox top={447} team={data.currentMatch.teamB} />
+          {/* Time box — top: 504 */}
           {data.currentMatch.scheduledAt && (
             <TimeBox scheduledAt={data.currentMatch.scheduledAt} />
           )}
@@ -243,20 +280,19 @@ function MainScene({ data }: { data: TotemPayload }) {
         <NoMatch />
       )}
 
+      {/* Next box — top: 579 */}
       {data.nextMatch && <NextBox match={data.nextMatch} />}
 
-      {/* Spacer empurra o footer para baixo se sobrar espaço */}
-      <div style={{ flex: 1, minHeight: 0 }} />
-
-      <FooterSponsors sponsors={data.sponsors.footer} />
-    </div>
+      {/* Sponsors — bottom: 4 */}
+      <SponsorsRow sponsors={data.sponsors.footer} />
+    </>
   );
 }
 
 // ============================================================================
-// BRAND LOGO — usa a logo PNG do torneio, com altura limitada
+// TOP BRAND (logo + textos no top)
 // ============================================================================
-function BrandLogo({
+function TopBrand({
   tournament,
 }: {
   tournament: TotemPayload["tournament"];
@@ -265,117 +301,98 @@ function BrandLogo({
   return (
     <div
       style={{
-        textAlign: "center",
-        lineHeight: 1,
-        marginBottom: 6,
+        position: "absolute",
+        top: 8,
         width: "100%",
+        textAlign: "center",
       }}
     >
       {tournament.logoUrl ? (
+        // Tem logo PNG → usa essa (provavelmente já tem todo o branding lá)
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={tournament.logoUrl}
           alt=""
           style={{
-            maxWidth: "100%",
-            maxHeight: 110,
+            width: "auto",
+            maxWidth: "94%",
+            maxHeight: 105,
             objectFit: "contain",
             margin: "0 auto",
             display: "block",
+            filter:
+              "drop-shadow(0 0 5px rgba(0, 186, 255, .9)) drop-shadow(0 0 9px rgba(186, 255, 0, .28))",
           }}
         />
       ) : (
-        // Fallback estilo mockup quando não há logo PNG
-        <div>
+        // Fallback estilo mockup (sem logo PNG)
+        <>
           <div
             style={{
-              width: 28,
-              height: 28,
-              margin: "0 auto 3px",
-              border: "2px solid #fff",
-              borderRadius: "7px 7px 10px 10px",
-              background: "linear-gradient(135deg, #0ab8ff, #003a9c)",
-              boxShadow: "0 0 10px rgba(0, 145, 255, 0.8)",
+              fontSize: 12,
+              fontWeight: 900,
+              lineHeight: 0.9,
+              letterSpacing: "0.3px",
+              ...WHITE_GLOW,
             }}
-          />
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.5px" }}>
+          >
             {tournament.name.toUpperCase()}
           </div>
-        </div>
+        </>
       )}
     </div>
   );
 }
 
 // ============================================================================
-// TEAM BLOCK — label + 2 players + names box
+// LABEL DUPLA A/B
 // ============================================================================
-function TeamBlock({
-  label,
-  team,
-}: {
-  label: string;
-  team: { p1: Player | null; p2: Player | null };
-}) {
-  return (
-    <>
-      <div
-        style={{
-          color: LIME,
-          fontSize: 10,
-          fontWeight: 900,
-          letterSpacing: "3px",
-          margin: "2px 0 4px",
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          width: "100%",
-          height: 82,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          overflow: "hidden",
-        }}
-      >
-        <PlayerCell player={team.p1} />
-        {team.p2 && <PlayerCell player={team.p2} />}
-      </div>
-
-      <div
-        style={{
-          width: "100%",
-          border: `1px solid ${CYAN}`,
-          borderRadius: 6,
-          padding: "6px 4px",
-          marginTop: 4,
-          background: "rgba(0, 10, 30, 0.75)",
-          boxShadow: "0 0 10px rgba(0, 145, 255, 0.55)",
-          textAlign: "center",
-        }}
-      >
-        {team.p1 && <NameLine text={team.p1.name} short={team.p1.shortName} />}
-        {team.p2 && <NameLine text={team.p2.name} short={team.p2.shortName} />}
-      </div>
-    </>
-  );
-}
-
-function NameLine({ text, short }: { text: string; short: string | null }) {
-  // Usa o nome curto se existir (cabe melhor)
+function Label({ top, children }: { top: number; children: React.ReactNode }) {
   return (
     <div
       style={{
-        fontSize: 14,
+        position: "absolute",
+        top,
+        width: "100%",
+        textAlign: "center",
+        fontSize: 11,
         fontWeight: 900,
-        lineHeight: 1.15,
-        textTransform: "uppercase",
+        letterSpacing: "2px",
+        ...GREEN_TEXT,
       }}
     >
-      {short ?? text}
+      {children}
+    </div>
+  );
+}
+
+// ============================================================================
+// PLAYERS ROW (2 jogadores lado a lado, com glow azul por baixo)
+// ============================================================================
+function PlayersRow({
+  top,
+  height,
+  team,
+}: {
+  top: number;
+  height: number;
+  team: { p1: Player | null; p2: Player | null };
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top,
+        left: 7,
+        width: 178,
+        height,
+        display: "flex",
+        justifyContent: "center",
+        gap: 2,
+      }}
+    >
+      <PlayerCell player={team.p1} />
+      {team.p2 && <PlayerCell player={team.p2} />}
     </div>
   );
 }
@@ -384,35 +401,53 @@ function PlayerCell({ player }: { player: Player | null }) {
   return (
     <div
       style={{
-        width: 78,
-        height: 82,
-        background: "rgba(255, 255, 255, 0.08)",
-        borderRadius: "6px 6px 0 0",
-        overflow: "hidden",
+        width: 88,
+        height: "100%",
+        position: "relative",
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
-        boxShadow: "0 0 18px rgba(0, 132, 255, 0.4)",
+        overflow: "visible",
       }}
     >
+      {/* Glow blob azul por baixo (::before) */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          width: 78,
+          height: 72,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(0, 186, 255, .65), transparent 68%)",
+          filter: "blur(4px)",
+          zIndex: 0,
+        }}
+      />
       {player?.photoUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={player.photoUrl}
           alt=""
           style={{
+            position: "relative",
+            zIndex: 2,
             width: "100%",
             height: "100%",
-            objectFit: "cover",
-            objectPosition: "top center",
+            objectFit: "contain",
+            objectPosition: "bottom center",
+            filter:
+              "drop-shadow(0 0 4px rgba(0, 186, 255, .95)) drop-shadow(0 6px 7px rgba(0,0,0,.75))",
           }}
         />
       ) : (
         <div
           style={{
-            color: "rgba(255,255,255,.4)",
-            fontSize: 24,
-            paddingBottom: 20,
+            position: "relative",
+            zIndex: 2,
+            color: "rgba(255,255,255,.5)",
+            fontSize: 30,
+            paddingBottom: 8,
           }}
         >
           ?
@@ -423,18 +458,70 @@ function PlayerCell({ player }: { player: Player | null }) {
 }
 
 // ============================================================================
-// VS
+// NAMES BOX
 // ============================================================================
-function Vs() {
+function NamesBox({
+  top,
+  team,
+}: {
+  top: number;
+  team: { p1: Player | null; p2: Player | null };
+}) {
   return (
     <div
       style={{
-        fontSize: 32,
+        position: "absolute",
+        top,
+        left: 10,
+        width: 172,
+        height: 48,
+        borderRadius: 7,
+        textAlign: "center",
+        paddingTop: 6,
+        ...NEON_BLUE,
+      }}
+    >
+      {team.p1 && (
+        <NameLine name={team.p1.name} short={team.p1.shortName} />
+      )}
+      {team.p2 && (
+        <NameLine name={team.p2.name} short={team.p2.shortName} />
+      )}
+    </div>
+  );
+}
+
+function NameLine({ name, short }: { name: string; short: string | null }) {
+  return (
+    <div
+      style={{
+        fontSize: 16,
         fontWeight: 900,
-        color: LIME,
-        lineHeight: 1,
-        margin: "6px 0 2px",
-        textShadow: "0 0 14px rgba(184, 255, 0, 0.8)",
+        lineHeight: 1.08,
+        letterSpacing: "0.1px",
+        ...WHITE_GLOW,
+      }}
+    >
+      {short ?? name}
+    </div>
+  );
+}
+
+// ============================================================================
+// VS
+// ============================================================================
+function VsLabel({ top }: { top: number }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top,
+        width: "100%",
+        textAlign: "center",
+        fontSize: 36,
+        fontWeight: 900,
+        lineHeight: 0.9,
+        ...GREEN_TEXT,
       }}
     >
       VS
@@ -452,34 +539,35 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
   return (
     <div
       style={{
-        width: "100%",
-        marginTop: 8,
-        border: `1px solid ${LIME}`,
-        borderRadius: 7,
-        background: "rgba(0, 10, 25, 0.85)",
-        padding: "6px 4px 8px",
+        position: "absolute",
+        top: 504,
+        left: 10,
+        width: 172,
+        height: 68,
+        borderRadius: 8,
         textAlign: "center",
-        boxShadow: "0 0 12px rgba(184, 255, 0, 0.35)",
+        ...NEON_GREEN,
       }}
     >
       <div
         style={{
-          color: LIME,
+          marginTop: 7,
           fontSize: 9,
           fontWeight: 900,
-          letterSpacing: "1.5px",
-          marginBottom: 2,
+          letterSpacing: "1px",
+          ...GREEN_TEXT,
         }}
       >
         HORÁRIO DO JOGO
       </div>
       <div
         style={{
-          fontSize: 42,
+          fontSize: 39,
           fontWeight: 900,
-          lineHeight: 1,
-          letterSpacing: "-1px",
-          textShadow: "0 0 10px rgba(255, 255, 255, 0.45)",
+          lineHeight: 0.95,
+          color: "#fff",
+          textShadow:
+            "0 0 5px rgba(255,255,255,.9), 0 0 12px rgba(186,255,0,.45)",
         }}
       >
         {time}
@@ -503,32 +591,33 @@ function NextBox({ match }: { match: MatchData }) {
   return (
     <div
       style={{
-        width: "100%",
-        marginTop: 8,
-        border: `1px solid ${CYAN}`,
+        position: "absolute",
+        top: 579,
+        left: 10,
+        width: 172,
+        height: 37,
         borderRadius: 7,
-        background: "rgba(0, 10, 25, 0.75)",
-        padding: "6px 4px",
         textAlign: "center",
+        paddingTop: 3,
+        ...NEON_BLUE,
       }}
     >
       <div
         style={{
-          color: CYAN,
-          fontSize: 11,
+          fontSize: 8,
           fontWeight: 900,
+          color: CYAN,
           letterSpacing: "1px",
-          marginBottom: 4,
+          textShadow: "0 0 8px rgba(0,186,255,.8)",
         }}
       >
         A SEGUIR
       </div>
       <div
         style={{
-          fontSize: 10,
-          fontWeight: 800,
-          lineHeight: 1.2,
-          textTransform: "uppercase",
+          fontSize: 7,
+          fontWeight: 900,
+          lineHeight: 1.05,
         }}
       >
         {pa1}
@@ -536,20 +625,19 @@ function NextBox({ match }: { match: MatchData }) {
       </div>
       <div
         style={{
-          color: LIME,
-          fontSize: 11,
+          fontSize: 7,
           fontWeight: 900,
-          margin: "1px 0",
+          color: LIME,
+          lineHeight: 1,
         }}
       >
         VS
       </div>
       <div
         style={{
-          fontSize: 10,
-          fontWeight: 800,
-          lineHeight: 1.2,
-          textTransform: "uppercase",
+          fontSize: 7,
+          fontWeight: 900,
+          lineHeight: 1.05,
         }}
       >
         {pb1}
@@ -560,31 +648,33 @@ function NextBox({ match }: { match: MatchData }) {
 }
 
 // ============================================================================
-// FOOTER SPONSORS — grid 3-col com dividers
+// SPONSORS ROW (3-col grid, cada um com neon-blue subtil)
 // ============================================================================
-function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
-  const cols = Math.max(1, sponsors.length);
+function SponsorsRow({ sponsors }: { sponsors: Sponsor[] }) {
+  const cols = sponsors.length === 0 ? 1 : sponsors.length;
   return (
     <div
       style={{
-        marginTop: "auto",
-        width: "100%",
-        height: 34,
-        border: "1px solid rgba(0, 170, 255, 0.45)",
-        borderRadius: 5,
+        position: "absolute",
+        left: 6,
+        bottom: 4,
+        width: 180,
+        height: 26,
         display: "grid",
         gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        background: "rgba(0, 5, 18, 0.85)",
-        overflow: "hidden",
+        gap: 3,
       }}
     >
       {sponsors.length === 0 ? (
         <div
           style={{
+            borderRadius: 4,
+            background: "rgba(0, 4, 16, .88)",
+            border: "1px solid rgba(0, 186, 255, .35)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 7,
+            fontSize: 6,
             color: "rgba(255,255,255,.3)",
           }}
         >
@@ -595,14 +685,15 @@ function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
           <div
             key={i}
             style={{
+              borderRadius: 4,
+              background: "rgba(0, 4, 16, .88)",
+              border: "1px solid rgba(0, 186, 255, .35)",
+              boxShadow:
+                "0 0 5px rgba(0, 186, 255, .35), inset 0 0 8px rgba(0, 80, 170, .25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               padding: 2,
-              borderRight:
-                i < sponsors.length - 1
-                  ? "1px solid rgba(255, 255, 255, 0.25)"
-                  : "none",
               overflow: "hidden",
             }}
           >
@@ -611,8 +702,8 @@ function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
               src={s.imageUrl}
               alt=""
               style={{
-                maxHeight: "100%",
-                maxWidth: "100%",
+                maxWidth: "94%",
+                maxHeight: 20,
                 objectFit: "contain",
               }}
             />
@@ -624,33 +715,33 @@ function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
 }
 
 // ============================================================================
-// EMPTY STATES + FULLSCREEN
+// EMPTY + FULLSCREEN
 // ============================================================================
 function NoMatch() {
   return (
     <div
       style={{
-        flex: 1,
-        display: "grid",
-        placeItems: "center",
+        position: "absolute",
+        top: 200,
+        left: 0,
+        right: 0,
+        textAlign: "center",
         padding: "30px 14px",
       }}
     >
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 800,
-            color: "#94a3b8",
-            letterSpacing: "1.5px",
-            marginBottom: 6,
-          }}
-        >
-          SEM JOGO ACTUAL
-        </div>
-        <div style={{ fontSize: 10, color: "#64748b" }}>
-          Não há jogos marcados para este campo.
-        </div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 800,
+          color: "#94a3b8",
+          letterSpacing: "1.5px",
+          marginBottom: 6,
+        }}
+      >
+        SEM JOGO ACTUAL
+      </div>
+      <div style={{ fontSize: 10, color: "#64748b" }}>
+        Não há jogos marcados para este campo.
       </div>
     </div>
   );
@@ -660,8 +751,6 @@ function FullscreenSponsorScene({ imageUrl }: { imageUrl: string }) {
   return (
     <div
       style={{
-        position: "relative",
-        zIndex: 2,
         width: "100%",
         height: "100%",
         display: "grid",
