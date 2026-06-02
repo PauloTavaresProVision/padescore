@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Totem 192×640 — Preview final</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a18;
+    color: #fff;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 16px;
+    gap: 24px;
+  }
+  h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  p.note { font-size: 13px; opacity: 0.7; max-width: 560px; text-align: center; line-height: 1.5; }
+
+  .row { display: flex; gap: 40px; align-items: flex-start; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .col h2 { font-size: 12px; color: #84cc16; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ---------- TOTEM 192×640 ---------- */
+  .totem {
+    width: 192px;
+    height: 640px;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 30%, #1d3a8a 0%, transparent 70%),
+      radial-gradient(ellipse 80% 40% at 50% 85%, #0d2670 0%, transparent 75%),
+      linear-gradient(180deg, #050d24 0%, #08163a 50%, #050d24 100%);
+    border-radius: 6px;
+    box-shadow: 0 22px 60px rgba(0,0,0,.7);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    padding: 6px 0 0;
+  }
+
+  /* dotted bg subtle pattern */
+  .totem::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(56,189,248,.06) 1px, transparent 1px);
+    background-size: 6px 6px;
+    pointer-events: none;
+  }
+
+  /* ---------- BRAND HEADER ---------- */
+  .brand {
+    text-align: center;
+    padding: 4px 8px;
+    position: relative;
+    z-index: 2;
+  }
+  .brand .sb-logo {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 8.5px; font-weight: 700; color: #fff;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
+  }
+  .brand .sb-logo .crest {
+    width: 9px; height: 9px;
+    background: linear-gradient(135deg, #fff 50%, #0066b3 50%);
+    border-radius: 50%;
+    border: 1px solid #fff;
+  }
+  .brand .title-line {
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -0.6px;
+    line-height: 0.95;
+    color: #fff;
+    text-transform: lowercase;
+    font-style: italic;
+  }
+  .brand .title-line em { color: #fff; font-style: normal; text-transform: uppercase; font-weight: 900; }
+  .brand .year {
+    font-size: 13px; font-weight: 900; letter-spacing: 1px;
+    color: #84cc16; line-height: 1;
+    margin-top: 1px;
+  }
+  .brand .country {
+    font-size: 7.5px; letter-spacing: 4px; font-weight: 600;
+    color: #cbd5e1; margin-top: 3px;
+    display: inline-block; padding: 0 6px;
+  }
+  .brand .country::before, .brand .country::after {
+    content: "—"; opacity: 0.4; margin: 0 4px;
+  }
+
+  /* ---------- COURT PILL ---------- */
+  .court {
+    margin: 4px 6px;
+    padding: 6px 0;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(13,40,80,.6) 0%, rgba(5,20,50,.6) 100%);
+    border-radius: 5px;
+    border: 1px solid rgba(56,189,248,.7);
+    box-shadow: 0 0 8px rgba(56,189,248,.4), inset 0 0 6px rgba(56,189,248,.1);
+    font-size: 15px; font-weight: 900; letter-spacing: 1.5px;
+    position: relative; z-index: 2;
+  }
+
+  /* ---------- TEAM BLOCK ---------- */
+  .team-block {
+    margin: 3px 5px 0;
+    text-align: center;
+    position: relative; z-index: 2;
+  }
+  .team-block .dupla-lab {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 8.5px; font-weight: 800;
+    color: #84cc16; letter-spacing: 1.5px;
+    margin-bottom: 1px;
+  }
+  .team-block .dupla-lab::before, .team-block .dupla-lab::after {
+    content: ""; width: 12px; height: 1px;
+    background: #84cc16;
+    display: inline-block;
+  }
+  .team-block .photos {
+    display: flex; justify-content: center;
+    height: 90px; width: 100%;
+    margin-top: 1px;
+  }
+  .team-block .ph {
+    width: 78px; height: 90px;
+    background: linear-gradient(180deg, #475569 0%, #334155 100%);
+    border-radius: 6px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .team-block .ph + .ph { margin-left: -12px; }
+  .team-block .ph::before {
+    content: ""; position: absolute;
+    top: 8px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #cbd5e1;
+  }
+  .team-block .ph::after {
+    content: ""; position: absolute;
+    top: 32px; left: 50%; transform: translateX(-50%);
+    width: 56px; height: 58px;
+    background: #1f2937;
+    border-radius: 12px 12px 0 0;
+  }
+  .team-block .names-pill {
+    margin-top: 2px;
+    padding: 5px 4px;
+    background: rgba(5,15,40,.6);
+    border: 1px solid rgba(56,189,248,.25);
+    border-radius: 5px;
+    font-size: 10px; font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: 0;
+    box-shadow: 0 0 6px rgba(56,189,248,.1) inset;
+  }
+
+  /* ---------- VS BIG ---------- */
+  .vs-big {
+    text-align: center;
+    font-size: 24px; font-weight: 900;
+    color: #84cc16;
+    line-height: 1;
+    margin: 2px 0 1px;
+    text-shadow: 0 0 8px rgba(132,204,22,.5);
+    letter-spacing: 1px;
+    position: relative; z-index: 2;
+  }
+  .vs-big::before, .vs-big::after {
+    content: ""; display: inline-block;
+    width: 30px; height: 1px;
+    background: rgba(132,204,22,.5);
+    vertical-align: middle;
+    margin: 0 4px;
+  }
+
+  /* ---------- HORÁRIO ---------- */
+  .horario {
+    margin: 4px 5px 3px;
+    padding: 4px 4px 6px;
+    background: linear-gradient(180deg, rgba(13,40,80,.7) 0%, rgba(5,15,40,.7) 100%);
+    border-radius: 5px;
+    border: 1px solid #84cc16;
+    box-shadow: 0 0 6px rgba(132,204,22,.3);
+    text-align: center;
+    position: relative; z-index: 2;
+  }
+  .horario .lab {
+    font-size: 8.5px; font-weight: 800;
+    color: #84cc16; letter-spacing: 1.2px;
+    margin-bottom: 1px;
+  }
+  .horario .time {
+    font-size: 28px; font-weight: 900;
+    color: #fff; letter-spacing: 2px;
+    line-height: 1;
+    text-shadow: 0 0 8px rgba(255,255,255,.4);
+  }
+
+  /* ---------- A SEGUIR ---------- */
+  .next {
+    margin: 3px 5px;
+    padding: 4px 4px 5px;
+    background: rgba(5,15,40,.6);
+    border-radius: 5px;
+    border: 1px solid rgba(56,189,248,.2);
+    text-align: center;
+    position: relative; z-index: 2;
+  }
+  .next .lab {
+    font-size: 9px; font-weight: 800;
+    color: #38bdf8; letter-spacing: 1.5px;
+    margin-bottom: 2px;
+  }
+  .next .lab::before, .next .lab::after {
+    content: ""; display: inline-block;
+    width: 10px; height: 1px;
+    background: #38bdf8; vertical-align: middle;
+    margin: 0 3px;
+  }
+  .next .line {
+    font-size: 9px; font-weight: 700;
+    color: #fff; line-height: 1.2;
+  }
+  .next .vs-mini {
+    font-size: 9px; font-weight: 900;
+    color: #84cc16; line-height: 1.2;
+    margin: 1px 0;
+  }
+
+  /* ---------- SPONSORS FOOTER ---------- */
+  .sponsors {
+    margin-top: auto;
+    padding: 5px 6px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 2px;
+    border-top: 1px solid rgba(56,189,248,.15);
+    background: rgba(255,255,255,.04);
+    position: relative; z-index: 2;
+  }
+  .sponsors .sp {
+    flex: 1;
+    height: 16px;
+    background: rgba(255,255,255,.92);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0a0a18;
+    font-size: 6.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 0 2px;
+    overflow: hidden;
+    text-align: center;
+  }
+  .sponsors .sep {
+    width: 1px;
+    height: 12px;
+    background: rgba(56,189,248,.4);
+  }
+</style>
+</head>
+<body>
+
+<h1>Totem 192×640 — Layout final proposto</h1>
+<p class="note">Ao tamanho real (192×640 px). Os elementos foram apertados para caberem TODOS:
+header da marca, campo, ambas as duplas (com fotos + nomes), HORÁRIO DO JOGO, A SEGUIR, e sponsors no rodapé.
+Photos placeholder — no real terão as fotos dos jogadores com fundo removido.</p>
+
+<div class="row">
+  <div class="col">
+    <h2>Layout proposto</h2>
+    <div class="totem">
+
+      <!-- HEADER MARCA -->
+      <div class="brand">
+        <div class="sb-logo"><span class="crest"></span>STANDARD BANK</div>
+        <div class="title-line">open<em>PADEL</em></div>
+        <div class="year">2026</div>
+        <div class="country">ANGOLA</div>
+      </div>
+
+      <!-- COURT -->
+      <div class="court">CAMPO 1</div>
+
+      <!-- TEAM A -->
+      <div class="team-block">
+        <div class="dupla-lab">DUPLA A</div>
+        <div class="photos">
+          <div class="ph"></div>
+          <div class="ph"></div>
+        </div>
+        <div class="names-pill">CARLOS SOUSA<br>SERGIO VIEIRA</div>
+      </div>
+
+      <!-- VS -->
+      <div class="vs-big">VS</div>
+
+      <!-- TEAM B -->
+      <div class="team-block">
+        <div class="dupla-lab">DUPLA B</div>
+        <div class="photos">
+          <div class="ph"></div>
+          <div class="ph"></div>
+        </div>
+        <div class="names-pill">NICOLAU M.<br>WOJTEK D.</div>
+      </div>
+
+      <!-- HORÁRIO -->
+      <div class="horario">
+        <div class="lab">HORÁRIO DO JOGO</div>
+        <div class="time">18:00</div>
+      </div>
+
+      <!-- A SEGUIR -->
+      <div class="next">
+        <div class="lab">A SEGUIR</div>
+        <div class="line">DIOGO M | MANUEL P</div>
+        <div class="vs-mini">VS</div>
+        <div class="line">MIGUEL R | TOMÁS G</div>
+      </div>
+
+      <!-- SPONSORS -->
+      <div class="sponsors">
+        <div class="sp">Standard</div>
+        <span class="sep"></span>
+        <div class="sp">BFA</div>
+        <span class="sep"></span>
+        <div class="sp">UNITEL</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p class="note" style="margin-top: 14px;">
+  <b>Trade-offs assumidos:</b><br>
+  • <b>Nomes Dupla B abreviados</b> ("NICOLAU M." em vez de "NICOLAU MONTEIRO") — em 192px wide é necessário.<br>
+  • <b>Fotos com largura ~78px cada</b> (sobrepostas ligeiramente) → faces visíveis a 3-5m.<br>
+  • <b>Tudo cabe</b> nos 640px sem cortar nada.
+</p>
+
+</body>
+</html>
