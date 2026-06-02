@@ -154,23 +154,83 @@ export default async function TournamentDetailPage({
           <p className="text-sm text-slate-500">Sem jogos ainda.</p>
         </div>
       ) : (
-        <ul className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
-          {matches.map((m, idx) => {
+        (() => {
+          // Agrupa por court_id; jogos sem campo vão para 'orphans'.
+          const byCourt = new Map<string, typeof matches>();
+          const orphans: typeof matches = [];
+          for (const m of matches) {
+            const cid = m.court_id;
+            if (cid) {
+              if (!byCourt.has(cid)) byCourt.set(cid, []);
+              byCourt.get(cid)!.push(m);
+            } else {
+              orphans.push(m);
+            }
+          }
+          // Dentro de cada campo: scheduled_at ASC (sem horário no fim),
+          // empate desempata por created_at DESC (mais recentes primeiro).
+          const sortMatches = (list: typeof matches) =>
+            [...list].sort((a, b) => {
+              if (a.scheduled_at && b.scheduled_at) {
+                return a.scheduled_at.localeCompare(b.scheduled_at);
+              }
+              if (a.scheduled_at) return -1;
+              if (b.scheduled_at) return 1;
+              return b.created_at.localeCompare(a.created_at);
+            });
+
+          // Helper p/ data legível ("Hoje 18:00" / "Amanhã 18:00" / "22 Mai 18:00")
+          function formatScheduled(iso: string | null): { date: string; time: string } {
+            if (!iso) return { date: "Sem horário", time: "" };
+            const d = new Date(iso);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today.getTime() + 86400000);
+            const matchDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const pad = (n: number) => String(n).padStart(2, "0");
+            const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            let date: string;
+            if (matchDay.getTime() === today.getTime()) date = "Hoje";
+            else if (matchDay.getTime() === tomorrow.getTime()) date = "Amanhã";
+            else {
+              const months = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+              date = `${d.getDate()} ${months[d.getMonth()]}`;
+            }
+            return { date, time };
+          }
+
+          const renderMatch = (m: (typeof matches)[number]) => {
             const teamA = [m.team_a_player1, m.team_a_player2].filter(Boolean).join(" / ");
             const teamB = [m.team_b_player1, m.team_b_player2].filter(Boolean).join(" / ");
             const s = stateByMatch.get(m.id);
+            const sch = formatScheduled(m.scheduled_at);
             return (
-              <li key={m.id} className={idx > 0 ? "border-t border-slate-100" : ""}>
+              <li key={m.id} className="border-t border-slate-100 first:border-t-0">
                 <Link
                   href={`/admin/tournaments/${id}/matches/${m.id}`}
                   className="group flex items-center gap-4 p-4 transition hover:bg-slate-50"
                 >
+                  <div className="w-20 shrink-0 text-center">
+                    {m.scheduled_at ? (
+                      <>
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                          {sch.date}
+                        </div>
+                        <div className="font-mono text-lg font-bold tabular-nums text-slate-900">
+                          {sch.time}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Sem horário
+                      </div>
+                    )}
+                  </div>
+
                   <StatusDot status={m.status} />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2 text-xs text-slate-500">
-                      <span className="font-mono uppercase">{m.court_name}</span>
-                      <span>·</span>
                       <span>{m.golden_point ? "Golden point" : "Vantagens"}</span>
                       {m.short_code && (
                         <>
@@ -198,8 +258,62 @@ export default async function TournamentDetailPage({
                 </Link>
               </li>
             );
-          })}
-        </ul>
+          };
+
+          return (
+            <div className="space-y-6">
+              {courts.map((c) => {
+                const list = sortMatches(byCourt.get(c.id) ?? []);
+                if (list.length === 0) {
+                  return (
+                    <div key={c.id}>
+                      <div className="mb-2 flex items-baseline justify-between">
+                        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700">
+                          {c.name}
+                        </h3>
+                        <span className="text-xs text-slate-400">sem jogos</span>
+                      </div>
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                        Ainda não há jogos marcados para este campo.
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={c.id}>
+                    <div className="mb-2 flex items-baseline justify-between">
+                      <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700">
+                        {c.name}
+                      </h3>
+                      <span className="text-xs font-medium text-slate-500">
+                        {list.length} {list.length === 1 ? "jogo" : "jogos"}
+                      </span>
+                    </div>
+                    <ul className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
+                      {list.map(renderMatch)}
+                    </ul>
+                  </div>
+                );
+              })}
+
+              {orphans.length > 0 && (
+                <div>
+                  <div className="mb-2 flex items-baseline justify-between">
+                    <h3 className="text-sm font-bold uppercase tracking-wide text-amber-700">
+                      Sem campo atribuído
+                    </h3>
+                    <span className="text-xs font-medium text-amber-600">
+                      {orphans.length} {orphans.length === 1 ? "jogo" : "jogos"} — edita para escolher campo
+                    </span>
+                  </div>
+                  <ul className="overflow-hidden rounded-2xl bg-white ring-1 ring-amber-200 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
+                    {sortMatches(orphans).map(renderMatch)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          );
+        })()
       )}
     </div>
   );
