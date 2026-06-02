@@ -3,6 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LinkButton } from "@/components/ui/Button";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "@/components/icons";
+import {
+  CourtsManager,
+  type CourtRow,
+} from "@/components/admin/CourtsManager";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +35,7 @@ export default async function TournamentDetailPage({
   const { data: matches } = await supabase
     .from("matches")
     .select(
-      "id, short_code, court_name, team_a_player1, team_a_player2, team_b_player1, team_b_player2, status, golden_point, created_at",
+      "id, short_code, court_name, court_id, scheduled_at, team_a_player1, team_a_player2, team_b_player1, team_b_player2, status, golden_point, created_at",
     )
     .eq("tournament_id", id)
     .order("created_at", { ascending: false });
@@ -51,6 +55,25 @@ export default async function TournamentDetailPage({
   const liveCount = matches?.filter((m) => m.status === "live").length ?? 0;
   const finishedCount = matches?.filter((m) => m.status === "finished").length ?? 0;
   const scheduledCount = matches?.filter((m) => m.status === "scheduled").length ?? 0;
+
+  // Lista de campos do torneio + contagem de jogos por campo (para mostrar
+  // ao user quantos jogos cada campo tem e bloquear delete se >0).
+  const { data: courtsRaw } = await supabase
+    .from("courts")
+    .select("id, name, sort_order")
+    .eq("tournament_id", id)
+    .order("sort_order", { ascending: true });
+  const matchesByCourt = new Map<string, number>();
+  for (const m of matches ?? []) {
+    const cid = (m as { court_id?: string | null }).court_id ?? null;
+    if (cid) matchesByCourt.set(cid, (matchesByCourt.get(cid) ?? 0) + 1);
+  }
+  const courts: CourtRow[] = (courtsRaw ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    sort_order: c.sort_order,
+    matchCount: matchesByCourt.get(c.id) ?? 0,
+  }));
 
   return (
     <div>
@@ -100,6 +123,17 @@ export default async function TournamentDetailPage({
               <Stat label="Terminados" value={finishedCount} dim />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Campos */}
+      <div className="mt-10 mb-4">
+        <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Campos</h2>
+        <p className="mt-0.5 mb-4 text-sm text-slate-500">
+          Define os campos do torneio. Cada jogo é atribuído a um campo (e cada totem corresponde a um campo).
+        </p>
+        <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
+          <CourtsManager tournamentId={id} initialCourts={courts} />
         </div>
       </div>
 

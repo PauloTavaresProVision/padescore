@@ -61,9 +61,43 @@ export async function createMatch(tournamentId: string, formData: FormData) {
     return n(k) || null;
   }
 
+  // Campo: o form envia `court_id` (UUID). Vai-se buscar o nome do campo
+  // para gravar também em `court_name` (snapshot histórico — mantém o nome
+  // mesmo que o campo seja renomeado/apagado mais tarde).
+  const court_id = uuidOrNull(formData.get("court_id"));
+  if (!court_id) {
+    redirect(
+      `/admin/tournaments/${tournamentId}/matches/new?error=` +
+        encodeURIComponent("Escolhe um campo."),
+    );
+  }
+  const { data: courtRow } = await supabase
+    .from("courts")
+    .select("name")
+    .eq("id", court_id)
+    .eq("tournament_id", tournamentId)
+    .single();
+  if (!courtRow) {
+    redirect(
+      `/admin/tournaments/${tournamentId}/matches/new?error=` +
+        encodeURIComponent("Campo inválido."),
+    );
+  }
+
+  // Horário marcado: input datetime-local vem em "YYYY-MM-DDTHH:MM"
+  // (timezone do browser). Convertemos para ISO timestamptz.
+  const scheduledRaw = n("scheduled_at");
+  let scheduled_at: string | null = null;
+  if (scheduledRaw) {
+    const d = new Date(scheduledRaw);
+    if (!Number.isNaN(d.getTime())) scheduled_at = d.toISOString();
+  }
+
   const payload = {
     tournament_id: tournamentId,
-    court_name: n("court_name") || "Court 1",
+    court_id,
+    court_name: courtRow.name,
+    scheduled_at,
     category,
     // Nome longo (TV)
     team_a_player1: n("team_a_player1"),

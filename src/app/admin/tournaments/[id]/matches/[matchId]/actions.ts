@@ -201,8 +201,34 @@ export async function updateMatch(
     );
   }
 
+  // Campo: o form envia `court_id` (UUID). Snapshot do nome para
+  // court_name (mantém histórico mesmo se o court for renomeado).
+  const court_id = uuidOrNull(formData.get("court_id"));
+  if (!court_id) {
+    redirect(editUrl + "?error=" + encodeURIComponent("Escolhe um campo."));
+  }
+  const { data: courtRow } = await supabase
+    .from("courts")
+    .select("name")
+    .eq("id", court_id)
+    .eq("tournament_id", tournamentId)
+    .single();
+  if (!courtRow) {
+    redirect(editUrl + "?error=" + encodeURIComponent("Campo inválido."));
+  }
+
+  // Horário marcado: input datetime-local → ISO timestamptz (ou null).
+  const scheduledRaw = n("scheduled_at");
+  let scheduled_at: string | null = null;
+  if (scheduledRaw) {
+    const d = new Date(scheduledRaw);
+    if (!Number.isNaN(d.getTime())) scheduled_at = d.toISOString();
+  }
+
   const patch: Record<string, unknown> = {
-    court_name: n("court_name") || "Court 1",
+    court_id,
+    court_name: courtRow.name,
+    scheduled_at,
     category,
     team_a_player1: n("team_a_player1"),
     team_a_player2: nOrNull("team_a_player2"),

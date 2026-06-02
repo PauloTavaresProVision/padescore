@@ -36,16 +36,36 @@ export default async function EditMatchPage({
   const sp = await searchParams;
 
   const supabase = await createClient();
-  const [{ data: match }, { data: playersRaw }] = await Promise.all([
-    supabase.from("matches").select("*").eq("id", matchId).single(),
-    supabase
-      .from("players")
-      .select("id, name, short_name, photo_url, mirror")
-      .order("name", { ascending: true }),
-  ]);
+  const [{ data: match }, { data: playersRaw }, { data: courtsRaw }] =
+    await Promise.all([
+      supabase.from("matches").select("*").eq("id", matchId).single(),
+      supabase
+        .from("players")
+        .select("id, name, short_name, photo_url, mirror")
+        .order("name", { ascending: true }),
+      supabase
+        .from("courts")
+        .select("id, name")
+        .eq("tournament_id", tournamentId)
+        .order("sort_order", { ascending: true }),
+    ]);
 
   if (!match) notFound();
   const players: PlayerOption[] = playersRaw ?? [];
+  const courts = courtsRaw ?? [];
+
+  // Para o input datetime-local: queremos "YYYY-MM-DDTHH:MM" na timezone
+  // local do browser. Em SSR a "local" é a timezone do servidor — para
+  // evitar mismatch, formatamos UTC e o browser ajusta na exibição. Se o
+  // user editar, o input devolve em local (o action converte para ISO).
+  function toDatetimeLocal(iso: string | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  const scheduledDefault = toDatetimeLocal(match.scheduled_at ?? null);
 
   const initial: InitialData = {
     a1: {
@@ -98,10 +118,30 @@ export default async function EditMatchPage({
         <Fieldset legend="Informação geral">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="court_name" className="mb-1.5 block text-sm font-medium text-slate-700">
-                Court
+              <label htmlFor="court_id" className="mb-1.5 block text-sm font-medium text-slate-700">
+                Campo
               </label>
-              <Input id="court_name" name="court_name" defaultValue={match.court_name} />
+              <select
+                id="court_id"
+                name="court_id"
+                required
+                defaultValue={match.court_id ?? ""}
+                disabled={courts.length === 0}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 disabled:opacity-50"
+              >
+                {courts.length === 0 ? (
+                  <option value="">— Cria um campo primeiro —</option>
+                ) : (
+                  <>
+                    <option value="">— Escolhe campo —</option>
+                    {courts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
             </div>
             <div>
               <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -120,6 +160,17 @@ export default async function EditMatchPage({
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="scheduled_at" className="mb-1.5 block text-sm font-medium text-slate-700">
+                Horário marcado <span className="text-xs font-normal text-slate-500">(opcional — aparece no totem)</span>
+              </label>
+              <Input
+                id="scheduled_at"
+                name="scheduled_at"
+                type="datetime-local"
+                defaultValue={scheduledDefault}
+              />
             </div>
           </div>
         </Fieldset>
