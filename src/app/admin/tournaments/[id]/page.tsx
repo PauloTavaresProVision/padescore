@@ -128,10 +128,20 @@ export default async function TournamentDetailPage({
 
       {/* Campos */}
       <div className="mt-10 mb-4">
-        <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Campos</h2>
-        <p className="mt-0.5 mb-4 text-sm text-slate-500">
-          Define os campos do torneio. Cada jogo é atribuído a um campo (e cada totem corresponde a um campo).
-        </p>
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Campos</h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              Define os campos do torneio. Cada jogo é atribuído a um campo (e cada totem corresponde a um campo).
+            </p>
+          </div>
+          <Link
+            href={`/admin/tournaments/${id}/totens`}
+            className="shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+          >
+            Gerir totens →
+          </Link>
+        </div>
         <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
           <CourtsManager tournamentId={id} initialCourts={courts} />
         </div>
