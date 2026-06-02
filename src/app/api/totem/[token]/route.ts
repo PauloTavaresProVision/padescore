@@ -205,25 +205,22 @@ export async function GET(
     .digest("hex")
     .slice(0, 16)}"`;
 
+  // Heartbeat: actualiza last_seen_at AGORA (await — fire-and-forget é
+  // pouco fiável em runtimes serverless e até em Next dev às vezes
+  // larga o promise antes do UPDATE atingir a DB).
+  await supabase
+    .from("totems")
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq("id", totem.id);
+
   // Cliente já tem a última versão?
   const ifNoneMatch = req.headers.get("if-none-match");
   if (ifNoneMatch && ifNoneMatch === etag) {
-    // Heartbeat mesmo em 304 (a app contactou-nos)
-    void supabase
-      .from("totems")
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq("id", totem.id);
     return new NextResponse(null, {
       status: 304,
       headers: { ETag: etag },
     });
   }
-
-  // 8) Heartbeat (fire-and-forget — não bloqueia a resposta)
-  void supabase
-    .from("totems")
-    .update({ last_seen_at: new Date().toISOString() })
-    .eq("id", totem.id);
 
   return NextResponse.json(payload, {
     headers: {
