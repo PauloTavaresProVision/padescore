@@ -257,21 +257,21 @@ function MainScene({ data }: { data: TotemPayload }) {
 
       {data.currentMatch ? (
         <>
-          {/* DUPLA A label — top: 174 */}
+          {/* DUPLA A label */}
           <Label top={174}>DUPLA A</Label>
-          {/* Players A — top: 194, h: 86 */}
+          {/* Players A */}
           <PlayersRow top={194} height={86} team={data.currentMatch.teamA} />
-          {/* Names A — top: 279, h: 48 */}
+          {/* Names A */}
           <NamesBox top={279} team={data.currentMatch.teamA} />
-          {/* VS — top: 324 */}
-          <VsLabel top={324} />
-          {/* DUPLA B label — top: 344 */}
-          <Label top={344}>DUPLA B</Label>
-          {/* Players B — top: 364, h: 84 */}
-          <PlayersRow top={364} height={84} team={data.currentMatch.teamB} />
-          {/* Names B — top: 447, h: 48 */}
-          <NamesBox top={447} team={data.currentMatch.teamB} />
-          {/* Time box — top: 504 */}
+          {/* VS — entre Names A (acaba ~327) e DUPLA B */}
+          <VsLabel top={328} />
+          {/* DUPLA B label — empurrado p/ 364 (era 344) para não chocar com VS */}
+          <Label top={364}>DUPLA B</Label>
+          {/* Players B — cascateia +20 */}
+          <PlayersRow top={384} height={84} team={data.currentMatch.teamB} />
+          {/* Names B — cascateia */}
+          <NamesBox top={470} team={data.currentMatch.teamB} />
+          {/* Time box — cascateia, reduzido p/ caber */}
           {data.currentMatch.scheduledAt && (
             <TimeBox scheduledAt={data.currentMatch.scheduledAt} />
           )}
@@ -540,10 +540,10 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
     <div
       style={{
         position: "absolute",
-        top: 504,
+        top: 524,
         left: 10,
         width: 172,
-        height: 68,
+        height: 60,
         borderRadius: 8,
         textAlign: "center",
         ...NEON_GREEN,
@@ -551,7 +551,7 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
     >
       <div
         style={{
-          marginTop: 7,
+          marginTop: 4,
           fontSize: 9,
           fontWeight: 900,
           letterSpacing: "1px",
@@ -562,7 +562,7 @@ function TimeBox({ scheduledAt }: { scheduledAt: string }) {
       </div>
       <div
         style={{
-          fontSize: 39,
+          fontSize: 34,
           fontWeight: 900,
           lineHeight: 0.95,
           color: "#fff",
@@ -592,13 +592,13 @@ function NextBox({ match }: { match: MatchData }) {
     <div
       style={{
         position: "absolute",
-        top: 579,
+        top: 590,
         left: 10,
         width: 172,
-        height: 37,
+        height: 32,
         borderRadius: 7,
         textAlign: "center",
-        paddingTop: 3,
+        paddingTop: 2,
         ...NEON_BLUE,
       }}
     >
