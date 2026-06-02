@@ -38,14 +38,17 @@ interface TotemPayload {
 }
 
 // ============================================================================
-// POLLING constants
+// CONSTANTS — exactly como no HTML do user
 // ============================================================================
-const POLL_INTERVAL_MS = 15_000; // 15s — relativamente rápido p/ ver mudanças
-const MAIN_SCENE_MS = 20_000; // 20s entre cada rotação para fullscreen
+const POLL_INTERVAL_MS = 15_000;
+const MAIN_SCENE_MS = 20_000;
 
-// Native pixels do design
 const TOTEM_W = 192;
 const TOTEM_H = 640;
+
+// Cores exactas do mockup
+const CYAN = "#00aaff";
+const LIME = "#b8ff00";
 
 // ============================================================================
 // TotemView — polling + cycler + render
@@ -55,7 +58,6 @@ export function TotemView({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null);
   const etagRef = useRef<string | null>(null);
 
-  // ----- POLLING -----
   useEffect(() => {
     let cancelled = false;
     async function poll() {
@@ -67,7 +69,7 @@ export function TotemView({ token }: { token: string }) {
           cache: "no-store",
         });
         if (cancelled) return;
-        if (res.status === 304) return; // nothing changed
+        if (res.status === 304) return;
         if (!res.ok) {
           setError(`HTTP ${res.status}`);
           return;
@@ -90,18 +92,19 @@ export function TotemView({ token }: { token: string }) {
     };
   }, [token]);
 
-  // ----- CYCLER (main scene → fullscreen sponsor → main → next sponsor...) -----
+  // Cycler entre cena principal e sponsors fullscreen
   const [cycleIdx, setCycleIdx] = useState(0);
   const fsCount = data?.sponsors.fullscreen.length ?? 0;
   useEffect(() => {
-    if (fsCount === 0) return; // sem fullscreen, fica sempre na main
-    const next = () => setCycleIdx((i) => (i + 1) % (fsCount + 1));
-    // cycleIdx == 0 → main scene; >=1 → sponsor[i-1]
+    if (fsCount === 0) return;
     const dur =
       cycleIdx === 0
         ? MAIN_SCENE_MS
         : (data?.sponsors.fullscreen[cycleIdx - 1]?.durationSec ?? 8) * 1000;
-    const t = setTimeout(next, dur);
+    const t = setTimeout(
+      () => setCycleIdx((i) => (i + 1) % (fsCount + 1)),
+      dur,
+    );
     return () => clearTimeout(t);
   }, [cycleIdx, fsCount, data]);
 
@@ -122,7 +125,7 @@ export function TotemView({ token }: { token: string }) {
     );
   }
 
-  // Cena fullscreen do sponsor?
+  // Cena fullscreen do sponsor
   if (cycleIdx > 0) {
     const sp = data.sponsors.fullscreen[cycleIdx - 1];
     if (sp) {
@@ -159,25 +162,26 @@ function Stage({ children }: { children: React.ReactNode }) {
         style={{
           width: TOTEM_W,
           height: TOTEM_H,
-          // Escala para encher a altura disponível (ou largura se for portrait extremo)
           transform: "scale(min(calc(100vh / 640), calc(100vw / 192)))",
           transformOrigin: "center center",
           flexShrink: 0,
           position: "relative",
           overflow: "hidden",
+          color: "#fff",
+          fontFamily: "Arial, Helvetica, sans-serif",
+          // Background EXACTAMENTE como no mockup
           background:
-            "radial-gradient(ellipse 70% 50% at 50% 30%, #1d3a8a 0%, transparent 70%), radial-gradient(ellipse 80% 40% at 50% 85%, #0d2670 0%, transparent 75%), linear-gradient(180deg, #050d24 0%, #08163a 50%, #050d24 100%)",
-          boxShadow: "0 22px 60px rgba(0,0,0,.7)",
+            "radial-gradient(circle at top, rgba(0, 110, 255, 0.35), transparent 35%), linear-gradient(180deg, #061b45 0%, #020814 100%)",
+          border: `1px solid rgba(0, 170, 255, 0.45)`,
         }}
       >
-        {/* dots pattern overlay */}
+        {/* Overlay ::before do mockup */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage:
-              "radial-gradient(rgba(56,189,248,.06) 1px, transparent 1px)",
-            backgroundSize: "6px 6px",
+            background:
+              "linear-gradient(135deg, transparent 0%, rgba(0, 120, 255, 0.18) 50%, transparent 100%), radial-gradient(circle at 50% 40%, rgba(0, 132, 255, 0.25), transparent 35%)",
             pointerEvents: "none",
           }}
         />
@@ -188,7 +192,7 @@ function Stage({ children }: { children: React.ReactNode }) {
 }
 
 // ============================================================================
-// MainScene — o layout principal do totem
+// MainScene — porto exacto do HTML do mockup
 // ============================================================================
 function MainScene({ data }: { data: TotemPayload }) {
   return (
@@ -196,32 +200,31 @@ function MainScene({ data }: { data: TotemPayload }) {
       style={{
         position: "relative",
         zIndex: 2,
+        padding: "8px 8px 6px",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
-        height: "100%",
-        padding: "6px 0 0",
+        alignItems: "center",
       }}
     >
-      {/* HEADER MARCA */}
-      <BrandHeader tournament={data.tournament} />
+      <BrandLogo tournament={data.tournament} />
 
-      {/* COURT PILL */}
+      {/* FIELD (CAMPO) */}
       <div
         style={{
-          margin: "6px 6px 4px",
-          padding: "12px 0",
-          textAlign: "center",
-          background:
-            "linear-gradient(180deg, rgba(13,40,80,.6) 0%, rgba(5,20,50,.6) 100%)",
-          borderRadius: 7,
-          border: "2px solid rgba(56,189,248,.9)",
-          boxShadow:
-            "0 0 16px rgba(56,189,248,.65), inset 0 0 12px rgba(56,189,248,.2)",
-          fontSize: 28,
+          width: "100%",
+          height: 42,
+          border: `1px solid ${CYAN}`,
+          borderRadius: 6,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: "6px 0 7px",
+          background: "rgba(0, 15, 40, 0.65)",
+          boxShadow: "0 0 12px rgba(0, 145, 255, 0.7)",
+          fontSize: 22,
           fontWeight: 900,
-          letterSpacing: "3px",
-          color: "#fff",
-          textShadow: "0 0 8px rgba(255,255,255,.4)",
+          letterSpacing: 1,
         }}
       >
         {data.court.toUpperCase()}
@@ -230,68 +233,83 @@ function MainScene({ data }: { data: TotemPayload }) {
       {data.currentMatch ? (
         <>
           <TeamBlock label="DUPLA A" team={data.currentMatch.teamA} />
-          <VsBig />
+          <Vs />
           <TeamBlock label="DUPLA B" team={data.currentMatch.teamB} />
-          <ScheduledBlock scheduledAt={data.currentMatch.scheduledAt} />
+          {data.currentMatch.scheduledAt && (
+            <TimeBox scheduledAt={data.currentMatch.scheduledAt} />
+          )}
         </>
       ) : (
         <NoMatch />
       )}
 
-      {/* A SEGUIR */}
-      {data.nextMatch ? (
-        <NextBlock match={data.nextMatch} />
-      ) : (
-        <div style={{ flex: 1 }} />
-      )}
+      {data.nextMatch && <NextBox match={data.nextMatch} />}
 
-      {/* FOOTER SPONSORS */}
+      {/* Spacer empurra o footer para baixo se sobrar espaço */}
+      <div style={{ flex: 1, minHeight: 0 }} />
+
       <FooterSponsors sponsors={data.sponsors.footer} />
     </div>
   );
 }
 
 // ============================================================================
-// SUB-COMPONENTS
+// BRAND LOGO — usa a logo PNG do torneio, com altura limitada
 // ============================================================================
-function BrandHeader({
+function BrandLogo({
   tournament,
 }: {
   tournament: TotemPayload["tournament"];
 }) {
   if (!tournament) return null;
   return (
-    <div style={{ textAlign: "center", padding: "8px 4px 2px" }}>
+    <div
+      style={{
+        textAlign: "center",
+        lineHeight: 1,
+        marginBottom: 6,
+        width: "100%",
+      }}
+    >
       {tournament.logoUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={tournament.logoUrl}
           alt=""
           style={{
-            width: "98%",
-            maxHeight: 150,
+            maxWidth: "100%",
+            maxHeight: 110,
             objectFit: "contain",
             margin: "0 auto",
             display: "block",
           }}
         />
       ) : (
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: 900,
-            color: "#fff",
-            textTransform: "uppercase",
-            padding: "24px 4px",
-          }}
-        >
-          {tournament.name}
+        // Fallback estilo mockup quando não há logo PNG
+        <div>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              margin: "0 auto 3px",
+              border: "2px solid #fff",
+              borderRadius: "7px 7px 10px 10px",
+              background: "linear-gradient(135deg, #0ab8ff, #003a9c)",
+              boxShadow: "0 0 10px rgba(0, 145, 255, 0.8)",
+            }}
+          />
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.5px" }}>
+            {tournament.name.toUpperCase()}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
+// ============================================================================
+// TEAM BLOCK — label + 2 players + names box
+// ============================================================================
 function TeamBlock({
   label,
   team,
@@ -300,90 +318,81 @@ function TeamBlock({
   team: { p1: Player | null; p2: Player | null };
 }) {
   return (
-    <div style={{ margin: "6px 6px 0", textAlign: "center" }}>
+    <>
       <div
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: 14,
+          color: LIME,
+          fontSize: 10,
           fontWeight: 900,
-          color: "#84cc16",
-          letterSpacing: "2.5px",
-          marginBottom: 4,
-          textShadow: "0 0 6px rgba(132,204,22,.4)",
+          letterSpacing: "3px",
+          margin: "2px 0 4px",
         }}
       >
-        <span
-          style={{
-            width: 24,
-            height: 2,
-            background: "#84cc16",
-            boxShadow: "0 0 6px rgba(132,204,22,.7)",
-          }}
-        />
         {label}
-        <span
-          style={{
-            width: 24,
-            height: 2,
-            background: "#84cc16",
-            boxShadow: "0 0 6px rgba(132,204,22,.7)",
-          }}
-        />
       </div>
 
-      {/* Fotos: ABERTAS no fundo azul (sem caixa cinzenta atrás) */}
       <div
         style={{
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          gap: 0,
-          height: 140,
           width: "100%",
+          height: 82,
+          display: "flex",
+          justifyContent: "center",
+          gap: 5,
+          overflow: "hidden",
         }}
       >
-        <PlayerThumb player={team.p1} />
-        {team.p2 && <PlayerThumb player={team.p2} />}
+        <PlayerCell player={team.p1} />
+        {team.p2 && <PlayerCell player={team.p2} />}
       </div>
 
-      {/* Nomes em pill com border cyan + glow */}
       <div
         style={{
+          width: "100%",
+          border: `1px solid ${CYAN}`,
+          borderRadius: 6,
+          padding: "6px 4px",
           marginTop: 4,
-          padding: "9px 6px",
-          background:
-            "linear-gradient(180deg, rgba(13,40,80,.7) 0%, rgba(5,15,40,.7) 100%)",
-          border: "1.5px solid rgba(56,189,248,.7)",
-          borderRadius: 7,
-          fontSize: 16,
-          fontWeight: 900,
-          color: "#fff",
-          lineHeight: 1.2,
-          letterSpacing: "0.5px",
-          boxShadow:
-            "0 0 10px rgba(56,189,248,.35), inset 0 0 8px rgba(56,189,248,.1)",
-          textTransform: "uppercase",
+          background: "rgba(0, 10, 30, 0.75)",
+          boxShadow: "0 0 10px rgba(0, 145, 255, 0.55)",
+          textAlign: "center",
         }}
       >
-        {team.p1 && <div>{team.p1.shortName ?? team.p1.name}</div>}
-        {team.p2 && <div>{team.p2.shortName ?? team.p2.name}</div>}
+        {team.p1 && <NameLine text={team.p1.name} short={team.p1.shortName} />}
+        {team.p2 && <NameLine text={team.p2.name} short={team.p2.shortName} />}
       </div>
+    </>
+  );
+}
+
+function NameLine({ text, short }: { text: string; short: string | null }) {
+  // Usa o nome curto se existir (cabe melhor)
+  return (
+    <div
+      style={{
+        fontSize: 14,
+        fontWeight: 900,
+        lineHeight: 1.15,
+        textTransform: "uppercase",
+      }}
+    >
+      {short ?? text}
     </div>
   );
 }
 
-function PlayerThumb({ player }: { player: Player | null }) {
+function PlayerCell({ player }: { player: Player | null }) {
   return (
     <div
       style={{
-        width: 90,
-        height: 140,
-        position: "relative",
-        flexShrink: 0,
-        display: "grid",
-        placeItems: "end center",
+        width: 78,
+        height: 82,
+        background: "rgba(255, 255, 255, 0.08)",
+        borderRadius: "6px 6px 0 0",
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        boxShadow: "0 0 18px rgba(0, 132, 255, 0.4)",
       }}
     >
       {player?.photoUrl ? (
@@ -392,133 +401,85 @@ function PlayerThumb({ player }: { player: Player | null }) {
           src={player.photoUrl}
           alt=""
           style={{
-            maxWidth: "100%",
-            maxHeight: "100%",
-            objectFit: "contain",
-            objectPosition: "bottom",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "top center",
           }}
         />
       ) : (
-        // Sem foto: silhueta minimalista no fundo azul, sem caixa
         <div
           style={{
-            width: 70,
-            height: 120,
-            opacity: 0.25,
-            display: "grid",
-            placeItems: "end center",
+            color: "rgba(255,255,255,.4)",
+            fontSize: 24,
+            paddingBottom: 20,
           }}
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "#fff",
-              marginBottom: 60,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 60,
-              height: 70,
-              background: "#fff",
-              borderRadius: "20px 20px 0 0",
-            }}
-          />
+          ?
         </div>
       )}
     </div>
   );
 }
 
-function VsBig() {
+// ============================================================================
+// VS
+// ============================================================================
+function Vs() {
   return (
     <div
       style={{
-        textAlign: "center",
-        fontSize: 44,
+        fontSize: 32,
         fontWeight: 900,
-        color: "#84cc16",
+        color: LIME,
         lineHeight: 1,
-        margin: "6px 0 4px",
-        textShadow:
-          "0 0 14px rgba(132,204,22,.85), 0 0 32px rgba(132,204,22,.4)",
-        letterSpacing: "3px",
-        fontStyle: "italic",
+        margin: "6px 0 2px",
+        textShadow: "0 0 14px rgba(184, 255, 0, 0.8)",
       }}
     >
-      <span
-        style={{
-          display: "inline-block",
-          width: 36,
-          height: 2,
-          background: "rgba(132,204,22,.7)",
-          verticalAlign: "middle",
-          margin: "0 7px",
-          boxShadow: "0 0 6px rgba(132,204,22,.6)",
-        }}
-      />
       VS
-      <span
-        style={{
-          display: "inline-block",
-          width: 36,
-          height: 2,
-          background: "rgba(132,204,22,.7)",
-          verticalAlign: "middle",
-          margin: "0 7px",
-          boxShadow: "0 0 6px rgba(132,204,22,.6)",
-        }}
-      />
     </div>
   );
 }
 
-function ScheduledBlock({ scheduledAt }: { scheduledAt: string | null }) {
-  if (!scheduledAt) return <div style={{ height: 6 }} />;
+// ============================================================================
+// TIME BOX (HORÁRIO DO JOGO)
+// ============================================================================
+function TimeBox({ scheduledAt }: { scheduledAt: string }) {
   const d = new Date(scheduledAt);
   const pad = (n: number) => String(n).padStart(2, "0");
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   return (
     <div
       style={{
-        margin: "10px 6px 4px",
-        padding: "8px 4px 10px",
-        background:
-          "linear-gradient(180deg, rgba(13,40,80,.7) 0%, rgba(5,15,40,.7) 100%)",
-        borderRadius: 6,
-        border: "1px solid #84cc16",
-        boxShadow:
-          "0 0 10px rgba(132,204,22,.35), inset 0 0 6px rgba(132,204,22,.08)",
+        width: "100%",
+        marginTop: 8,
+        border: `1px solid ${LIME}`,
+        borderRadius: 7,
+        background: "rgba(0, 10, 25, 0.85)",
+        padding: "6px 4px 8px",
         textAlign: "center",
+        boxShadow: "0 0 12px rgba(184, 255, 0, 0.35)",
       }}
     >
       <div
         style={{
-          fontSize: 12,
+          color: LIME,
+          fontSize: 9,
           fontWeight: 900,
-          color: "#84cc16",
-          letterSpacing: "1.8px",
-          marginBottom: 4,
-          textShadow: "0 0 6px rgba(132,204,22,.4)",
+          letterSpacing: "1.5px",
+          marginBottom: 2,
         }}
       >
         HORÁRIO DO JOGO
       </div>
       <div
         style={{
-          fontSize: 46,
+          fontSize: 42,
           fontWeight: 900,
-          color: "#fff",
-          letterSpacing: "3.5px",
           lineHeight: 1,
-          textShadow: "0 0 12px rgba(255,255,255,.55)",
-          fontVariantNumeric: "tabular-nums",
+          letterSpacing: "-1px",
+          textShadow: "0 0 10px rgba(255, 255, 255, 0.45)",
         }}
       >
         {time}
@@ -527,64 +488,46 @@ function ScheduledBlock({ scheduledAt }: { scheduledAt: string | null }) {
   );
 }
 
-function NextBlock({ match }: { match: MatchData }) {
+// ============================================================================
+// NEXT BOX (A SEGUIR)
+// ============================================================================
+function NextBox({ match }: { match: MatchData }) {
   const pa1 = match.teamA.p1?.shortName ?? match.teamA.p1?.name ?? "?";
-  const pa2 = match.teamA.p2 ? ` | ${match.teamA.p2.shortName ?? match.teamA.p2.name}` : "";
+  const pa2 = match.teamA.p2
+    ? ` | ${match.teamA.p2.shortName ?? match.teamA.p2.name}`
+    : "";
   const pb1 = match.teamB.p1?.shortName ?? match.teamB.p1?.name ?? "?";
-  const pb2 = match.teamB.p2 ? ` | ${match.teamB.p2.shortName ?? match.teamB.p2.name}` : "";
+  const pb2 = match.teamB.p2
+    ? ` | ${match.teamB.p2.shortName ?? match.teamB.p2.name}`
+    : "";
   return (
     <div
       style={{
-        margin: "6px 6px 4px",
-        padding: "6px 4px 7px",
-        background:
-          "linear-gradient(180deg, rgba(5,15,40,.7) 0%, rgba(5,15,40,.5) 100%)",
-        borderRadius: 6,
-        border: "1px solid rgba(56,189,248,.45)",
-        boxShadow:
-          "0 0 8px rgba(56,189,248,.18), inset 0 0 6px rgba(56,189,248,.06)",
+        width: "100%",
+        marginTop: 8,
+        border: `1px solid ${CYAN}`,
+        borderRadius: 7,
+        background: "rgba(0, 10, 25, 0.75)",
+        padding: "6px 4px",
         textAlign: "center",
       }}
     >
       <div
         style={{
-          fontSize: 10,
+          color: CYAN,
+          fontSize: 11,
           fontWeight: 900,
-          color: "#38bdf8",
-          letterSpacing: "1.8px",
+          letterSpacing: "1px",
           marginBottom: 4,
         }}
       >
-        <span
-          style={{
-            display: "inline-block",
-            width: 14,
-            height: 1.5,
-            background: "#38bdf8",
-            boxShadow: "0 0 4px rgba(56,189,248,.6)",
-            verticalAlign: "middle",
-            margin: "0 4px",
-          }}
-        />
         A SEGUIR
-        <span
-          style={{
-            display: "inline-block",
-            width: 14,
-            height: 1.5,
-            background: "#38bdf8",
-            boxShadow: "0 0 4px rgba(56,189,248,.6)",
-            verticalAlign: "middle",
-            margin: "0 4px",
-          }}
-        />
       </div>
       <div
         style={{
           fontSize: 10,
           fontWeight: 800,
-          color: "#fff",
-          lineHeight: 1.25,
+          lineHeight: 1.2,
           textTransform: "uppercase",
         }}
       >
@@ -593,12 +536,10 @@ function NextBlock({ match }: { match: MatchData }) {
       </div>
       <div
         style={{
+          color: LIME,
           fontSize: 11,
           fontWeight: 900,
-          color: "#84cc16",
-          lineHeight: 1.2,
-          margin: "2px 0",
-          textShadow: "0 0 4px rgba(132,204,22,.5)",
+          margin: "1px 0",
         }}
       >
         VS
@@ -607,8 +548,7 @@ function NextBlock({ match }: { match: MatchData }) {
         style={{
           fontSize: 10,
           fontWeight: 800,
-          color: "#fff",
-          lineHeight: 1.25,
+          lineHeight: 1.2,
           textTransform: "uppercase",
         }}
       >
@@ -619,34 +559,50 @@ function NextBlock({ match }: { match: MatchData }) {
   );
 }
 
+// ============================================================================
+// FOOTER SPONSORS — grid 3-col com dividers
+// ============================================================================
 function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
+  const cols = Math.max(1, sponsors.length);
   return (
     <div
       style={{
         marginTop: "auto",
-        padding: "6px 4px 8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-evenly",
-        gap: 4,
-        borderTop: "1px solid rgba(56,189,248,.2)",
-        background: "rgba(255,255,255,.05)",
+        width: "100%",
+        height: 34,
+        border: "1px solid rgba(0, 170, 255, 0.45)",
+        borderRadius: 5,
+        display: "grid",
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        background: "rgba(0, 5, 18, 0.85)",
+        overflow: "hidden",
       }}
     >
       {sponsors.length === 0 ? (
-        <span style={{ fontSize: 8, color: "rgba(255,255,255,.3)" }}>—</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 7,
+            color: "rgba(255,255,255,.3)",
+          }}
+        >
+          —
+        </div>
       ) : (
         sponsors.map((s, i) => (
           <div
             key={i}
             style={{
-              flex: 1,
-              minWidth: 0,
-              height: 26,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "2px 2px",
+              padding: 2,
+              borderRight:
+                i < sponsors.length - 1
+                  ? "1px solid rgba(255, 255, 255, 0.25)"
+                  : "none",
               overflow: "hidden",
             }}
           >
@@ -667,6 +623,9 @@ function FooterSponsors({ sponsors }: { sponsors: Sponsor[] }) {
   );
 }
 
+// ============================================================================
+// EMPTY STATES + FULLSCREEN
+// ============================================================================
 function NoMatch() {
   return (
     <div
@@ -697,9 +656,6 @@ function NoMatch() {
   );
 }
 
-// ============================================================================
-// FullscreenSponsorScene — sponsor a cobrir o totem inteiro
-// ============================================================================
 function FullscreenSponsorScene({ imageUrl }: { imageUrl: string }) {
   return (
     <div
