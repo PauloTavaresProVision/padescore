@@ -67,11 +67,26 @@ export async function GET(
     { data: overridesRaw },
     { data: playersRaw },
   ] = await Promise.all([
+    // Tenta pedir colunas novas (migration 0016). Se ainda não foram
+    // aplicadas, fallback para colunas base. Defaults aplicados depois.
     supabase
       .from("tournaments")
-      .select("id, name, padelteams_competition_code")
+      .select(
+        "id, name, padelteams_competition_code, scene_main_duration_sec, scene_sponsors_duration_sec",
+      )
       .eq("id", totem.tournament_id)
-      .maybeSingle(),
+      .maybeSingle()
+      .then(async (r) => {
+        if (r.error && /scene_(main|sponsors)_duration_sec/i.test(r.error.message)) {
+          // Colunas ainda não existem — re-tentar sem elas
+          return await supabase
+            .from("tournaments")
+            .select("id, name, padelteams_competition_code")
+            .eq("id", totem.tournament_id)
+            .maybeSingle();
+        }
+        return r;
+      }),
     supabase
       .from("courts")
       .select("id, name, padelteams_field_id, sort_order")
@@ -101,9 +116,15 @@ export async function GET(
     );
   }
 
-  // 3) Snapshot do PadelTeams (cached)
+  // Preview mode (?preview=1): usado pela página admin Sponsors para mostrar
+  // o cavalete sem ter que ter PadelTeams configurado. Ignora a chamada à
+  // API externa, devolve mocks para jogos e usa os sponsors reais da DB.
+  const urlEarly = new URL(req.url);
+  const previewMode = urlEarly.searchParams.get("preview") === "1";
+
+  // 3) Snapshot do PadelTeams (cached) — ignorado em previewMode
   const competitionCode = tournament.padelteams_competition_code;
-  if (!competitionCode) {
+  if (!previewMode && !competitionCode) {
     return NextResponse.json(
       {
         error: "Torneio sem PadelTeams configurado",
@@ -113,15 +134,17 @@ export async function GET(
     );
   }
 
-  let snapshot;
-  try {
-    snapshot = await getCompetitionSnapshot(competitionCode);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Erro desconhecido";
-    return NextResponse.json(
-      { error: "Falha a contactar PadelTeams", detail: msg },
-      { status: 502 },
-    );
+  let snapshot: Awaited<ReturnType<typeof getCompetitionSnapshot>> | null = null;
+  if (!previewMode && competitionCode) {
+    try {
+      snapshot = await getCompetitionSnapshot(competitionCode);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro desconhecido";
+      return NextResponse.json(
+        { error: "Falha a contactar PadelTeams", detail: msg },
+        { status: 502 },
+      );
+    }
   }
 
   // 4) Indexes para o transform
@@ -147,11 +170,13 @@ export async function GET(
 
   // 5) Filtrar jogos para os fields deste cavalete e transformar
   const ourFieldIds = new Set(courtByFieldId.keys());
-  const transformedGames: CavaletteGame[] = snapshot.games
-    .filter((g) => g.field && ourFieldIds.has(g.field.id))
-    .map((g) =>
-      transformGame(g, { photoOverrides, courtByFieldId, featuredGameIds }),
-    );
+  const transformedGames: CavaletteGame[] = snapshot
+    ? snapshot.games
+        .filter((g) => g.field && ourFieldIds.has(g.field.id))
+        .map((g) =>
+          transformGame(g, { photoOverrides, courtByFieldId, featuredGameIds }),
+        )
+    : [];
 
   // 6) Categorizar por court
   //
@@ -189,8 +214,13 @@ export async function GET(
   // Dev/teste: ?demo=1 injecta jogos mock nos cards para vermos o visual
   // com dados a sério, mesmo quando o torneio do PadelTeams não tem jogos
   // a decorrer agora.
+  //
+  // ?preview=1 (modo admin Sponsors): também activa demo para mostrar
+  // jogos mock — mas mantém os sponsors REAIS da DB (ver bloco em baixo).
   const demoMode =
-    process.env.NODE_ENV !== "production" && url.searchParams.get("demo") === "1";
+    (process.env.NODE_ENV !== "production" &&
+      url.searchParams.get("demo") === "1") ||
+    previewMode;
   if (demoMode) {
     if (cavaleteCourts[0] && !liveByCourt[0]) {
       liveByCourt[0] = mockLiveGame(
@@ -305,26 +335,57 @@ export async function GET(
     }));
 
   // Demo: se não há sponsors reais, injecta uns mock para testar Cena 3
+  // - 8 logos para o cartão grande (grid 4×2 todos visíveis)
+  // - 12 logos para os 6 slots de parceiros (rotacionam 2 por slot)
   if (demoMode && footerSponsors.length === 0 && fullscreenSponsors.length === 0) {
-    // Logos públicos para teste (qualquer URL pública serve)
+    // Placeholders brancos com texto azul (simulam logos PNG)
     const mockLogo = (name: string) =>
       `https://placehold.co/400x200/ffffff/0a2856/png?text=${encodeURIComponent(name)}`;
     fullscreenSponsors = [
-      { imageUrl: mockLogo("STANDARD BANK"), durationSec: 8 },
-      { imageUrl: mockLogo("BYTE DIGITAL"), durationSec: 8 },
+      { imageUrl: mockLogo("ATC"), durationSec: 8 },
+      { imageUrl: mockLogo("GIANT SEGUROS"), durationSec: 8 },
+      { imageUrl: mockLogo("DOM"), durationSec: 8 },
+      { imageUrl: mockLogo("ALPROME"), durationSec: 8 },
+      { imageUrl: mockLogo("DELTA Q"), durationSec: 8 },
+      { imageUrl: mockLogo("CHANGAN"), durationSec: 8 },
+      { imageUrl: mockLogo("CASA DOS FRESCOS"), durationSec: 8 },
+      { imageUrl: mockLogo("ATLANTIDA WTA"), durationSec: 8 },
     ];
     footerSponsors = [
-      { imageUrl: mockLogo("CANDANDO") },
-      { imageUrl: mockLogo("BEEFEATER") },
-      { imageUrl: mockLogo("DELTA Q") },
-      { imageUrl: mockLogo("GIANT SEGUROS") },
-      { imageUrl: mockLogo("ATC") },
-      { imageUrl: mockLogo("DOM") },
+      { imageUrl: mockLogo("MATEUS ROSE") },
+      { imageUrl: mockLogo("AVENE") },
+      { imageUrl: mockLogo("CHECK-IN") },
+      { imageUrl: mockLogo("PURA") },
+      { imageUrl: mockLogo("RISKOS") },
+      { imageUrl: mockLogo("TCHACO SPORTS") },
+      { imageUrl: mockLogo("WASABI") },
+      { imageUrl: mockLogo("FISIO QUINTAS") },
+      { imageUrl: mockLogo("BYTE DIGITAL") },
+      { imageUrl: mockLogo("LE GUSTE") },
+      { imageUrl: mockLogo("URIAGE") },
+      { imageUrl: mockLogo("STANDARD GESTAO") },
     ];
   }
 
+  // Defaults caso a migration 0016 ainda não tenha sido aplicada na DB.
+  // O select com colunas novas devolve undefined em vez de falhar quando
+  // a column ainda não existe (depende do driver). Esta é uma defesa extra.
+  type TournamentWithScenes = typeof tournament & {
+    scene_main_duration_sec?: number | null;
+    scene_sponsors_duration_sec?: number | null;
+  };
+  const t = tournament as TournamentWithScenes;
+  const sceneMainSec = t.scene_main_duration_sec ?? 40;
+  const sceneSponsorsSec = t.scene_sponsors_duration_sec ?? 15;
+
   const payload: CavaletePayload = {
-    tournament: { name: tournament.name },
+    tournament: {
+      name: tournament.name,
+      sceneDurations: {
+        mainSec: sceneMainSec,
+        sponsorsSec: sceneSponsorsSec,
+      },
+    },
     cavalete: {
       name: totem.name,
       courts: cavaleteCourts,

@@ -143,6 +143,13 @@ export default async function TournamentDetailPage({
               PadelTeams →
             </Link>
             <Link
+              href={`/admin/tournaments/${id}/featured`}
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+              title="Marcar jogos em destaque para Cena 2 (EM FOCO)"
+            >
+              ★ Destaques →
+            </Link>
+            <Link
               href={`/admin/tournaments/${id}/sponsors`}
               className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
             >

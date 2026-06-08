@@ -51,6 +51,17 @@ export default async function SponsorsPage({
     .map((s) => `${s.id.slice(0, 8)}-${s.sortOrder}`)
     .join("_");
 
+  // Procura primeiro cavalete deste torneio — necessário porque o preview
+  // re-aproveita a rota /cavalete/{token} (já tem o renderer da Cena 3).
+  // Se não houver cavalete configurado, mostramos hint para criar um.
+  const { data: firstCavalete } = await supabase
+    .from("totems")
+    .select("api_token")
+    .eq("tournament_id", tournamentId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
   return (
     <div>
       <Link
@@ -65,29 +76,36 @@ export default async function SponsorsPage({
       </h1>
       <p className="mt-1 mb-4 max-w-2xl text-sm text-slate-500">
         Logótipos que aparecem nos cavaletes do torneio.{" "}
-        <b className="text-slate-700">Fullscreen</b> = patrocinador oficial
-        (cartão grande, centro da cena).{" "}
-        <b className="text-slate-700">Footer</b> = parceiros oficiais
-        (4 cartões pequenos 2×2 no rodapé da cena).
+        <b className="text-slate-700">Fullscreen</b> = Patrocinadores Oficiais
+        (até 8 logos juntos num cartão grande 4×2).{" "}
+        <b className="text-slate-700">Footer</b> = Parceiros (6 caixinhas
+        em grid 3×2, rotacionam entre todos os parceiros disponíveis).
       </p>
       <div className="mb-6 grid max-w-3xl gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs text-slate-700">
           <div className="mb-1 font-bold text-emerald-700">
-            FULLSCREEN — Patrocinador Oficial
+            FULLSCREEN — Patrocinadores Oficiais (até 8)
           </div>
           <div>
-            Recomendado: <b>800×300 px</b> · Máximo: 900×400 px
+            Recomendado: <b>200×120 px</b> · Máximo: 300×180 px
           </div>
-          <div>Ideal: PNG transparente ou SVG</div>
+          <div>
+            Todos visíveis ao mesmo tempo num grid 4 colunas × 2 linhas.
+          </div>
+          <div>Ideal: PNG transparente ou SVG · sem fundo branco</div>
         </div>
         <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 text-xs text-slate-700">
           <div className="mb-1 font-bold text-blue-700">
-            FOOTER — Parceiros Oficiais
+            FOOTER — Parceiros (sem limite)
           </div>
           <div>
-            Recomendado: <b>300×200 px</b> · Máximo: 350×250 px
+            Recomendado: <b>240×180 px</b> · Máximo: 320×240 px
           </div>
-          <div>Ideal: PNG transparente ou SVG · margem à volta do logo</div>
+          <div>
+            6 caixinhas em grid 3×2 rotacionam entre todos os parceiros
+            (8s por slot).
+          </div>
+          <div>Ideal: PNG transparente ou SVG</div>
         </div>
       </div>
 
@@ -104,23 +122,46 @@ export default async function SponsorsPage({
             initialSponsors={sponsors}
           />
         </div>
-        <aside className="lg:w-[230px]">
+        <aside className="lg:w-[270px]">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-            Preview do totem
+            Preview do cavalete (Cena Sponsors)
           </h2>
           <p className="mb-3 text-xs text-slate-500">
-            Os sponsors abaixo aparecem em rotação no rodapé. Jogadores e
-            horário são exemplo — só os sponsors são os reais deste torneio.
+            Mostra como os sponsors aparecem no cavalete 1080×1920 (Cena 3).
+            Jogadores são exemplo — sponsors são os reais deste torneio.
           </p>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm">
-            <iframe
-              title="Preview do totem"
-              src={`/totem-preview/${tournamentId}?v=${encodeURIComponent(previewKey)}`}
-              width="192"
-              height="640"
-              style={{ display: "block", border: 0, width: 192, height: 640 }}
-            />
-          </div>
+          {firstCavalete?.api_token ? (
+            <div
+              className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm"
+              style={{ width: 270, height: 480 }}
+            >
+              <iframe
+                title="Preview cavalete — Cena Sponsors"
+                src={`/cavalete/${firstCavalete.api_token}?scene=sponsors&preview=1&v=${encodeURIComponent(previewKey)}`}
+                style={{
+                  display: "block",
+                  border: 0,
+                  // Renderiza a 1080×1920 e escala para o iframe via CSS
+                  width: 1080,
+                  height: 1920,
+                  transform: "scale(0.25)",
+                  transformOrigin: "top left",
+                }}
+              />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <b className="block mb-1">Sem cavalete configurado</b>
+              Cria um cavalete na secção{" "}
+              <Link
+                href={`/admin/tournaments/${tournamentId}/totens`}
+                className="font-bold underline"
+              >
+                Cavaletes
+              </Link>{" "}
+              deste torneio para ver o preview aqui.
+            </div>
+          )}
         </aside>
       </div>
     </div>

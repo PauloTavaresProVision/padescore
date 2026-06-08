@@ -209,7 +209,14 @@ export function bucketCourtGames(
 // ============================================================================
 
 export interface CavaletePayload {
-  tournament: { name: string };
+  tournament: {
+    name: string;
+    /** Tempos de rotação configurados por torneio. Defaults: main 40s, sponsors 15s. */
+    sceneDurations: {
+      mainSec: number;
+      sponsorsSec: number;
+    };
+  };
   cavalete: {
     name: string;
     courts: { id: string; name: string }[];

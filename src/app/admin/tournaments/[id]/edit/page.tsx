@@ -253,6 +253,75 @@ export default async function EditTournamentPage({
           </div>
         </Fieldset>
 
+        <Fieldset
+          legend="Cavalete — rotação entre cenas"
+          hint="Quanto tempo cada cena fica visível no display 1080×1920 do cavalete."
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="scene_main_duration_sec"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Cena 1 — Jogos (em jogo agora + próximos + resultados)
+              </label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="scene_main_duration_sec"
+                  name="scene_main_duration_sec"
+                  type="number"
+                  min={5}
+                  max={600}
+                  defaultValue={tournament.scene_main_duration_sec ?? 40}
+                  className="w-28"
+                />
+                <span className="text-sm text-slate-500">segundos</span>
+              </div>
+              <p className="mt-1.5 text-xs text-slate-500">
+                Default: 40s. Min 5s, max 600s (10 min).
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="scene_sponsors_duration_sec"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Cena 3 — Publicidade (patrocinadores + parceiros)
+              </label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="scene_sponsors_duration_sec"
+                  name="scene_sponsors_duration_sec"
+                  type="number"
+                  min={5}
+                  max={300}
+                  defaultValue={tournament.scene_sponsors_duration_sec ?? 15}
+                  className="w-28"
+                />
+                <span className="text-sm text-slate-500">segundos</span>
+              </div>
+              <p className="mt-1.5 text-xs text-slate-500">
+                Default: 15s. Min 5s, max 300s (5 min).
+              </p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+            <b>Ciclo total:</b>{" "}
+            {(tournament.scene_main_duration_sec ?? 40) +
+              (tournament.scene_sponsors_duration_sec ?? 15)}
+            s
+            {" "}·{" "}
+            <b>Publicidade representa:</b>{" "}
+            {Math.round(
+              ((tournament.scene_sponsors_duration_sec ?? 15) /
+                ((tournament.scene_main_duration_sec ?? 40) +
+                  (tournament.scene_sponsors_duration_sec ?? 15))) *
+                100,
+            )}
+            % do tempo total
+          </div>
+        </Fieldset>
+
         <div className="flex items-center justify-between gap-3 pt-2">
           <DeleteTournamentButton action={deleteBound} tournamentName={tournament.name} />
           <div className="flex gap-3">

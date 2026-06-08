@@ -34,7 +34,10 @@ interface CavaletteGame {
   court: { id: string; name: string } | null;
 }
 interface CavaletePayload {
-  tournament: { name: string };
+  tournament: {
+    name: string;
+    sceneDurations: { mainSec: number; sponsorsSec: number };
+  };
   cavalete: {
     name: string;
     courts: { id: string; name: string }[];
@@ -69,9 +72,16 @@ const FONT_BODY = `Arial, "Helvetica Neue", sans-serif`;
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
+// Erro tipado — usado para mostrar mensagem específica por código
+interface FetchError {
+  status: number; // 0 = network error
+  hint?: string; // mensagem amigável do API (campo "hint" da resposta JSON)
+  rawMessage?: string;
+}
+
 export function CavaleteView({ token }: { token: string }) {
   const [data, setData] = useState<CavaletePayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<FetchError | null>(null);
   const etagRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -89,7 +99,17 @@ export function CavaleteView({ token }: { token: string }) {
         if (cancelled) return;
         if (res.status === 304) return;
         if (!res.ok) {
-          setError(`HTTP ${res.status}`);
+          // Tenta extrair "error" + "hint" do body JSON do nosso endpoint
+          let hint: string | undefined;
+          let rawMessage: string | undefined;
+          try {
+            const body = await res.json();
+            hint = body.hint || body.detail;
+            rawMessage = body.error;
+          } catch {
+            // body não-JSON, ignora
+          }
+          setError({ status: res.status, hint, rawMessage });
           return;
         }
         const etag = res.headers.get("etag");
@@ -99,7 +119,10 @@ export function CavaleteView({ token }: { token: string }) {
         setError(null);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Network error");
+        setError({
+          status: 0,
+          rawMessage: e instanceof Error ? e.message : "Network error",
+        });
       }
     }
     void poll();
@@ -131,27 +154,19 @@ export function CavaleteView({ token }: { token: string }) {
     }
     if (!hasSponsors) return;
     const isMain = sceneIdx === 0;
-    const dur = isMain ? 40_000 : 15_000;
+    // Durações vêm do payload (configuradas por torneio no admin).
+    // Defaults aplicados pelo servidor: 40s main / 15s sponsors.
+    const mainSec = data?.tournament.sceneDurations.mainSec ?? 40;
+    const sponsorsSec = data?.tournament.sceneDurations.sponsorsSec ?? 15;
+    const dur = (isMain ? mainSec : sponsorsSec) * 1000;
     const t = setTimeout(() => setSceneIdx((i) => (i + 1) % 2), dur);
     return () => clearTimeout(t);
-  }, [sceneIdx, hasSponsors, forceScene]);
+  }, [sceneIdx, hasSponsors, forceScene, data?.tournament.sceneDurations]);
 
   if (!data) {
     return (
       <Stage bg="main">
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "grid",
-            placeItems: "center",
-            color: "#fff",
-            fontSize: 32,
-            fontFamily: FONT_BODY,
-          }}
-        >
-          {error ? `Erro: ${error}` : "A carregar..."}
-        </div>
+        <StatusOverlay state={statusFromError(error)} />
       </Stage>
     );
   }
@@ -187,6 +202,9 @@ function Stage({
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // Cada cena tem o seu próprio PNG do designer com chrome completo
+  // (header + títulos + caixas + footer). Código só desenha CONTEÚDO
+  // DINÂMICO (logos, scores, jogadores) por cima.
   const bgUrl =
     bg === "sponsors"
       ? "/cavalete/scene-sponsors-bg.png"
@@ -816,68 +834,219 @@ function CompactTeam({
 }
 
 // =============================================================================
-// SPONSORS SCENE — sobre o PNG scene-sponsors-bg.png
-//   - 1 cartão grande no centro = "Patrocinador Oficial" (kind=fullscreen)
-//   - 4 cartões pequenos 2×2 = "Nossos Parceiros" (kind=footer)
-// Cada slot rotaciona independentemente entre os logos disponíveis dessa
-// categoria. Slots vazios mostram placeholder discreto.
+// SPONSORS SCENE — sobre o PNG scene-sponsors-bg.png do designer
+//
+// O PNG já tem TODO o chrome visual desenhado:
+//   - Header padel Open
+//   - Título "PATROCINADORES OFICIAIS" + caixa branca grande vazia
+//   - Título "NOSSOS PARCEIROS" + grid 3×2 de caixinhas vazias
+//   - Footer ornament
+//
+// O código só posiciona LOGOS dinâmicos por cima das caixas.
+// Coordenadas em canvas 1080×1920 (PNG 941×1672 é esticado pelo Stage).
 // =============================================================================
-const SPONSOR_ROTATE_MS = 6000;
-const SPONSOR_FADE_MS = 600;
+const PARTNER_ROTATE_MS = 6000;
+const PARTNER_FADE_MS = 600;
 
-// Coordenadas em canvas 1080×1920, medidas do PNG do designer
-const SPONSOR_SLOTS = {
-  // Patrocinador Oficial — cartão grande central (medido sobre o PNG)
-  main: { x: 133, y: 575, w: 814, h: 380 },
-  // Nossos Parceiros — 4 cartões 2×2 (deixar respiro para o título acima)
-  partners: [
-    { x: 133, y: 1215, w: 369, h: 295 }, // top-left
-    { x: 569, y: 1215, w: 378, h: 295 }, // top-right
-    { x: 133, y: 1535, w: 369, h: 295 }, // bottom-left
-    { x: 569, y: 1535, w: 378, h: 295 }, // bottom-right
-  ],
+// Coordenadas medidas directamente do scene-sponsors-bg.png (1080×1920)
+// via detecção de pixels brancos nas caixas desenhadas.
+const SPONSORS_LAYOUT = {
+  // Caixa grande "PATROCINADORES OFICIAIS" — grid 4×2 de logos
+  mainCard: {
+    x: 48,
+    y: 620,
+    w: 987,
+    h: 585,
+    grid: { cols: 4, rows: 2, padding: 36, gap: 16 },
+  },
+  // 6 caixinhas em grid 3×2 — 1 logo cada
+  partnersGrid: {
+    startX: 64,
+    startY: 1330,
+    cellW: 303,
+    cellH: 195,
+    gapX: 22,
+    gapY: 40,
+    cols: 3,
+    rows: 2,
+  },
 };
 
 function SponsorsScene({ data }: { data: CavaletePayload }) {
-  const mainSponsors = data.sponsors.fullscreen;
-  const partnerSponsors = data.sponsors.footer;
+  const mainSponsors = data.sponsors.fullscreen.slice(0, 8); // até 8 no grid 4×2
+  const partnerPool = data.sponsors.footer;
+
+  // Construir 6 listas DISJUNTAS (uma por slot do grid 3×2) usando
+  // chunking por stride: o slot i recebe pool[i], pool[i+6], pool[i+12]...
+  // Garante que num dado instante NUNCA há logos repetidos visíveis,
+  // mesmo com pools grandes (ex: 16 → cada slot tem 2-3 logos exclusivos).
+  const partnerSlotItems: { imageUrl: string }[][] = Array.from(
+    { length: 6 },
+    () => [],
+  );
+  partnerPool.forEach((item, idx) => {
+    partnerSlotItems[idx % 6]!.push(item);
+  });
 
   return (
     <>
-      {/* Cartão grande — Patrocinador Oficial */}
-      <SponsorSlot
-        slot={SPONSOR_SLOTS.main}
-        items={mainSponsors}
-        rotateMs={SPONSOR_ROTATE_MS}
+      {/* GRID 4×2 dos sponsors principais — POR CIMA da caixa branca do PNG */}
+      <MainSponsorsCard
+        slot={SPONSORS_LAYOUT.mainCard}
+        sponsors={mainSponsors}
       />
 
-      {/* 4 cartões pequenos — Nossos Parceiros */}
-      {SPONSOR_SLOTS.partners.map((slotCoords, slotIdx) => (
-        <SponsorSlot
-          key={slotIdx}
-          slot={slotCoords}
-          // Cada slot mostra uma "view" diferente da lista de parceiros,
-          // desfasada — assim quando rotam, não mostram todos o mesmo
-          items={rotateArray(partnerSponsors, slotIdx)}
-          rotateMs={SPONSOR_ROTATE_MS + slotIdx * 500} // ligeiro desfasamento
-        />
-      ))}
+      {/* GRID 3×2 de logos parceiros — POR CIMA das 6 caixinhas do PNG */}
+      {Array.from({ length: 6 }).map((_, i) => {
+        const col = i % SPONSORS_LAYOUT.partnersGrid.cols;
+        const row = Math.floor(i / SPONSORS_LAYOUT.partnersGrid.cols);
+        const x =
+          SPONSORS_LAYOUT.partnersGrid.startX +
+          col * (SPONSORS_LAYOUT.partnersGrid.cellW + SPONSORS_LAYOUT.partnersGrid.gapX);
+        const y =
+          SPONSORS_LAYOUT.partnersGrid.startY +
+          row * (SPONSORS_LAYOUT.partnersGrid.cellH + SPONSORS_LAYOUT.partnersGrid.gapY);
+        return (
+          <PartnerCard
+            key={i}
+            x={x}
+            y={y}
+            w={SPONSORS_LAYOUT.partnersGrid.cellW}
+            h={SPONSORS_LAYOUT.partnersGrid.cellH}
+            items={partnerSlotItems[i]!}
+            rotateMs={PARTNER_ROTATE_MS + i * 400}
+          />
+        );
+      })}
     </>
   );
 }
 
-function rotateArray<T>(arr: T[], offset: number): T[] {
-  if (arr.length === 0) return arr;
-  const o = offset % arr.length;
-  return [...arr.slice(o), ...arr.slice(0, o)];
+// -----------------------------------------------------------------------------
+// EmptySlotPlaceholder — placeholder discreto para slots vazios no grid
+// 4×2 do PATROCINADOR OFICIAL (usado em preview / quando há menos de 8
+// patrocinadores configurados)
+// -----------------------------------------------------------------------------
+function EmptySlotPlaceholder({ label }: { label: string }) {
+  return (
+    <div
+      style={{
+        border: "2px dashed rgba(45, 140, 255, .25)",
+        borderRadius: 12,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "rgba(45, 140, 255, .55)",
+        fontFamily: FONT_BODY,
+        fontWeight: 700,
+        fontSize: 14,
+        letterSpacing: "1px",
+        textAlign: "center",
+        padding: 6,
+      }}
+    >
+      {label}
+    </div>
+  );
 }
 
-function SponsorSlot({
+// -----------------------------------------------------------------------------
+// MainSponsorsCard — caixa branca grande com grid 4×2 de logos dentro
+// -----------------------------------------------------------------------------
+function MainSponsorsCard({
   slot,
+  sponsors,
+}: {
+  slot: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    grid: { cols: number; rows: number; padding: number; gap: number };
+  };
+  sponsors: { imageUrl: string }[];
+}) {
+  const cells = slot.grid.cols * slot.grid.rows; // 8
+  const list = Array.from({ length: cells }).map((_, i) => sponsors[i] ?? null);
+
+  return (
+    <div
+      style={{
+        // POR CIMA da caixa branca desenhada no PNG (sem styling próprio)
+        position: "absolute",
+        left: slot.x,
+        top: slot.y,
+        width: slot.w,
+        height: slot.h,
+        zIndex: 2,
+        padding: slot.grid.padding,
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${slot.grid.cols}, 1fr)`,
+          gridTemplateRows: `repeat(${slot.grid.rows}, 1fr)`,
+          gap: slot.grid.gap,
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        {list.map((item, i) =>
+          item ? (
+            <div
+              key={i}
+              style={{
+                position: "relative",
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+              }}
+            >
+              {/* Logo ocupa 95% × 75% da célula (mantendo aspect ratio via
+                  background-size: contain). Generoso o suficiente para
+                  logos com aspects extremos não desaparecerem, sem ficarem
+                  todos a tocar nas bordas. */}
+              <div
+                style={{
+                  width: "95%",
+                  height: "75%",
+                  backgroundImage: `url('${item.imageUrl}')`,
+                  backgroundPosition: "center",
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            </div>
+          ) : (
+            <EmptySlotPlaceholder key={i} label="Patrocinador" />
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// PartnerCard — caixinha branca com cyan glow border, com 1 logo dentro,
+// rotaciona entre items
+// -----------------------------------------------------------------------------
+function PartnerCard({
+  x,
+  y,
+  w,
+  h,
   items,
   rotateMs,
 }: {
-  slot: { x: number; y: number; w: number; h: number };
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   items: { imageUrl: string }[];
   rotateMs: number;
 }) {
@@ -893,34 +1062,34 @@ function SponsorSlot({
   return (
     <div
       style={{
+        // POR CIMA da caixinha branca desenhada no PNG (sem styling próprio)
         position: "absolute",
-        left: slot.x,
-        top: slot.y,
-        width: slot.w,
-        height: slot.h,
-        // Fundo branco opaco que tapa o placeholder do PNG por baixo,
-        // mesmo cantos arredondados (matching o template do designer)
-        background: "#fff",
-        borderRadius: 30,
+        left: x,
+        top: y,
+        width: w,
+        height: h,
         overflow: "hidden",
+        zIndex: 2,
       }}
     >
       {total === 0 ? (
         <div
           style={{
-            width: "100%",
-            height: "100%",
+            position: "absolute",
+            inset: 16,
+            border: "2px dashed rgba(45, 140, 255, .35)",
+            borderRadius: 14,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "rgba(0,0,0,.15)",
+            color: "rgba(45, 140, 255, .65)",
             fontFamily: FONT_BODY,
             fontWeight: 700,
-            fontSize: 20,
-            letterSpacing: "1.5px",
+            fontSize: 18,
+            letterSpacing: "1px",
           }}
         >
-          —
+          PARCEIRO
         </div>
       ) : (
         items.map((item, i) => (
@@ -930,23 +1099,22 @@ function SponsorSlot({
               position: "absolute",
               inset: 0,
               opacity: i === idx ? 1 : 0,
-              transition: `opacity ${SPONSOR_FADE_MS}ms ease`,
+              transition: `opacity ${PARTNER_FADE_MS}ms ease`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "8%",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.imageUrl}
-              alt=""
+            {/* Área alvo fixa 230×150 — uniformiza weight visual entre
+                logos com aspect ratios diferentes */}
+            <div
               style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                width: "auto",
-                height: "auto",
-                objectFit: "contain",
+                width: 230,
+                height: 150,
+                backgroundImage: `url('${item.imageUrl}')`,
+                backgroundPosition: "center",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
               }}
             />
           </div>
@@ -1095,6 +1263,146 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+    </div>
+  );
+}
+
+// =============================================================================
+// STATUS OVERLAY — para estados de erro/loading, dentro do Stage
+// Mantém o header padel Open do PNG visível por baixo, em vez de tela negra.
+// =============================================================================
+type StatusKind = "loading" | "notfound" | "unconfigured" | "offline" | "server" | "network";
+interface StatusInfo {
+  kind: StatusKind;
+  title: string;
+  hint: string;
+  emoji: string;
+  color: string;
+}
+
+function statusFromError(err: FetchError | null): StatusInfo {
+  if (!err) {
+    return {
+      kind: "loading",
+      title: "A PREPARAR CAVALETE",
+      hint: "A carregar dados do torneio...",
+      emoji: "⏳",
+      color: "#12c8ff",
+    };
+  }
+  if (err.status === 404) {
+    return {
+      kind: "notfound",
+      title: "CAVALETE NÃO ENCONTRADO",
+      hint: "Verifica se o código do dispositivo está correcto. Contacta o organizador se persistir.",
+      emoji: "🔍",
+      color: "#ff4554",
+    };
+  }
+  if (err.status === 409) {
+    return {
+      kind: "unconfigured",
+      title: "AGUARDANDO CONFIGURAÇÃO",
+      hint:
+        err.hint ||
+        "O torneio ainda não está ligado ao PadelTeams. Vai começar em breve.",
+      emoji: "⚙",
+      color: "#9bf000",
+    };
+  }
+  if (err.status === 502) {
+    return {
+      kind: "offline",
+      title: "SEM LIGAÇÃO AO PADELTEAMS",
+      hint: "A tentar reconectar automaticamente...",
+      emoji: "📡",
+      color: "#ffaa00",
+    };
+  }
+  if (err.status >= 500) {
+    return {
+      kind: "server",
+      title: "ERRO TEMPORÁRIO",
+      hint: `Servidor indisponível (${err.status}). A tentar novamente...`,
+      emoji: "⚠",
+      color: "#ff4554",
+    };
+  }
+  if (err.status === 0) {
+    return {
+      kind: "network",
+      title: "SEM LIGAÇÃO À REDE",
+      hint: "Verifica a ligação Wi-Fi/Ethernet deste cavalete.",
+      emoji: "📶",
+      color: "#ffaa00",
+    };
+  }
+  // Fallback para outros 4xx
+  return {
+    kind: "server",
+    title: `ERRO ${err.status}`,
+    hint: err.hint || err.rawMessage || "Erro desconhecido — a tentar novamente.",
+    emoji: "⚠",
+    color: "#ff4554",
+  };
+}
+
+function StatusOverlay({ state }: { state: StatusInfo }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        // Não cobre o header padel Open do PNG (top ~430px)
+        paddingTop: 720,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        textAlign: "center",
+        padding: "720px 60px 0",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 120,
+          marginBottom: 30,
+          textShadow: `0 0 40px ${state.color}`,
+          opacity: state.kind === "loading" ? 0.85 : 1,
+          animation:
+            state.kind === "loading"
+              ? "cav-pulse 1.8s ease-in-out infinite"
+              : undefined,
+        }}
+      >
+        {state.emoji}
+      </div>
+      <style>{`@keyframes cav-pulse {0%,100%{opacity:.4;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}`}</style>
+      <div
+        style={{
+          color: state.color,
+          fontSize: 72,
+          letterSpacing: "3px",
+          textShadow: `0 0 24px ${state.color}99`,
+          marginBottom: 24,
+          lineHeight: 1.1,
+        }}
+      >
+        {state.title}
+      </div>
+      <div
+        style={{
+          color: "rgba(255,255,255,.78)",
+          fontFamily: FONT_BODY,
+          fontWeight: 600,
+          fontSize: 32,
+          maxWidth: 820,
+          lineHeight: 1.35,
+        }}
+      >
+        {state.hint}
+      </div>
     </div>
   );
 }
