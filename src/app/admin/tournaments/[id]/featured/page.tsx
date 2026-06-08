@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ChevronLeftIcon } from "@/components/icons";
-import { getCompetitionSnapshot } from "@/lib/padelteams/client";
+import {
+  getCompetitionSnapshot,
+  combineGameDateTime,
+} from "@/lib/padelteams/client";
 import { toggleFeatured } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +71,9 @@ export default async function FeaturedGamesPage({
     const aFeat = featuredSet.has(a.id) ? 0 : 1;
     const bFeat = featuredSet.has(b.id) ? 0 : 1;
     if (aFeat !== bFeat) return aFeat - bFeat;
-    return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+    return (
+      combineGameDateTime(a).getTime() - combineGameDateTime(b).getTime()
+    );
   });
 
   return (
@@ -147,7 +152,7 @@ export default async function FeaturedGamesPage({
             <tbody className="divide-y divide-slate-100">
               {sortedGames.map((g) => {
                 const isFeatured = featuredSet.has(g.id);
-                const d = new Date(g.scheduled_at);
+                const d = combineGameDateTime(g);
                 return (
                   <tr
                     key={g.id}
