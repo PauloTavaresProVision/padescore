@@ -431,7 +431,7 @@ function RequestModal({
       `${preferredText ? `Disponibilidade alternativa: ${preferredText}\n\n` : ""}` +
       `*Por favor cada um confirma se concorda* (cada link é único):\n\n` +
       acceptances
-        .map((a) => `${a.player_name}: ${origin}/confirmar/${a.acceptance_token}`)
+        .map((a) => `${a.player_name}: ${origin}/c/${a.acceptance_token}`)
         .join("\n");
     const waText = encodeURIComponent(intro);
 

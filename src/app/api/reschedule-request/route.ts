@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPublicCompetitionGames } from "@/lib/padelteams/scraper";
+import { sendSmsOne } from "@/lib/wesender/client";
 
 export const dynamic = "force-dynamic";
 
@@ -261,6 +262,49 @@ export async function POST(req: Request) {
     .from("reschedule_acceptances")
     .select("player_name, player_role, player_phone, acceptance_token")
     .eq("request_id", inserted.id);
+
+  // -------------------------------------------------------------------------
+  // Disparar SMS via Wesender para cada jogador que tem telemóvel.
+  // Async em paralelo, não bloqueia a resposta — falhas são logadas mas não
+  // partem o pedido (o frontend ainda tem links WhatsApp como backup).
+  // -------------------------------------------------------------------------
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+  // SMS curto cabe em 160 chars (Wesender substitui acentos por nós com
+  // CEspeciais=false). Formato:
+  //   "Standard Open: Niria pediu alteracao do jogo 13/06 11:45. Concordas? https://X/c/abc..."
+  const eventShort = "Standard Open";
+  const dayShort = game.date
+    .split("-")
+    .slice(1)
+    .reverse()
+    .join("/"); // YYYY-MM-DD → DD/MM
+  const timeShort = game.time;
+
+  if (createdAcceptances && createdAcceptances.length > 0) {
+    void Promise.allSettled(
+      createdAcceptances
+        .filter((a) => a.player_phone)
+        .map(async (a) => {
+          const url = `${appUrl}/c/${a.acceptance_token}`;
+          const msg = `${eventShort}: ${requesterName} pediu alteracao do jogo ${dayShort} ${timeShort}. Concordas? ${url}`;
+          try {
+            await sendSmsOne(a.player_phone!, msg, {
+              allowSpecialChars: false,
+            });
+            // Marca enviado na DB (best-effort)
+            await supabase
+              .from("reschedule_acceptances")
+              .update({ decided_via: "sms_sent" })
+              .eq("acceptance_token", a.acceptance_token);
+          } catch (err) {
+            console.warn(
+              `[wesender] falha a enviar SMS para ${a.player_name} (${a.player_phone}):`,
+              err instanceof Error ? err.message : err,
+            );
+          }
+        }),
+    );
+  }
 
   return NextResponse.json(
     {
