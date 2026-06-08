@@ -7,10 +7,12 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/pedidos/[code]/lookup
  *
- * Endpoint público. Identifica o jogador pelo telemóvel e devolve os jogos
- * em que está envolvido (matching por nome com o snapshot PadelTeams).
+ * Endpoint público. Identifica o jogador pelo telemóvel OU email e
+ * devolve os jogos em que está envolvido (matching por nome com o
+ * snapshot PadelTeams).
  *
- * Body: { phone: "+244923456789" }
+ * Body: { phone: "+244923456789" }  ou  { email: "x@y.com" }
+ *        (ou identifier — auto-detect se contém @)
  *
  * Response 200 (1 jogador):
  *   {
@@ -19,14 +21,14 @@ export const dynamic = "force-dynamic";
  *     games: [{ id, scheduledAt, field, teamA, teamB, ... }]
  *   }
  *
- * Response 200 (vários jogadores no mesmo telemóvel — casais):
+ * Response 200 (vários jogadores no mesmo contacto — casais que partilham):
  *   {
  *     players: [{ name, category }, { name, category }],
  *     selectedPlayer: null,  // frontend mostra dropdown
  *     games: []
  *   }
  *
- * Response 404: telemóvel não inscrito neste torneio.
+ * Response 404: identificador não inscrito neste torneio.
  */
 
 function normalizePhone(raw: string, defaultCountry = "244"): string | null {
@@ -64,22 +66,49 @@ export async function POST(
 ) {
   const { code } = await params;
 
-  let body: { phone?: string; selectedName?: string };
+  let body: {
+    phone?: string;
+    email?: string;
+    identifier?: string;
+    selectedName?: string;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  const phone = normalizePhone(String(body.phone ?? ""));
-  if (!phone) {
+  // Auto-detect: se `identifier` contém '@' → email; senão → phone.
+  // Aceitar também phone/email explícitos como fallback.
+  const rawIdentifier = (body.identifier ?? "").trim();
+  let lookupEmail: string | null = null;
+  let lookupPhone: string | null = null;
+
+  if (body.email) {
+    lookupEmail = String(body.email).trim().toLowerCase();
+  } else if (body.phone) {
+    lookupPhone = normalizePhone(String(body.phone));
+  } else if (rawIdentifier) {
+    if (rawIdentifier.includes("@")) {
+      lookupEmail = rawIdentifier.toLowerCase();
+    } else {
+      lookupPhone = normalizePhone(rawIdentifier);
+    }
+  }
+
+  if (!lookupPhone && !lookupEmail) {
     return NextResponse.json(
       {
         error:
-          "Telemóvel inválido. Formato: +244923456789 ou 923456789 (Angola)",
+          "Identificador inválido. Indica telemóvel (ex: 923456789) ou email.",
       },
       { status: 400 },
     );
+  }
+
+  // Validar formato email se foi essa a escolha
+  if (lookupEmail && !/^\S+@\S+\.\S+$/.test(lookupEmail)) {
+    return NextResponse.json({ error: "Email inválido" }, { status: 400 });
   }
 
   const supabase = createAdminClient();
@@ -97,19 +126,26 @@ export async function POST(
     );
   }
 
-  // Procurar jogadores com este telemóvel (pode haver mais de 1 — casais)
-  const { data: contactsRaw } = await supabase
+  // Procurar jogadores pelo telemóvel OU email (case-insensitive no email)
+  let query = supabase
     .from("players_contacts")
-    .select("name, category, gender")
-    .eq("tournament_id", tournament.id)
-    .eq("phone", phone);
+    .select("name, phone, email, category, gender")
+    .eq("tournament_id", tournament.id);
+  if (lookupPhone) {
+    query = query.eq("phone", lookupPhone);
+  } else if (lookupEmail) {
+    // ilike para case-insensitive — emails são case-insensitive no domain
+    query = query.ilike("email", lookupEmail);
+  }
+  const { data: contactsRaw } = await query;
   const contacts = contactsRaw ?? [];
 
   if (contacts.length === 0) {
     return NextResponse.json(
       {
-        error:
-          "Telemóvel não encontrado nas inscrições. Confirma o número ou contacta o clube.",
+        error: lookupEmail
+          ? "Email não encontrado nas inscrições. Verifica ou contacta o clube."
+          : "Telemóvel não encontrado nas inscrições. Confirma o número ou contacta o clube.",
       },
       { status: 404 },
     );
@@ -193,6 +229,10 @@ export async function POST(
       name: player.name,
       category: player.category,
       gender: player.gender,
+      // Devolvido para o frontend usar no submit do pedido (que precisa
+      // sempre de telemóvel, mesmo quando o jogador se identificou por email)
+      phone: player.phone,
+      email: player.email,
     },
     games,
   });

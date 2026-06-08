@@ -15,6 +15,8 @@ interface PlayerOption {
   name: string;
   category: string | null;
   gender: "M" | "F" | null;
+  phone?: string;
+  email?: string | null;
 }
 
 interface LookupResponse {
@@ -39,7 +41,8 @@ interface Props {
  *   4. Modal para preencher motivo + sugestão
  */
 export function PedidosClient({ competitionCode }: Props) {
-  const [phone, setPhone] = useState("");
+  // Identificador pode ser telemóvel OU email (auto-detect por '@')
+  const [identifier, setIdentifier] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
 
@@ -59,7 +62,7 @@ export function PedidosClient({ competitionCode }: Props) {
       const res = await fetch(`/api/pedidos/${competitionCode}/lookup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, selectedName }),
+        body: JSON.stringify({ identifier, selectedName }),
       });
       const data: LookupResponse = await res.json();
       if (!res.ok) {
@@ -84,6 +87,9 @@ export function PedidosClient({ competitionCode }: Props) {
     setSubmittedId(null);
   }
 
+  // Detecta visualmente o tipo de input para feedback (placeholder + icon)
+  const looksLikeEmail = identifier.includes("@");
+
   // Tela 1: pede telemóvel
   if (!players) {
     return (
@@ -92,7 +98,8 @@ export function PedidosClient({ competitionCode }: Props) {
           Identifica-te
         </h2>
         <p className="mb-4 text-sm text-slate-600">
-          Indica o teu telemóvel para vermos os teus jogos.
+          Indica o teu <b>telemóvel</b> ou <b>email</b> para vermos os teus
+          jogos.
         </p>
         <form
           onSubmit={(e) => {
@@ -101,17 +108,23 @@ export function PedidosClient({ competitionCode }: Props) {
           }}
           className="space-y-3"
         >
-          <input
-            type="tel"
-            inputMode="tel"
-            required
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+244 923 456 789"
-            disabled={lookingUp}
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base !text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100"
-            autoFocus
-          />
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg">
+              {looksLikeEmail ? "✉️" : "📱"}
+            </span>
+            <input
+              type="text"
+              inputMode={looksLikeEmail ? "email" : "tel"}
+              autoComplete={looksLikeEmail ? "email" : "tel"}
+              required
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="923 456 789 ou o.teu@email.com"
+              disabled={lookingUp}
+              className="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-4 py-3 text-base !text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100"
+              autoFocus
+            />
+          </div>
           {lookupError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
               {lookupError}
@@ -119,14 +132,14 @@ export function PedidosClient({ competitionCode }: Props) {
           )}
           <button
             type="submit"
-            disabled={lookingUp || !phone.trim()}
+            disabled={lookingUp || !identifier.trim()}
             className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-base font-bold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-50"
           >
             {lookingUp ? "A procurar..." : "Ver os meus jogos"}
           </button>
           <p className="text-center text-[11px] text-slate-400">
-            O teu número é usado apenas para validar a identidade e contactar-te
-            sobre a alteração.
+            O teu contacto é usado apenas para validar a identidade e
+            contactar-te sobre a alteração.
           </p>
         </form>
       </div>
@@ -262,7 +275,9 @@ export function PedidosClient({ competitionCode }: Props) {
           competitionCode={competitionCode}
           game={selectedGame}
           requesterName={selectedPlayer.name}
-          requesterPhone={phone}
+          // O telemóvel vem do contacto na DB (uniforme E.164), independente
+          // de o jogador se ter identificado por phone ou email.
+          requesterPhone={selectedPlayer.phone ?? identifier}
           onClose={() => {
             setSelectedGame(null);
             setSubmittedId(null);
