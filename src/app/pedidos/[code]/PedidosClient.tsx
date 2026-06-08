@@ -109,7 +109,7 @@ export function PedidosClient({ competitionCode }: Props) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+244 923 456 789"
             disabled={lookingUp}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base !text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100"
             autoFocus
           />
           {lookupError && (
@@ -397,7 +397,7 @@ function RequestModal({
             onChange={(e) => setReason(e.target.value)}
             placeholder="Conflito com viagem de trabalho, doença, etc."
             rows={3}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm !text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
         </Field>
         <Field label="Sugestão de novo horário (opcional)">
@@ -405,7 +405,7 @@ function RequestModal({
             value={preferred}
             onChange={(e) => setPreferred(e.target.value)}
             placeholder="Sábado tarde ou domingo manhã"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm !text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
         </Field>
 
