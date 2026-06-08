@@ -180,13 +180,106 @@ export async function POST(req: Request) {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Criar acceptances para os OUTROS 3 jogadores (parceira + 2 adversários)
+  // Match por nome fuzzy com players_contacts para obter telemóveis.
+  // O requester é auto-aceite (não criamos linha para ele).
+  // -------------------------------------------------------------------------
+  const requesterNorm = normalizeName(requesterName);
+  // Quem está na mesma dupla que o requester? A ou B?
+  const requesterInA = game.teamAPlayers.some(
+    (n) => normalizeName(n) === requesterNorm ||
+            normalizeName(n).includes(requesterNorm) ||
+            requesterNorm.includes(normalizeName(n)),
+  );
+  const partners = requesterInA ? game.teamAPlayers : game.teamBPlayers;
+  const opponents = requesterInA ? game.teamBPlayers : game.teamAPlayers;
+
+  // Buscar contactos de TODOS os jogadores que NÃO são o requester
+  const otherNames = [
+    ...partners.filter((n) => normalizeName(n) !== requesterNorm),
+    ...opponents,
+  ];
+
+  const { data: allContacts } = await supabase
+    .from("players_contacts")
+    .select("name, phone, email")
+    .eq("tournament_id", tournament.id);
+
+  const contactByName = new Map<string, { phone: string; email: string | null }>();
+  for (const c of allContacts ?? []) {
+    contactByName.set(normalizeName(c.name), {
+      phone: c.phone,
+      email: c.email,
+    });
+  }
+
+  function lookupContact(name: string): { phone: string | null; email: string | null } {
+    const nn = normalizeName(name);
+    // Match exacto primeiro
+    if (contactByName.has(nn)) {
+      const c = contactByName.get(nn)!;
+      return { phone: c.phone, email: c.email };
+    }
+    // Fallback fuzzy (substring)
+    for (const [k, v] of contactByName) {
+      if (k.includes(nn) || nn.includes(k)) {
+        return { phone: v.phone, email: v.email };
+      }
+    }
+    return { phone: null, email: null };
+  }
+
+  const acceptanceRows = otherNames.map((name) => {
+    const c = lookupContact(name);
+    const role = partners.includes(name) ? "partner" : "opponent";
+    return {
+      request_id: inserted.id,
+      player_name: name,
+      player_role: role,
+      player_phone: c.phone,
+      player_email: c.email,
+    };
+  });
+
+  if (acceptanceRows.length > 0) {
+    const { error: accErr } = await supabase
+      .from("reschedule_acceptances")
+      .insert(acceptanceRows);
+    if (accErr) {
+      // Não bloqueia — o pedido foi guardado, só falhou criar acceptances
+      console.warn(
+        `[reschedule] falha a criar acceptances para request ${inserted.id}:`,
+        accErr.message,
+      );
+    }
+  }
+
+  // Buscar os tokens das acceptances criadas para devolver ao frontend
+  // (usa para gerar link de partilha no WhatsApp)
+  const { data: createdAcceptances } = await supabase
+    .from("reschedule_acceptances")
+    .select("player_name, player_role, player_phone, acceptance_token")
+    .eq("request_id", inserted.id);
+
   return NextResponse.json(
     {
       id: inserted.id,
       status: inserted.status,
       createdAt: inserted.created_at,
       gameSnapshot,
+      acceptances: createdAcceptances ?? [],
     },
     { status: 201 },
   );
+}
+
+/** Normaliza nome para matching: lowercase, sem acentos. */
+function normalizeName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
 }

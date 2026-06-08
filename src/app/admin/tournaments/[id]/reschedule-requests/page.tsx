@@ -30,6 +30,14 @@ interface RequestRow {
   created_at: string;
 }
 
+interface AcceptanceRow {
+  request_id: string;
+  player_name: string;
+  player_role: "partner" | "opponent";
+  status: "pending" | "accepted" | "rejected";
+  decided_at: string | null;
+}
+
 export default async function ReschedulePage({
   params,
   searchParams,
@@ -62,6 +70,22 @@ export default async function ReschedulePage({
     .eq("tournament_id", tournamentId)
     .order("created_at", { ascending: false });
   const requests = (requestsRaw ?? []) as RequestRow[];
+
+  // Buscar acceptances de todos os requests (1 query só)
+  const requestIds = requests.map((r) => r.id);
+  const { data: acceptancesRaw } =
+    requestIds.length > 0
+      ? await supabase
+          .from("reschedule_acceptances")
+          .select("request_id, player_name, player_role, status, decided_at")
+          .in("request_id", requestIds)
+      : { data: [] };
+  const acceptancesByRequest = new Map<string, AcceptanceRow[]>();
+  for (const a of (acceptancesRaw ?? []) as AcceptanceRow[]) {
+    const arr = acceptancesByRequest.get(a.request_id) ?? [];
+    arr.push(a);
+    acceptancesByRequest.set(a.request_id, arr);
+  }
 
   const pending = requests.filter((r) => r.status === "pending");
   const resolved = requests.filter((r) => r.status !== "pending");
@@ -128,6 +152,7 @@ export default async function ReschedulePage({
                 key={r.id}
                 tournamentId={tournamentId}
                 req={r}
+                acceptances={acceptancesByRequest.get(r.id) ?? []}
                 isPending
               />
             ))}
@@ -147,6 +172,7 @@ export default async function ReschedulePage({
                 key={r.id}
                 tournamentId={tournamentId}
                 req={r}
+                acceptances={acceptancesByRequest.get(r.id) ?? []}
                 isPending={false}
               />
             ))}
@@ -160,10 +186,12 @@ export default async function ReschedulePage({
 function RequestCard({
   tournamentId,
   req,
+  acceptances,
   isPending,
 }: {
   tournamentId: string;
   req: RequestRow;
+  acceptances: AcceptanceRow[];
   isPending: boolean;
 }) {
   const g = req.game_snapshot;
@@ -218,6 +246,44 @@ function RequestCard({
           </div>
         )}
       </div>
+
+      {acceptances.length > 0 && (
+        <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3">
+          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Confirmação dos outros jogadores
+          </div>
+          <div className="grid gap-1.5 sm:grid-cols-3">
+            {acceptances.map((a, i) => (
+              <div
+                key={i}
+                className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-xs ${
+                  a.status === "accepted"
+                    ? "bg-emerald-50 text-emerald-900"
+                    : a.status === "rejected"
+                    ? "bg-red-50 text-red-900"
+                    : "bg-slate-50 text-slate-700"
+                }`}
+              >
+                <span className="text-base leading-none">
+                  {a.status === "accepted"
+                    ? "✓"
+                    : a.status === "rejected"
+                    ? "✗"
+                    : "…"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold leading-tight">{a.player_name}</div>
+                  <div className="text-[10px] opacity-70">
+                    {a.player_role === "partner" ? "parceira" : "adversário"}
+                    {a.decided_at &&
+                      ` · ${formatRelative(new Date(a.decided_at))}`}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {req.admin_response && (
         <div

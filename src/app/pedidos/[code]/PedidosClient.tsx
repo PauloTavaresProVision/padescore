@@ -377,6 +377,12 @@ function RequestModal({
     setSlots((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // Quando submetido, guardamos as acceptances criadas para construir o
+  // texto do WhatsApp com os links únicos
+  const [acceptances, setAcceptances] = useState<
+    { player_name: string; player_role: string; acceptance_token: string }[]
+  >([]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -401,6 +407,7 @@ function RequestModal({
         setSubmitting(false);
         return;
       }
+      setAcceptances(data.acceptances ?? []);
       onSubmitted(data.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro de rede");
@@ -411,26 +418,45 @@ function RequestModal({
 
   if (submittedId) {
     const preferredText = formatSlotsForApi(slots);
-    const waText = encodeURIComponent(
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : "";
+
+    // Mensagem WhatsApp com info do pedido + links únicos por jogador
+    // (cada um vê o seu próprio link para Aceitar/Rejeitar)
+    const intro =
       `Olá! Pedi alteração de horário para o nosso jogo:\n\n` +
-        `📅 ${formatDayLong(game.scheduledAt.slice(0, 10))} às ${formatTime(game.scheduledAt)}\n` +
-        `🎾 ${game.teamA} vs ${game.teamB}\n` +
-        `🏟 ${game.field}\n\n` +
-        `${preferredText ? `Disponibilidade: ${preferredText}\n\n` : ""}` +
-        `Aguardamos resposta do clube. 🙏`,
-    );
+      `📅 ${formatDayLong(game.scheduledAt.slice(0, 10))} às ${formatTime(game.scheduledAt)}\n` +
+      `🎾 ${game.teamA} vs ${game.teamB}\n` +
+      `🏟 ${game.field}\n\n` +
+      `${preferredText ? `Disponibilidade alternativa: ${preferredText}\n\n` : ""}` +
+      `*Por favor cada um confirma se concorda* (cada link é único):\n\n` +
+      acceptances
+        .map((a) => `${a.player_name}: ${origin}/confirmar/${a.acceptance_token}`)
+        .join("\n");
+    const waText = encodeURIComponent(intro);
+
     return (
       <ModalShell onClose={onClose} title="✓ Pedido enviado">
-        <div className="space-y-4 text-center">
-          <div className="text-5xl">✅</div>
-          <p className="text-sm text-slate-700">
-            O teu pedido foi registado. O clube vai avaliar e responder em
-            breve.
+        <div className="space-y-4">
+          <div className="text-center text-5xl">✅</div>
+          <p className="text-center text-sm text-slate-700">
+            O teu pedido foi registado.
           </p>
-          <div className="rounded-lg bg-slate-50 p-3 text-left text-xs text-slate-600">
-            <b>Próximo passo:</b> Avisa a tua parceira e os adversários no
-            grupo WhatsApp:
-          </div>
+
+          {acceptances.length > 0 ? (
+            <div className="rounded-lg bg-emerald-50 p-3 text-left text-xs text-emerald-900 ring-1 ring-emerald-200">
+              <b className="block mb-1">Próximo passo</b>
+              Cada um dos outros {acceptances.length} jogadores tem o seu
+              link único para aceitar/rejeitar. Partilha a mensagem
+              abaixo no grupo WhatsApp:
+            </div>
+          ) : (
+            <div className="rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900 ring-1 ring-amber-200">
+              Não conseguimos identificar os outros jogadores nos
+              contactos. O clube vai avaliar directamente.
+            </div>
+          )}
+
           <a
             href={`https://wa.me/?text=${waText}`}
             target="_blank"
@@ -444,7 +470,7 @@ function RequestModal({
           </a>
           <button
             onClick={onClose}
-            className="text-sm text-slate-500 underline hover:text-slate-700"
+            className="block w-full text-center text-sm text-slate-500 underline hover:text-slate-700"
           >
             Fechar
           </button>
