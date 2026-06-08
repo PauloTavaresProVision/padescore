@@ -204,7 +204,7 @@ function MainScene({ data }: { data: CavaletePayload }) {
         height: "100%",
         // padding-top = onde acaba o título "EM JOGO AGORA" do PNG (~440)
         // + 30px de margem para o badge "CAMPO XX" do card1 ficar abaixo
-        padding: "720px 36px 6px",
+        padding: "670px 36px 4px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -337,8 +337,8 @@ function LiveMatchCard({
           background: "rgba(2, 12, 36, .72)",
           boxShadow:
             "inset 0 0 30px rgba(45, 140, 255, .35), 0 0 35px rgba(45, 140, 255, .55)",
-          padding: "50px 24px 10px",
-          minHeight: 160,
+          padding: "42px 24px 8px",
+          minHeight: 150,
         }}
       >
         {game ? <LiveMatchContent game={game} /> : <AwaitingNext />}
@@ -443,9 +443,9 @@ function TeamColumn({
           color: CYAN,
           fontFamily: FONT_BODY,
           fontWeight: 800,
-          fontSize: 24,
-          letterSpacing: "2.5px",
-          marginBottom: 6,
+          fontSize: 18,
+          letterSpacing: "2px",
+          marginBottom: 4,
           textShadow: "0 0 12px rgba(18, 200, 255, .55)",
         }}
       >
@@ -454,7 +454,7 @@ function TeamColumn({
       <div
         style={{
           color: "#fff",
-          fontSize: 50,
+          fontSize: 36,
           lineHeight: 1.05,
           letterSpacing: "1px",
           textShadow: "0 0 16px rgba(255,255,255,.35)",
@@ -473,10 +473,10 @@ function BigVS() {
     <div
       style={{
         color: LIME,
-        fontSize: 130,
+        fontSize: 90,
         lineHeight: 0.85,
         fontStyle: "italic",
-        textShadow: `0 0 32px rgba(155,240,0,.85)`,
+        textShadow: `0 0 28px rgba(155,240,0,.85)`,
         padding: "0 4px",
       }}
     >
