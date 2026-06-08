@@ -150,6 +150,20 @@ export default async function TournamentDetailPage({
               ★ Destaques →
             </Link>
             <Link
+              href={`/admin/tournaments/${id}/contacts`}
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+              title="Importar Excel de contactos para pedidos de alteração"
+            >
+              📞 Contactos →
+            </Link>
+            <Link
+              href={`/admin/tournaments/${id}/reschedule-requests`}
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+              title="Pedidos de alteração de horário"
+            >
+              📅 Pedidos →
+            </Link>
+            <Link
               href={`/admin/tournaments/${id}/sponsors`}
               className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
             >
