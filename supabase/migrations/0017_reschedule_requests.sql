@@ -99,10 +99,12 @@ comment on table match_reschedule_requests is
 -- -----------------------------------------------------------------------------
 -- RLS: pedidos são geridos via service-role (admin) ou public (submit form)
 -- -----------------------------------------------------------------------------
+-- Idempotente: drop antes de create. CREATE POLICY do Postgres não tem
+-- IF NOT EXISTS, então tem que ser drop + create.
 alter table players_contacts enable row level security;
 alter table match_reschedule_requests enable row level security;
 
--- Só o owner do torneio vê os contactos
+drop policy if exists "Tournament owner reads contacts" on players_contacts;
 create policy "Tournament owner reads contacts"
   on players_contacts for select
   using (
@@ -112,6 +114,8 @@ create policy "Tournament owner reads contacts"
         and t.owner_id = auth.uid()
     )
   );
+
+drop policy if exists "Tournament owner writes contacts" on players_contacts;
 create policy "Tournament owner writes contacts"
   on players_contacts for all
   using (
@@ -122,7 +126,7 @@ create policy "Tournament owner writes contacts"
     )
   );
 
--- Owner do torneio vê e resolve os pedidos
+drop policy if exists "Tournament owner reads requests" on match_reschedule_requests;
 create policy "Tournament owner reads requests"
   on match_reschedule_requests for select
   using (
@@ -132,6 +136,8 @@ create policy "Tournament owner reads requests"
         and t.owner_id = auth.uid()
     )
   );
+
+drop policy if exists "Tournament owner updates requests" on match_reschedule_requests;
 create policy "Tournament owner updates requests"
   on match_reschedule_requests for update
   using (
