@@ -204,7 +204,7 @@ function MainScene({ data }: { data: CavaletePayload }) {
         height: "100%",
         // padding-top = onde acaba o título "EM JOGO AGORA" do PNG (~440)
         // + 30px de margem para o badge "CAMPO XX" do card1 ficar abaixo
-        padding: "490px 36px 6px",
+        padding: "720px 36px 6px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -229,7 +229,7 @@ function MainScene({ data }: { data: CavaletePayload }) {
         ) : (
           <PaginatedList
             items={data.upcoming}
-            pageSize={5}
+            pageSize={4}
             rowHeight={72}
             gap={6}
             keyFn={(g) => String(g.padelteamsId)}
