@@ -285,8 +285,21 @@ export async function getCompetitionSnapshot(
   const competition = await getCompetition(code);
   const { tournaments } = await getCompetitionTournaments(competition.id);
 
+  // Resilient: tournaments sem draws ainda criados retornam 500 do PadelTeams.
+  // Em vez de fail-all, fazemos skip do tournament problemático e continuamos
+  // com os que funcionam. Pré-evento (sem nenhum draw) → games=[] mas snapshot
+  // válido com competition + tournaments info.
   const gamesPerTournament = await Promise.all(
-    tournaments.map((t) => getTournamentGames(t.id)),
+    tournaments.map((t) =>
+      getTournamentGames(t.id).catch((err) => {
+        // Log silencioso (server-side). Não interrompe os outros tournaments.
+        console.warn(
+          `[PadelTeams snapshot] skip tournament ${t.id} (${t.name}):`,
+          err instanceof Error ? err.message : err,
+        );
+        return [] as PadelTeamsGame[];
+      }),
+    ),
   );
   const games = gamesPerTournament.flat();
 
