@@ -235,5 +235,10 @@ export async function POST(
       email: player.email,
     },
     games,
+    // Datas do torneio (para o dropdown de "Disponível no dia X")
+    competitionDates: {
+      from: snapshot.dateFrom,
+      to: snapshot.dateTo,
+    },
   });
 }

@@ -23,6 +23,7 @@ interface LookupResponse {
   players: PlayerOption[];
   selectedPlayer: PlayerOption | null;
   games: GameForUI[];
+  competitionDates?: { from: string; to: string };
   error?: string;
 }
 
@@ -50,6 +51,9 @@ export function PedidosClient({ competitionCode }: Props) {
   const [players, setPlayers] = useState<PlayerOption[] | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerOption | null>(null);
   const [games, setGames] = useState<GameForUI[]>([]);
+  const [competitionDates, setCompetitionDates] = useState<
+    { from: string; to: string } | null
+  >(null);
 
   // Modal de pedido
   const [selectedGame, setSelectedGame] = useState<GameForUI | null>(null);
@@ -72,6 +76,7 @@ export function PedidosClient({ competitionCode }: Props) {
       setPlayers(data.players);
       setSelectedPlayer(data.selectedPlayer);
       setGames(data.games);
+      if (data.competitionDates) setCompetitionDates(data.competitionDates);
     } catch (e) {
       setLookupError(e instanceof Error ? e.message : "Erro de rede");
     } finally {
@@ -278,6 +283,7 @@ export function PedidosClient({ competitionCode }: Props) {
           // O telemóvel vem do contacto na DB (uniforme E.164), independente
           // de o jogador se ter identificado por phone ou email.
           requesterPhone={selectedPlayer.phone ?? identifier}
+          competitionDates={competitionDates}
           onClose={() => {
             setSelectedGame(null);
             setSubmittedId(null);
@@ -290,11 +296,47 @@ export function PedidosClient({ competitionCode }: Props) {
   );
 }
 
+interface TimeSlot {
+  /** YYYY-MM-DD */
+  day: string;
+  /** HH:MM (24h) */
+  from: string;
+  /** HH:MM (24h) */
+  to: string;
+}
+
+/** Constrói lista de dias disponíveis para o dropdown a partir do range
+ * da competição. */
+function buildDayOptions(
+  dates: { from: string; to: string } | null,
+  excludeGameDay?: string,
+): string[] {
+  if (!dates) return [];
+  const days: string[] = [];
+  const start = new Date(`${dates.from}T12:00:00`);
+  const end = new Date(`${dates.to}T12:00:00`);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (iso !== excludeGameDay) days.push(iso);
+  }
+  return days;
+}
+
+function formatSlotsForApi(slots: TimeSlot[]): string {
+  // Converte os slots num texto estruturado mas lível para o admin do clube.
+  // Ex: "Sábado, 14 de junho 17:00–22:00 · Domingo, 15 de junho 9:00–13:00"
+  return slots
+    .filter((s) => s.day && s.from && s.to)
+    .map((s) => `${formatDayLong(s.day)} ${s.from}–${s.to}`)
+    .join(" · ");
+}
+
 function RequestModal({
   competitionCode,
   game,
   requesterName,
   requesterPhone,
+  competitionDates,
   onClose,
   onSubmitted,
   submittedId,
@@ -303,20 +345,44 @@ function RequestModal({
   game: GameForUI;
   requesterName: string;
   requesterPhone: string;
+  competitionDates: { from: string; to: string } | null;
   onClose: () => void;
   onSubmitted: (id: string) => void;
   submittedId: string | null;
 }) {
   const [reason, setReason] = useState("");
-  const [preferred, setPreferred] = useState("");
+  // Múltiplos slots de disponibilidade (default: 1 vazio)
+  const [slots, setSlots] = useState<TimeSlot[]>([
+    { day: "", from: "17:00", to: "22:00" },
+  ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const dayOptions = buildDayOptions(
+    competitionDates,
+    game.scheduledAt.slice(0, 10),
+  );
+
+  function updateSlot(idx: number, patch: Partial<TimeSlot>) {
+    setSlots((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
+    );
+  }
+
+  function addSlot() {
+    setSlots((prev) => [...prev, { day: "", from: "17:00", to: "22:00" }]);
+  }
+
+  function removeSlot(idx: number) {
+    setSlots((prev) => prev.filter((_, i) => i !== idx));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
+      const preferredSlot = formatSlotsForApi(slots);
       const res = await fetch("/api/reschedule-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -326,7 +392,7 @@ function RequestModal({
           requesterName,
           requesterPhone,
           reason,
-          preferredSlot: preferred || undefined,
+          preferredSlot: preferredSlot || undefined,
         }),
       });
       const data = await res.json();
@@ -344,12 +410,13 @@ function RequestModal({
   }
 
   if (submittedId) {
+    const preferredText = formatSlotsForApi(slots);
     const waText = encodeURIComponent(
       `Olá! Pedi alteração de horário para o nosso jogo:\n\n` +
         `📅 ${formatDayLong(game.scheduledAt.slice(0, 10))} às ${formatTime(game.scheduledAt)}\n` +
         `🎾 ${game.teamA} vs ${game.teamB}\n` +
         `🏟 ${game.field}\n\n` +
-        `${preferred ? `Sugeri: ${preferred}\n\n` : ""}` +
+        `${preferredText ? `Disponibilidade: ${preferredText}\n\n` : ""}` +
         `Aguardamos resposta do clube. 🙏`,
     );
     return (
@@ -415,14 +482,80 @@ function RequestModal({
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm !text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
         </Field>
-        <Field label="Sugestão de novo horário (opcional)">
-          <input
-            value={preferred}
-            onChange={(e) => setPreferred(e.target.value)}
-            placeholder="Sábado tarde ou domingo manhã"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm !text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-          />
-        </Field>
+        <div>
+          <div className="mb-2 flex items-baseline justify-between">
+            <span className="block text-xs font-semibold text-slate-700">
+              Disponibilidade para reagendar
+            </span>
+            <span className="text-[10px] text-slate-400">
+              (opcional, ajuda o clube)
+            </span>
+          </div>
+
+          {slots.map((slot, idx) => (
+            <div
+              key={idx}
+              className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Opção {idx + 1}
+                </span>
+                {slots.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeSlot(idx)}
+                    className="text-[11px] text-red-500 underline hover:text-red-700"
+                  >
+                    Remover
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-[1fr] gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
+                <select
+                  value={slot.day}
+                  onChange={(e) => updateSlot(idx, { day: e.target.value })}
+                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm !text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                >
+                  <option value="">— Escolher dia —</option>
+                  {dayOptions.map((d) => (
+                    <option key={d} value={d}>
+                      {formatDayLong(d)}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <span className="hidden sm:inline">das</span>
+                  <input
+                    type="time"
+                    value={slot.from}
+                    onChange={(e) => updateSlot(idx, { from: e.target.value })}
+                    step={900}
+                    className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm !text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <span>às</span>
+                  <input
+                    type="time"
+                    value={slot.to}
+                    onChange={(e) => updateSlot(idx, { to: e.target.value })}
+                    step={900}
+                    className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm !text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addSlot}
+            className="w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700"
+          >
+            + Adicionar outro horário disponível
+          </button>
+        </div>
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
