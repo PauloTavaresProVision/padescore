@@ -294,6 +294,35 @@ export async function GET(
 
   // 8) Sponsors
   const sponsors = sponsorsRaw ?? [];
+  let footerSponsors = sponsors
+    .filter((s) => s.kind === "footer")
+    .map((s) => ({ imageUrl: s.image_url }));
+  let fullscreenSponsors = sponsors
+    .filter((s) => s.kind === "fullscreen")
+    .map((s) => ({
+      imageUrl: s.image_url,
+      durationSec: s.duration_sec,
+    }));
+
+  // Demo: se não há sponsors reais, injecta uns mock para testar Cena 3
+  if (demoMode && footerSponsors.length === 0 && fullscreenSponsors.length === 0) {
+    // Logos públicos para teste (qualquer URL pública serve)
+    const mockLogo = (name: string) =>
+      `https://placehold.co/400x200/ffffff/0a2856/png?text=${encodeURIComponent(name)}`;
+    fullscreenSponsors = [
+      { imageUrl: mockLogo("STANDARD BANK"), durationSec: 8 },
+      { imageUrl: mockLogo("BYTE DIGITAL"), durationSec: 8 },
+    ];
+    footerSponsors = [
+      { imageUrl: mockLogo("CANDANDO") },
+      { imageUrl: mockLogo("BEEFEATER") },
+      { imageUrl: mockLogo("DELTA Q") },
+      { imageUrl: mockLogo("GIANT SEGUROS") },
+      { imageUrl: mockLogo("ATC") },
+      { imageUrl: mockLogo("DOM") },
+    ];
+  }
+
   const payload: CavaletePayload = {
     tournament: { name: tournament.name },
     cavalete: {
@@ -301,20 +330,12 @@ export async function GET(
       courts: cavaleteCourts,
     },
     liveByCourt,
-    // Devolvemos até 30 de cada — o cliente pagina visualmente
     upcoming: upcomingAll.slice(0, 30),
     results: resultsAll.slice(0, 30),
     featured,
     sponsors: {
-      footer: sponsors
-        .filter((s) => s.kind === "footer")
-        .map((s) => ({ imageUrl: s.image_url })),
-      fullscreen: sponsors
-        .filter((s) => s.kind === "fullscreen")
-        .map((s) => ({
-          imageUrl: s.image_url,
-          durationSec: s.duration_sec,
-        })),
+      footer: footerSponsors,
+      fullscreen: fullscreenSponsors,
     },
     serverTime: new Date().toISOString(),
   };

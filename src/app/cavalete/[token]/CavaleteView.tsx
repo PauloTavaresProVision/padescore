@@ -110,9 +110,35 @@ export function CavaleteView({ token }: { token: string }) {
     };
   }, [token]);
 
+  // Rotação entre cenas: Main (40s) → Sponsors (15s) → Main → ...
+  // Se não houver sponsors, fica sempre na Main.
+  const hasSponsors =
+    (data?.sponsors.footer.length ?? 0) +
+      (data?.sponsors.fullscreen.length ?? 0) >
+    0;
+  // Em dev/teste, ?scene=sponsors força a Cena 3 (sem rotação)
+  const url = typeof window !== "undefined" ? new URL(window.location.href) : null;
+  const forceScene = url?.searchParams.get("scene");
+  const [sceneIdx, setSceneIdx] = useState(0); // 0=main, 1=sponsors
+  useEffect(() => {
+    if (forceScene === "sponsors") {
+      setSceneIdx(1);
+      return;
+    }
+    if (forceScene === "main") {
+      setSceneIdx(0);
+      return;
+    }
+    if (!hasSponsors) return;
+    const isMain = sceneIdx === 0;
+    const dur = isMain ? 40_000 : 15_000;
+    const t = setTimeout(() => setSceneIdx((i) => (i + 1) % 2), dur);
+    return () => clearTimeout(t);
+  }, [sceneIdx, hasSponsors, forceScene]);
+
   if (!data) {
     return (
-      <Stage>
+      <Stage bg="main">
         <div
           style={{
             position: "absolute",
@@ -130,9 +156,10 @@ export function CavaleteView({ token }: { token: string }) {
     );
   }
 
+  const showSponsors = hasSponsors && sceneIdx === 1;
   return (
-    <Stage>
-      <MainScene data={data} />
+    <Stage bg={showSponsors ? "sponsors" : "main"}>
+      {showSponsors ? <SponsorsScene data={data} /> : <MainScene data={data} />}
     </Stage>
   );
 }
@@ -141,7 +168,13 @@ export function CavaleteView({ token }: { token: string }) {
 // STAGE — PNG do designer como background completo (header + dot field + arcs
 // + título "EM JOGO AGORA" já incluído). Nada de CSS extra de decoração.
 // =============================================================================
-function Stage({ children }: { children: React.ReactNode }) {
+function Stage({
+  children,
+  bg,
+}: {
+  children: React.ReactNode;
+  bg: "main" | "sponsors";
+}) {
   const [scale, setScale] = useState(1);
   useEffect(() => {
     const update = () => {
@@ -153,6 +186,11 @@ function Stage({ children }: { children: React.ReactNode }) {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
+
+  const bgUrl =
+    bg === "sponsors"
+      ? "/cavalete/scene-sponsors-bg.png"
+      : "/cavalete/scene-main-bg.png";
 
   return (
     <div
@@ -176,10 +214,11 @@ function Stage({ children }: { children: React.ReactNode }) {
           color: "#fff",
           fontFamily: FONT_DISPLAY,
           backgroundColor: "#020817",
-          backgroundImage: "url('/cavalete/scene-main-bg.png')",
+          backgroundImage: `url('${bgUrl}')`,
           backgroundSize: `${STAGE_W}px ${STAGE_H}px`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "0 0",
+          transition: "background-image 0.5s ease",
         }}
       >
         {children}
@@ -772,6 +811,147 @@ function CompactTeam({
           {n}
         </div>
       ))}
+    </div>
+  );
+}
+
+// =============================================================================
+// SPONSORS SCENE — sobre o PNG scene-sponsors-bg.png
+//   - 1 cartão grande no centro = "Patrocinador Oficial" (kind=fullscreen)
+//   - 4 cartões pequenos 2×2 = "Nossos Parceiros" (kind=footer)
+// Cada slot rotaciona independentemente entre os logos disponíveis dessa
+// categoria. Slots vazios mostram placeholder discreto.
+// =============================================================================
+const SPONSOR_ROTATE_MS = 6000;
+const SPONSOR_FADE_MS = 600;
+
+// Coordenadas em canvas 1080×1920, medidas do PNG do designer
+const SPONSOR_SLOTS = {
+  // Patrocinador Oficial — cartão grande central (medido sobre o PNG)
+  main: { x: 133, y: 575, w: 814, h: 380 },
+  // Nossos Parceiros — 4 cartões 2×2 (deixar respiro para o título acima)
+  partners: [
+    { x: 133, y: 1215, w: 369, h: 295 }, // top-left
+    { x: 569, y: 1215, w: 378, h: 295 }, // top-right
+    { x: 133, y: 1535, w: 369, h: 295 }, // bottom-left
+    { x: 569, y: 1535, w: 378, h: 295 }, // bottom-right
+  ],
+};
+
+function SponsorsScene({ data }: { data: CavaletePayload }) {
+  const mainSponsors = data.sponsors.fullscreen;
+  const partnerSponsors = data.sponsors.footer;
+
+  return (
+    <>
+      {/* Cartão grande — Patrocinador Oficial */}
+      <SponsorSlot
+        slot={SPONSOR_SLOTS.main}
+        items={mainSponsors}
+        rotateMs={SPONSOR_ROTATE_MS}
+      />
+
+      {/* 4 cartões pequenos — Nossos Parceiros */}
+      {SPONSOR_SLOTS.partners.map((slotCoords, slotIdx) => (
+        <SponsorSlot
+          key={slotIdx}
+          slot={slotCoords}
+          // Cada slot mostra uma "view" diferente da lista de parceiros,
+          // desfasada — assim quando rotam, não mostram todos o mesmo
+          items={rotateArray(partnerSponsors, slotIdx)}
+          rotateMs={SPONSOR_ROTATE_MS + slotIdx * 500} // ligeiro desfasamento
+        />
+      ))}
+    </>
+  );
+}
+
+function rotateArray<T>(arr: T[], offset: number): T[] {
+  if (arr.length === 0) return arr;
+  const o = offset % arr.length;
+  return [...arr.slice(o), ...arr.slice(0, o)];
+}
+
+function SponsorSlot({
+  slot,
+  items,
+  rotateMs,
+}: {
+  slot: { x: number; y: number; w: number; h: number };
+  items: { imageUrl: string }[];
+  rotateMs: number;
+}) {
+  const [idx, setIdx] = useState(0);
+  const total = items.length;
+
+  useEffect(() => {
+    if (total <= 1) return;
+    const t = setTimeout(() => setIdx((i) => (i + 1) % total), rotateMs);
+    return () => clearTimeout(t);
+  }, [idx, total, rotateMs]);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: slot.x,
+        top: slot.y,
+        width: slot.w,
+        height: slot.h,
+        // Fundo branco opaco que tapa o placeholder do PNG por baixo,
+        // mesmo cantos arredondados (matching o template do designer)
+        background: "#fff",
+        borderRadius: 30,
+        overflow: "hidden",
+      }}
+    >
+      {total === 0 ? (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "rgba(0,0,0,.15)",
+            fontFamily: FONT_BODY,
+            fontWeight: 700,
+            fontSize: 20,
+            letterSpacing: "1.5px",
+          }}
+        >
+          —
+        </div>
+      ) : (
+        items.map((item, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: i === idx ? 1 : 0,
+              transition: `opacity ${SPONSOR_FADE_MS}ms ease`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "8%",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.imageUrl}
+              alt=""
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
+          </div>
+        ))
+      )}
     </div>
   );
 }

@@ -63,13 +63,33 @@ export default async function SponsorsPage({
       <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
         Sponsors
       </h1>
-      <p className="mt-1 mb-6 max-w-2xl text-sm text-slate-500">
-        Imagens que aparecem no totem dos campos.{" "}
-        <b className="text-slate-700">Footer</b> = logos pequenos sempre
-        visíveis no rodapé.{" "}
-        <b className="text-slate-700">Fullscreen</b> = imagens grandes
-        rotativas (entre conteúdo do jogo).
+      <p className="mt-1 mb-4 max-w-2xl text-sm text-slate-500">
+        Logótipos que aparecem nos cavaletes do torneio.{" "}
+        <b className="text-slate-700">Fullscreen</b> = patrocinador oficial
+        (cartão grande, centro da cena).{" "}
+        <b className="text-slate-700">Footer</b> = parceiros oficiais
+        (4 cartões pequenos 2×2 no rodapé da cena).
       </p>
+      <div className="mb-6 grid max-w-3xl gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs text-slate-700">
+          <div className="mb-1 font-bold text-emerald-700">
+            FULLSCREEN — Patrocinador Oficial
+          </div>
+          <div>
+            Recomendado: <b>800×300 px</b> · Máximo: 900×400 px
+          </div>
+          <div>Ideal: PNG transparente ou SVG</div>
+        </div>
+        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 text-xs text-slate-700">
+          <div className="mb-1 font-bold text-blue-700">
+            FOOTER — Parceiros Oficiais
+          </div>
+          <div>
+            Recomendado: <b>300×200 px</b> · Máximo: 350×250 px
+          </div>
+          <div>Ideal: PNG transparente ou SVG · margem à volta do logo</div>
+        </div>
+      </div>
 
       {sp.error && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
