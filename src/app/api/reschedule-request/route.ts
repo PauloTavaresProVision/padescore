@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  getCompetitionSnapshot,
-  combineGameDateTime,
-} from "@/lib/padelteams/client";
+import { getPublicCompetitionGames } from "@/lib/padelteams/scraper";
 
 export const dynamic = "force-dynamic";
 
@@ -128,13 +125,17 @@ export async function POST(req: Request) {
     );
   }
 
-  // Buscar snapshot do PadelTeams para validar gameId + construir game_snapshot
-  let snapshot: Awaited<ReturnType<typeof getCompetitionSnapshot>>;
+  // Buscar jogos via scraping da página pública (workaround do bug 500 no
+  // /v1/tournament/games). Cache 30s.
+  let snapshot: Awaited<ReturnType<typeof getPublicCompetitionGames>>;
   try {
-    snapshot = await getCompetitionSnapshot(competitionCode);
+    snapshot = await getPublicCompetitionGames(competitionCode);
   } catch (e) {
     return NextResponse.json(
-      { error: "Falha a validar jogo no PadelTeams", detail: e instanceof Error ? e.message : String(e) },
+      {
+        error: "Falha a validar jogo no PadelTeams",
+        detail: e instanceof Error ? e.message : String(e),
+      },
       { status: 502 },
     );
   }
@@ -147,19 +148,14 @@ export async function POST(req: Request) {
   }
 
   // Snapshot mínimo (estável mesmo se PadelTeams alterar/remover depois)
-  const tournamentName =
-    snapshot.tournaments.find((t) =>
-      // não temos game.tournament_id directo — usamos primeira partida do nome
-      snapshot.games.some((g) => g.id === game.id),
-    )?.name ?? "?";
   const gameSnapshot = {
-    teamA: game.team1.players.map((p) => p.name).join(" / ") || game.team1.name,
-    teamB: game.team2.players.map((p) => p.name).join(" / ") || game.team2.name,
-    teamAPlayers: game.team1.players.map((p) => ({ id: p.id, name: p.name })),
-    teamBPlayers: game.team2.players.map((p) => ({ id: p.id, name: p.name })),
-    scheduledAt: combineGameDateTime(game).toISOString(),
-    field: game.field?.description ?? null,
-    category: tournamentName,
+    teamA: game.teamA,
+    teamB: game.teamB,
+    teamAPlayers: game.teamAPlayers.map((name) => ({ name })),
+    teamBPlayers: game.teamBPlayers.map((name) => ({ name })),
+    scheduledAt: game.scheduledAt,
+    field: game.field,
+    category: null, // o scraper não tem categoria; mais tarde podemos enriquecer
   };
 
   const { data: inserted, error: insErr } = await supabase

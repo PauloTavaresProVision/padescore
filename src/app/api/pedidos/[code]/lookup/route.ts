@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  getCompetitionSnapshot,
-  combineGameDateTime,
-} from "@/lib/padelteams/client";
+import { getPublicCompetitionGames } from "@/lib/padelteams/scraper";
 
 export const dynamic = "force-dynamic";
 
@@ -147,10 +144,12 @@ export async function POST(
     );
   }
 
-  // Buscar snapshot do PadelTeams para encontrar os jogos deste jogador
-  let snapshot: Awaited<ReturnType<typeof getCompetitionSnapshot>>;
+  // Buscar jogos da página pública do PadelTeams (HTML scraping —
+  // workaround porque a API REST /v1/tournament/games retorna 500).
+  // Snapshot cacheado 30s.
+  let snapshot: Awaited<ReturnType<typeof getPublicCompetitionGames>>;
   try {
-    snapshot = await getCompetitionSnapshot(code);
+    snapshot = await getPublicCompetitionGames(code);
   } catch (e) {
     return NextResponse.json(
       {
@@ -166,32 +165,23 @@ export async function POST(
   const playerNorm = normalizeName(player.name);
   const games = snapshot.games
     .filter((g) => {
-      const allPlayerNames = [
-        ...g.team1.players.map((p) => p.name),
-        ...g.team2.players.map((p) => p.name),
-      ];
+      const allPlayerNames = [...g.teamAPlayers, ...g.teamBPlayers];
       return allPlayerNames.some((n) => {
         const nn = normalizeName(n);
-        // match exacto OU substring (caso o PadelTeams tenha nome mais
-        // longo, ex: "Maria João Santos" vs nosso "Maria João")
-        return nn === playerNorm || nn.includes(playerNorm) || playerNorm.includes(nn);
+        return (
+          nn === playerNorm || nn.includes(playerNorm) || playerNorm.includes(nn)
+        );
       });
     })
     .map((g) => ({
       id: g.id,
-      scheduledAt: combineGameDateTime(g).toISOString(),
-      field: g.field?.description ?? "—",
-      teamA:
-        g.team1.players.map((p) => p.name).join(" / ") || g.team1.name || "—",
-      teamB:
-        g.team2.players.map((p) => p.name).join(" / ") || g.team2.name || "—",
-      status: g.status,
+      scheduledAt: g.scheduledAt,
+      field: g.field,
+      teamA: g.teamA,
+      teamB: g.teamB,
+      status: "open" as const,
     }))
-    .sort(
-      (a, b) =>
-        new Date(a.scheduledAt).getTime() -
-        new Date(b.scheduledAt).getTime(),
-    );
+    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
 
   return NextResponse.json({
     players: contacts.map((c) => ({
