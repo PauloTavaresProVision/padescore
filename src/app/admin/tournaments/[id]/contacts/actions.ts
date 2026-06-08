@@ -98,9 +98,14 @@ function parseCsv(text: string): {
   if (firstLine.includes(";")) sep = ";";
   else if (firstLine.includes("\t")) sep = "\t";
 
-  // Parse header se primeira linha não tem dígitos
+  // Parse header — detecta pela palavra-chave "Name"/"Nome"/"Telefone"/"Phone"
+  // na primeira linha. NÃO usar /\d/.test porque o cabeçalho do Standard
+  // Bank tem F1, F2, M1... que têm dígitos mas continuam a ser header.
   const headerCols = firstLine.split(sep).map((c) => c.trim().replace(/^"|"$/g, ""));
-  const hasHeader = headerCols.length > 1 && !/\d/.test(firstLine);
+  const headerKeywords = ["name", "nome", "phone", "telefone", "telemóvel", "telemovel"];
+  const hasHeader =
+    headerCols.length > 1 &&
+    headerCols.some((h) => headerKeywords.includes(h.trim().toLowerCase()));
   const startIdx = hasHeader ? 1 : 0;
 
   // Detectar formato Standard Bank (12 colunas com F1..M4 nos índices 5-11)
