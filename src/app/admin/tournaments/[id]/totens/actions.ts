@@ -26,42 +26,96 @@ function fail(tournamentId: string, message: string): never {
   );
 }
 
-/** Cria um totem para um campo. Token é gerado automaticamente pelo default
- *  da coluna (function generate_totem_token() — 40 chars). */
-export async function createTotem(tournamentId: string, courtId: string) {
+/**
+ * Cria um cavalete novo (1 ou 2 campos). O token é gerado automaticamente
+ * pelo default do schema (16 chars opacos).
+ */
+export async function createCavalete(
+  tournamentId: string,
+  formData: FormData,
+) {
   const supabase = await ensureOwner(tournamentId);
+  const courtId1 = String(formData.get("court_id_1") ?? "");
+  const courtId2Raw = String(formData.get("court_id_2") ?? "");
+  const courtId2 = courtId2Raw && courtId2Raw !== courtId1 ? courtId2Raw : null;
+  const customName = String(formData.get("name") ?? "").trim();
 
-  // Pega o nome do campo para sugerir o nome do totem.
-  const { data: court } = await supabase
-    .from("courts")
-    .select("name")
-    .eq("id", courtId)
-    .eq("tournament_id", tournamentId)
-    .single();
-  if (!court) fail(tournamentId, "Campo inválido.");
-
-  const { error } = await supabase
-    .from("totems")
-    .insert({
-      tournament_id: tournamentId,
-      court_id: courtId,
-      name: `Totem ${court.name}`,
-      // api_token usa o default do schema
-    });
-  if (error) {
-    if ((error as { code?: string }).code === "23505") {
-      fail(tournamentId, `Este campo já tem um totem.`);
-    }
-    fail(tournamentId, error.message);
+  if (!courtId1) fail(tournamentId, "Escolhe pelo menos 1 campo.");
+  if (courtId2 === courtId1) {
+    fail(tournamentId, "Os 2 campos do cavalete têm que ser diferentes.");
   }
+
+  // Validar que os campos existem e pertencem a este torneio
+  const allCourtIds = [courtId1, ...(courtId2 ? [courtId2] : [])];
+  const { data: courts } = await supabase
+    .from("courts")
+    .select("id, name")
+    .in("id", allCourtIds)
+    .eq("tournament_id", tournamentId);
+  if (!courts || courts.length !== allCourtIds.length) {
+    fail(tournamentId, "Campo inválido.");
+  }
+
+  // Verificar que nenhum dos campos já está noutro cavalete
+  const { data: usedBy } = await supabase
+    .from("totems")
+    .select("court_id, court_id_2, name")
+    .eq("tournament_id", tournamentId);
+  const usedIds = new Set<string>();
+  for (const t of usedBy ?? []) {
+    if (t.court_id) usedIds.add(t.court_id);
+    if (t.court_id_2) usedIds.add(t.court_id_2);
+  }
+  const conflicts = allCourtIds.filter((id) => usedIds.has(id));
+  if (conflicts.length > 0) {
+    const names = courts!
+      .filter((c) => conflicts.includes(c.id))
+      .map((c) => c.name)
+      .join(", ");
+    fail(
+      tournamentId,
+      `Campo(s) já noutro cavalete: ${names}. Apaga primeiro o cavalete que os usa.`,
+    );
+  }
+
+  // Nome sugerido: "Cavalete CAMPO1 + CAMPO2"
+  const name = customName ||
+    (courtId2
+      ? `Cavalete ${courts!.find((c) => c.id === courtId1)!.name} + ${courts!.find((c) => c.id === courtId2)!.name}`
+      : `Totem ${courts![0].name}`);
+
+  const { error } = await supabase.from("totems").insert({
+    tournament_id: tournamentId,
+    court_id: courtId1,
+    court_id_2: courtId2,
+    name,
+  });
+  if (error) fail(tournamentId, error.message);
   revalidatePath(`/admin/tournaments/${tournamentId}/totens`);
 }
 
-/** Gera novo api_token (invalida o anterior). Usar quando suspeitas que
- *  o token foi exposto e queres "fechar" a porta. */
+/** Actualiza os campos de um cavalete (1 ou 2). */
+export async function setCavaleteCourts(
+  tournamentId: string,
+  totemId: string,
+  courtId1: string,
+  courtId2: string | null,
+) {
+  const supabase = await ensureOwner(tournamentId);
+
+  if (courtId2 === courtId1) courtId2 = null;
+
+  const { error } = await supabase
+    .from("totems")
+    .update({ court_id: courtId1, court_id_2: courtId2 })
+    .eq("id", totemId)
+    .eq("tournament_id", tournamentId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/tournaments/${tournamentId}/totens`);
+}
+
 export async function regenerateToken(tournamentId: string, totemId: string) {
   const supabase = await ensureOwner(tournamentId);
-  // Chama a function p/ obter token único.
   const { data: newToken, error: tokErr } = await supabase.rpc(
     "generate_totem_token",
   );
@@ -83,8 +137,8 @@ export async function renameTotem(
 ) {
   const supabase = await ensureOwner(tournamentId);
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) fail(tournamentId, "Nome do totem é obrigatório.");
-  if (name.length > 60) fail(tournamentId, "Nome demasiado longo.");
+  if (!name) fail(tournamentId, "Nome é obrigatório.");
+  if (name.length > 80) fail(tournamentId, "Nome demasiado longo.");
 
   const { error } = await supabase
     .from("totems")
@@ -103,5 +157,30 @@ export async function deleteTotem(tournamentId: string, totemId: string) {
     .eq("id", totemId)
     .eq("tournament_id", tournamentId);
   if (error) fail(tournamentId, error.message);
+  revalidatePath(`/admin/tournaments/${tournamentId}/totens`);
+}
+
+// Backwards compat — alguns componentes ainda chamam createTotem(courtId)
+export async function createTotem(tournamentId: string, courtId: string) {
+  const supabase = await ensureOwner(tournamentId);
+  const { data: court } = await supabase
+    .from("courts")
+    .select("name")
+    .eq("id", courtId)
+    .eq("tournament_id", tournamentId)
+    .single();
+  if (!court) fail(tournamentId, "Campo inválido.");
+
+  const { error } = await supabase.from("totems").insert({
+    tournament_id: tournamentId,
+    court_id: courtId,
+    name: `Totem ${court.name}`,
+  });
+  if (error) {
+    if ((error as { code?: string }).code === "23505") {
+      fail(tournamentId, "Este campo já tem um totem.");
+    }
+    fail(tournamentId, error.message);
+  }
   revalidatePath(`/admin/tournaments/${tournamentId}/totens`);
 }

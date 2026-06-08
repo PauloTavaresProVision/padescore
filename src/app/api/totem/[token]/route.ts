@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  *
  * URL: GET /api/totem/[token]
  *
- * Auth: o token (40 chars opacos) IDENTIFICA o totem. Quem tiver acesso ao
+ * Auth: o token (16 chars opacos) IDENTIFICA o totem. Quem tiver acesso ao
  * URL consegue ver os dados desse campo — não há informação privada aqui
  * (nomes de jogadores e fotos são públicos por natureza).
  *
@@ -24,7 +24,9 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
-  if (!token || token.length < 20) {
+  // Sanity-guard: tokens válidos são 16 chars (novos) ou 40 chars (legados).
+  // Qualquer coisa abaixo de 8 é tipo lixo / ataque — corta antes da DB.
+  if (!token || token.length < 8) {
     return NextResponse.json({ error: "Token inválido" }, { status: 404 });
   }
 

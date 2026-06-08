@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { ChevronLeftIcon } from "@/components/icons";
-import { TotensTable } from "./TotensTable";
+import { CavaletesManager } from "./CavaletesManager";
 
 export const dynamic = "force-dynamic";
 
@@ -36,38 +36,34 @@ export default async function TotensPage({
       .from("courts")
       .select("id, name, sort_order")
       .eq("tournament_id", tournamentId)
-      .order("sort_order", { ascending: true }),
+      .order("sort_order"),
     supabase
       .from("totems")
-      .select("id, court_id, name, api_token, last_seen_at, created_at")
-      .eq("tournament_id", tournamentId),
+      .select(
+        "id, court_id, court_id_2, name, api_token, last_seen_at, created_at",
+      )
+      .eq("tournament_id", tournamentId)
+      .order("created_at"),
   ]);
 
-  // Determinar a base URL para construir as URLs da API que o user copia.
+  // Base URL para construir o URL do endpoint (que o operador cola na app)
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? "http";
   const baseUrl = `${proto}://${host}`;
 
-  // Index de totem por court_id
-  const totemByCourt = new Map(
-    (totems ?? []).map((t) => [t.court_id, t] as const),
-  );
-  const rows = (courts ?? []).map((c) => {
-    const t = totemByCourt.get(c.id) ?? null;
-    return {
-      court: { id: c.id, name: c.name },
-      totem: t
-        ? {
-            id: t.id,
-            name: t.name,
-            apiToken: t.api_token,
-            apiUrl: `${baseUrl}/api/totem/${t.api_token}`,
-            lastSeenAt: t.last_seen_at,
-          }
-        : null,
-    };
-  });
+  const courtsList = courts ?? [];
+  const courtById = new Map(courtsList.map((c) => [c.id, c]));
+
+  const cavaletes = (totems ?? []).map((t) => ({
+    id: t.id,
+    name: t.name,
+    apiToken: t.api_token,
+    apiUrl: `${baseUrl}/api/cavalete/${t.api_token}`,
+    lastSeenAt: t.last_seen_at,
+    court1: courtById.get(t.court_id) ?? null,
+    court2: t.court_id_2 ? courtById.get(t.court_id_2) ?? null : null,
+  }));
 
   return (
     <div>
@@ -79,12 +75,13 @@ export default async function TotensPage({
         Voltar ao torneio
       </Link>
       <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
-        Totens
+        Cavaletes
       </h1>
-      <p className="mt-1 mb-6 text-sm text-slate-500">
-        Cada totem corresponde a um campo. Cria um totem por campo, copia o
-        URL da API e cola na app Windows do totem. O token é secreto — quem
-        tiver acesso ao URL consegue ver os jogos do campo.
+      <p className="mt-1 mb-6 max-w-2xl text-sm text-slate-500">
+        Cada cavalete corresponde a um dispositivo Windows físico (PC com
+        ecrã 1080×1920 portrait). Cada cavalete mostra <b>1 ou 2 campos</b>:
+        EM JOGO AGORA, próximos e resultados. Copia o token (16 caracteres)
+        e cola na app <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px]">PadescoreTotem.exe</code> do PC do cavalete.
       </p>
 
       {sp.error && (
@@ -93,10 +90,10 @@ export default async function TotensPage({
         </div>
       )}
 
-      {rows.length === 0 ? (
+      {courtsList.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-8 text-center">
           <p className="text-sm text-amber-900">
-            Ainda não tens campos definidos. Cria os campos primeiro em{" "}
+            Ainda não tens campos definidos. Cria primeiro em{" "}
             <Link
               href={`/admin/tournaments/${tournamentId}`}
               className="font-semibold underline"
@@ -108,7 +105,11 @@ export default async function TotensPage({
         </div>
       ) : (
         <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
-          <TotensTable tournamentId={tournamentId} rows={rows} />
+          <CavaletesManager
+            tournamentId={tournamentId}
+            courts={courtsList}
+            cavaletes={cavaletes}
+          />
         </div>
       )}
     </div>

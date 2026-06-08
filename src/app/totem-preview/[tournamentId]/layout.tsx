@@ -1,4 +1,4 @@
-export default function TotemLayout({
+export default function TotemPreviewLayout({
   children,
 }: {
   children: React.ReactNode;

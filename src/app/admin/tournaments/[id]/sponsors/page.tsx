@@ -45,6 +45,12 @@ export default async function SponsorsPage({
     sortOrder: s.sort_order,
   }));
 
+  // Chave estável que muda quando sponsors mudam (count, ids ou order).
+  // Usada no src do iframe para forçar reload após CRUD.
+  const previewKey = sponsors
+    .map((s) => `${s.id.slice(0, 8)}-${s.sortOrder}`)
+    .join("_");
+
   return (
     <div>
       <Link
@@ -71,7 +77,32 @@ export default async function SponsorsPage({
         </div>
       )}
 
-      <SponsorsManager tournamentId={tournamentId} initialSponsors={sponsors} />
+      <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="lg:flex-1">
+          <SponsorsManager
+            tournamentId={tournamentId}
+            initialSponsors={sponsors}
+          />
+        </div>
+        <aside className="lg:w-[230px]">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+            Preview do totem
+          </h2>
+          <p className="mb-3 text-xs text-slate-500">
+            Os sponsors abaixo aparecem em rotação no rodapé. Jogadores e
+            horário são exemplo — só os sponsors são os reais deste torneio.
+          </p>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm">
+            <iframe
+              title="Preview do totem"
+              src={`/totem-preview/${tournamentId}?v=${encodeURIComponent(previewKey)}`}
+              width="192"
+              height="640"
+              style={{ display: "block", border: 0, width: 192, height: 640 }}
+            />
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Standard Bank Open Padel 2026 - Campo 1</title>
+  <style>
+    :root {
+      --w: 192px;
+      --h: 640px;
+      --bg: #020815;
+      --blue: #2d8cff;
+      --cyan: #12c8ff;
+      --lime: #9bf000;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: var(--w);
+      height: var(--h);
+      overflow: hidden;
+      background: #171717;
+      font-family: Impact, "Arial Black", Arial, sans-serif;
+      color: var(--white);
+    }
+
+    .poster {
+      position: relative;
+      width: var(--w);
+      height: var(--h);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 55%, rgba(0, 84, 255, .42), transparent 34%),
+        radial-gradient(circle at 50% 18%, rgba(0, 36, 110, .55), transparent 35%),
+        linear-gradient(180deg, #020713 0%, #020713 34%, #001334 64%, #020713 100%);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .poster::before,
+    .poster::after {
+      content: "";
+      position: absolute;
+      top: -64px;
+      width: 170px;
+      height: 230px;
+      border: 1px solid rgba(45, 140, 255, .85);
+      border-radius: 50%;
+      filter: drop-shadow(0 0 7px var(--blue));
+      opacity: .75;
+    }
+
+    .poster::before { left: -111px; }
+    .poster::after { right: -111px; }
+
+    .dot-field {
+      position: absolute;
+      inset: 0;
+      opacity: .38;
+      background-image: radial-gradient(rgba(68, 165, 255, .85) 1px, transparent 1px);
+      background-size: 7px 7px;
+      mask-image: radial-gradient(circle at top center, #000 0 18%, transparent 42%);
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 9px 11px 8px;
+      text-align: center;
+    }
+
+    .main-brand {
+      width: 79px;
+      height: auto;
+      display: block;
+      margin: 0 auto 3px;
+      filter: drop-shadow(0 0 7px rgba(45, 140, 255, .95));
+    }
+
+    .title {
+      font-size: 25px;
+      line-height: .9;
+      font-style: italic;
+      letter-spacing: .3px;
+      text-shadow: 0 0 8px rgba(255,255,255,.45);
+    }
+
+    .year {
+      color: var(--lime);
+      font-size: 21px;
+      line-height: 1;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px rgba(155,240,0,.65);
+    }
+
+    .country {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      margin: 0 11px 6px;
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      font-size: 8px;
+      letter-spacing: 7px;
+    }
+
+    .country::before,
+    .country::after,
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan));
+      box-shadow: 0 0 7px var(--cyan);
+    }
+
+    .country::after,
+    .divider::after { background: linear-gradient(90deg, var(--cyan), transparent); }
+
+    .neon-box {
+      border: 1px solid rgba(65, 162, 255, .98);
+      border-radius: 5px;
+      box-shadow: inset 0 0 7px rgba(45, 140, 255, .55), 0 0 8px rgba(45, 140, 255, .75);
+      background: rgba(2, 10, 30, .74);
+    }
+
+    .field {
+      height: 34px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 9px;
+      font-size: 25px;
+      line-height: 1;
+      letter-spacing: 1px;
+    }
+
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 7px;
+      margin: 0 11px 3px;
+      color: var(--lime);
+      font-size: 13px;
+      font-style: italic;
+      letter-spacing: .8px;
+      text-shadow: 0 0 8px rgba(155,240,0,.75);
+    }
+
+    .divider::before { background: linear-gradient(90deg, transparent, var(--lime)); }
+    .divider::after { background: linear-gradient(90deg, var(--lime), transparent); }
+
+    .players {
+      position: relative;
+      height: 66px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      align-items: end;
+      margin: 0 8px -2px;
+    }
+
+    .player {
+      height: 64px;
+      position: relative;
+      filter: drop-shadow(0 0 11px rgba(0,119,255,.9));
+    }
+
+    .player::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 25px;
+      height: 25px;
+      transform: translateX(-50%);
+      border-radius: 50% 50% 44% 44%;
+      background:
+        radial-gradient(circle at 35% 38%, rgba(255,255,255,.55), transparent 12%),
+        linear-gradient(180deg, #f0ba8b, #9b5d3c);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
+    }
+
+    .player::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 49px;
+      height: 47px;
+      transform: translateX(-50%);
+      border-radius: 18px 18px 9px 9px;
+      background:
+        linear-gradient(36deg, transparent 0 26%, rgba(245, 196, 150, .95) 27% 38%, transparent 39%),
+        linear-gradient(-35deg, transparent 0 26%, rgba(194, 124, 82, .95) 27% 38%, transparent 39%),
+        linear-gradient(135deg, #222d35, #07101d);
+    }
+
+    .player.light::before { background: linear-gradient(180deg, #f3caa7, #bc7a52); }
+    .player.blue::after { background: linear-gradient(36deg, transparent 0 26%, #8f5f3e 27% 38%, transparent 39%), linear-gradient(-35deg, transparent 0 26%, #7a4a31 27% 38%, transparent 39%), linear-gradient(135deg, #194a86, #07172d); }
+    .player.dark::before { background: linear-gradient(180deg, #8a5639, #4c2b20); }
+
+    .names {
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      margin: 0 0 5px;
+      padding: 4px 5px;
+      font-size: 14px;
+      line-height: 1.2;
+      letter-spacing: 1px;
+      text-shadow: 0 0 7px rgba(255,255,255,.45);
+    }
+
+    .vs {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 11px;
+      margin: -4px 10px 0;
+      color: var(--lime);
+      font-size: 35px;
+      line-height: 1;
+      font-style: italic;
+      text-shadow: 0 0 11px rgba(155,240,0,.8);
+    }
+
+    .vs::before,
+    .vs::after {
+      content: "";
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--lime));
+      box-shadow: 0 0 8px var(--lime);
+    }
+
+    .vs::after { background: linear-gradient(90deg, var(--lime), transparent); }
+
+    .time-box {
+      height: 60px;
+      display: grid;
+      place-items: center;
+      margin: 6px 0 7px;
+      border-color: rgba(155, 240, 0, .95);
+      box-shadow: inset 0 0 6px rgba(155,240,0,.35), 0 0 8px rgba(155,240,0,.55);
+    }
+
+    .time-box > div {
+      display: grid;
+      gap: 3px;
+      justify-items: center;
+      align-content: center;
+      padding-top: 2px;
+    }
+
+    .time-label {
+      color: var(--lime);
+      font-size: 10px;
+      letter-spacing: .7px;
+      line-height: 1.05;
+    }
+
+    .time {
+      margin-top: 0;
+      font-size: 36px;
+      line-height: .82;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px rgba(155,240,0,.55);
+    }
+
+    .next {
+      min-height: 59px;
+      padding: 4px 5px;
+      display: grid;
+      place-items: center;
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .next-title {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 7px;
+      align-items: center;
+      width: 100%;
+      color: var(--cyan);
+      font-size: 12px;
+      letter-spacing: .8px;
+    }
+
+    .next-title::before,
+    .next-title::after {
+      content: "";
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan));
+      box-shadow: 0 0 6px var(--cyan);
+    }
+
+    .next-title::after { background: linear-gradient(90deg, var(--cyan), transparent); }
+
+    .next-line {
+      font-size: 9px;
+      letter-spacing: 1px;
+      line-height: 1.35;
+    }
+
+    .next-vs {
+      color: var(--lime);
+      font-size: 15px;
+      line-height: 1;
+      font-family: Impact, "Arial Black", Arial, sans-serif;
+    }
+
+    .sponsors {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px;
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
+    }
+
+    .sponsor {
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(71, 139, 255, .28);
+      border-radius: 3px;
+      background: rgba(2, 8, 22, .88);
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .sponsor.bank-logo {
+      padding: 3px;
+    }
+
+    .sponsor-logo {
+      width: 55px;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 5px rgba(45, 140, 255, .75));
+    }
+
+    .beefeater {
+      color: #ff3145;
+      font-family: Impact, "Arial Black", Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: .2px;
+    }
+
+    .byte {
+      color: #fff;
+      font-size: 9px;
+      letter-spacing: .4px;
+    }
+
+    .byte span { color: #13d885; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main class="poster" aria-label="Cartaz Standard Bank Open Padel 2026">
+    <div class="dot-field"></div>
+    <section class="content">
+      <img class="main-brand" src="assets/standard-bank-angola-header-full.svg" alt="Standard Bank Angola">
+      <div class="title">OPEN PADEL</div>
+      <div class="year">2026</div>
+      <div class="country"><span>ANGOLA</span></div>
+
+      <div class="field neon-box">CAMPO 1</div>
+
+      <div class="divider">DUPLA A</div>
+      <div class="players">
+        <div class="player"></div>
+        <div class="player light"></div>
+      </div>
+      <div class="names neon-box">CARLOS SOUSA<br>SERGIO VIEIRA</div>
+
+      <div class="vs">VS</div>
+
+      <div class="divider">DUPLA B</div>
+      <div class="players">
+        <div class="player light"></div>
+        <div class="player dark blue"></div>
+      </div>
+      <div class="names neon-box">NICOLAU M.<br>WOJTEK D.</div>
+
+      <div class="time-box neon-box">
+        <div>
+          <div class="time-label">HORÁRIO DO JOGO</div>
+          <div class="time">18:00</div>
+        </div>
+      </div>
+
+      <div class="next neon-box">
+        <div class="next-title"><span>A SEGUIR</span></div>
+        <div class="next-line">DIOGO M | MANUEL P</div>
+        <div class="next-vs">VS</div>
+        <div class="next-line">MIGUEL R | TOMÁS G</div>
+      </div>
+
+      <div class="sponsors" aria-label="Patrocinadores">
+        <div class="sponsor bank-logo"><img class="sponsor-logo" src="assets/standard-bank-angola-header-full.svg" alt="Standard Bank"></div>
+        <div class="sponsor beefeater">BEEFEATER<br><small style="color:white;font-size:5px;letter-spacing:1px;">LONDON</small></div>
+        <div class="sponsor byte"><span>B</span> BYTE<br>DIGITAL</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
