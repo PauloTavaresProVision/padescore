@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPublicCompetitionGames } from "@/lib/padelteams/scraper";
+import {
+  getCompetitionSnapshot,
+  combineGameDateTime,
+} from "@/lib/padelteams/client";
 
 export const dynamic = "force-dynamic";
 
@@ -180,12 +183,10 @@ export async function POST(
     );
   }
 
-  // Buscar jogos da página pública do PadelTeams (HTML scraping —
-  // workaround porque a API REST /v1/tournament/games retorna 500).
-  // Snapshot cacheado 30s.
-  let snapshot: Awaited<ReturnType<typeof getPublicCompetitionGames>>;
+  // Buscar snapshot do PadelTeams via API REST oficial (cache 30s).
+  let snapshot: Awaited<ReturnType<typeof getCompetitionSnapshot>>;
   try {
-    snapshot = await getPublicCompetitionGames(code);
+    snapshot = await getCompetitionSnapshot(code);
   } catch (e) {
     return NextResponse.json(
       {
@@ -201,7 +202,10 @@ export async function POST(
   const playerNorm = normalizeName(player.name);
   const games = snapshot.games
     .filter((g) => {
-      const allPlayerNames = [...g.teamAPlayers, ...g.teamBPlayers];
+      const allPlayerNames = [
+        ...g.team1.players.map((p) => p.name),
+        ...g.team2.players.map((p) => p.name),
+      ];
       return allPlayerNames.some((n) => {
         const nn = normalizeName(n);
         return (
@@ -211,11 +215,13 @@ export async function POST(
     })
     .map((g) => ({
       id: g.id,
-      scheduledAt: g.scheduledAt,
-      field: g.field,
-      teamA: g.teamA,
-      teamB: g.teamB,
-      status: "open" as const,
+      scheduledAt: combineGameDateTime(g).toISOString(),
+      field: g.field?.description ?? "—",
+      teamA:
+        g.team1.players.map((p) => p.name).join(" / ") || g.team1.name || "—",
+      teamB:
+        g.team2.players.map((p) => p.name).join(" / ") || g.team2.name || "—",
+      status: g.status,
     }))
     .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
 
@@ -237,8 +243,8 @@ export async function POST(
     games,
     // Datas do torneio (para o dropdown de "Disponível no dia X")
     competitionDates: {
-      from: snapshot.dateFrom,
-      to: snapshot.dateTo,
+      from: snapshot.competition.date_from,
+      to: snapshot.competition.date_to,
     },
   });
 }

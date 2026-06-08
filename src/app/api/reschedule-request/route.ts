@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPublicCompetitionGames } from "@/lib/padelteams/scraper";
+import {
+  getCompetitionSnapshot,
+  combineGameDateTime,
+} from "@/lib/padelteams/client";
 import { sendSmsOne } from "@/lib/wesender/client";
 
 export const dynamic = "force-dynamic";
@@ -126,11 +129,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // Buscar jogos via scraping da página pública (workaround do bug 500 no
-  // /v1/tournament/games). Cache 30s.
-  let snapshot: Awaited<ReturnType<typeof getPublicCompetitionGames>>;
+  // Buscar snapshot do PadelTeams via API REST oficial (cache 30s).
+  let snapshot: Awaited<ReturnType<typeof getCompetitionSnapshot>>;
   try {
-    snapshot = await getPublicCompetitionGames(competitionCode);
+    snapshot = await getCompetitionSnapshot(competitionCode);
   } catch (e) {
     return NextResponse.json(
       {
@@ -150,13 +152,13 @@ export async function POST(req: Request) {
 
   // Snapshot mínimo (estável mesmo se PadelTeams alterar/remover depois)
   const gameSnapshot = {
-    teamA: game.teamA,
-    teamB: game.teamB,
-    teamAPlayers: game.teamAPlayers.map((name) => ({ name })),
-    teamBPlayers: game.teamBPlayers.map((name) => ({ name })),
-    scheduledAt: game.scheduledAt,
-    field: game.field,
-    category: null, // o scraper não tem categoria; mais tarde podemos enriquecer
+    teamA: game.team1.players.map((p) => p.name).join(" / ") || game.team1.name,
+    teamB: game.team2.players.map((p) => p.name).join(" / ") || game.team2.name,
+    teamAPlayers: game.team1.players.map((p) => ({ id: p.id, name: p.name })),
+    teamBPlayers: game.team2.players.map((p) => ({ id: p.id, name: p.name })),
+    scheduledAt: combineGameDateTime(game).toISOString(),
+    field: game.field?.description ?? null,
+    category: null, // futuramente: lookup do tournament.name pelo phase_id
   };
 
   const { data: inserted, error: insErr } = await supabase
@@ -187,14 +189,17 @@ export async function POST(req: Request) {
   // O requester é auto-aceite (não criamos linha para ele).
   // -------------------------------------------------------------------------
   const requesterNorm = normalizeName(requesterName);
+  const team1Names = game.team1.players.map((p) => p.name);
+  const team2Names = game.team2.players.map((p) => p.name);
   // Quem está na mesma dupla que o requester? A ou B?
-  const requesterInA = game.teamAPlayers.some(
-    (n) => normalizeName(n) === requesterNorm ||
-            normalizeName(n).includes(requesterNorm) ||
-            requesterNorm.includes(normalizeName(n)),
+  const requesterInA = team1Names.some(
+    (n) =>
+      normalizeName(n) === requesterNorm ||
+      normalizeName(n).includes(requesterNorm) ||
+      requesterNorm.includes(normalizeName(n)),
   );
-  const partners = requesterInA ? game.teamAPlayers : game.teamBPlayers;
-  const opponents = requesterInA ? game.teamBPlayers : game.teamAPlayers;
+  const partners = requesterInA ? team1Names : team2Names;
+  const opponents = requesterInA ? team2Names : team1Names;
 
   // Buscar contactos de TODOS os jogadores que NÃO são o requester
   const otherNames = [
@@ -278,7 +283,7 @@ export async function POST(req: Request) {
     .slice(1)
     .reverse()
     .join("/"); // YYYY-MM-DD → DD/MM
-  const timeShort = game.time;
+  const timeShort = game.time.slice(0, 5); // HH:MM:SS → HH:MM
 
   if (createdAcceptances && createdAcceptances.length > 0) {
     void Promise.allSettled(
