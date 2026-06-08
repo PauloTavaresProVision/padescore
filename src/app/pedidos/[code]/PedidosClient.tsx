@@ -478,18 +478,33 @@ interface TimeSlot {
   to: string;
 }
 
+/**
+ * Calcula as opções de dia para reagendamento. Regra: só permitir o próprio
+ * dia do jogo OU o dia seguinte (cap do range do torneio).
+ *
+ * Ex: jogo dia 13 num torneio 13-20 → opções: [13, 14]
+ *     jogo dia 20 num torneio 13-20 → opções: [20]
+ */
 function buildDayOptions(
   dates: { from: string; to: string } | null,
-  excludeGameDay?: string,
+  gameDay: string,
 ): string[] {
-  if (!dates) return [];
-  const days: string[] = [];
-  const start = new Date(`${dates.from}T12:00:00`);
-  const end = new Date(`${dates.to}T12:00:00`);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    if (iso !== excludeGameDay) days.push(iso);
+  if (!dates || !gameDay) return [];
+
+  const tournamentEnd = new Date(`${dates.to}T12:00:00`);
+  const game = new Date(`${gameDay}T12:00:00`);
+  if (isNaN(game.getTime())) return [];
+
+  const days: string[] = [gameDay];
+
+  // Adicionar dia seguinte (se cabe no torneio)
+  const next = new Date(game);
+  next.setDate(next.getDate() + 1);
+  if (next <= tournamentEnd) {
+    const iso = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`;
+    days.push(iso);
   }
+
   return days;
 }
 
@@ -522,8 +537,11 @@ function RequestModal({
   submittedId: string | null;
 }) {
   const [reason, setReason] = useState("");
+  // Default: pré-seleccionar o dia do jogo (jogador pode mudar para o dia
+  // seguinte se quiser)
+  const defaultDay = game.scheduledAt.slice(0, 10);
   const [slots, setSlots] = useState<TimeSlot[]>([
-    { day: "", from: "17:00", to: "22:00" },
+    { day: defaultDay, from: "17:00", to: "22:00" },
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -535,6 +553,7 @@ function RequestModal({
     competitionDates,
     game.scheduledAt.slice(0, 10),
   );
+  const gameDay = game.scheduledAt.slice(0, 10);
 
   function updateSlot(idx: number, patch: Partial<TimeSlot>) {
     setSlots((prev) =>
@@ -542,7 +561,7 @@ function RequestModal({
     );
   }
   function addSlot() {
-    setSlots((prev) => [...prev, { day: "", from: "17:00", to: "22:00" }]);
+    setSlots((prev) => [...prev, { day: defaultDay, from: "17:00", to: "22:00" }]);
   }
   function removeSlot(idx: number) {
     setSlots((prev) => prev.filter((_, i) => i !== idx));
@@ -734,10 +753,10 @@ function RequestModal({
                   onChange={(e) => updateSlot(idx, { day: e.target.value })}
                   className={`${inputBaseClass} px-2.5 py-2 text-sm`}
                 >
-                  <option value="">— Escolher dia —</option>
                   {dayOptions.map((d) => (
                     <option key={d} value={d}>
                       {formatDayLong(d)}
+                      {d === gameDay ? " (mesmo dia)" : " (dia seguinte)"}
                     </option>
                   ))}
                 </select>
