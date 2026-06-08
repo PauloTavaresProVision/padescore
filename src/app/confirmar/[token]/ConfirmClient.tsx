@@ -155,8 +155,9 @@ export function ConfirmClient(props: Props) {
       )}
 
       <p className="text-center text-[11px] text-slate-400">
-        Cada um dos 3 outros jogadores recebe link único. O clube vê todas as
-        respostas e decide.
+        {props.playerRole === "partner"
+          ? "Como parceira, a tua concordância é importante para o pedido seguir."
+          : "Basta um dos adversários concordar para o pedido seguir. O clube decide depois."}
       </p>
     </div>
   );

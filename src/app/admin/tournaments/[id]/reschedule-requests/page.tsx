@@ -38,6 +38,107 @@ interface AcceptanceRow {
   decided_at: string | null;
 }
 
+/**
+ * Regra de consenso entre os jogadores:
+ *   - Parceira: obrigatório aceitar
+ *   - Adversários: pelo menos 1 dos 2 aceita
+ *
+ * Resultado:
+ *   - 'consensus' → parceira aceitou + 1+ adversário aceitou → clube pode aprovar
+ *   - 'rejected' → parceira rejeitou OU ambos adversários rejeitaram
+ *   - 'pending' → ainda faltam votos relevantes
+ *   - 'no_partner' → o pedido não tem parceira identificada (nome único na dupla)
+ */
+type ConsensusStatus = "consensus" | "rejected" | "pending" | "no_partner";
+
+interface Consensus {
+  status: ConsensusStatus;
+  partner: { row: AcceptanceRow | null; status: "accepted" | "rejected" | "pending" | "absent" };
+  opponentsAccepted: number;
+  opponentsRejected: number;
+  opponentsPending: number;
+  message: string;
+}
+
+function computeConsensus(acceptances: AcceptanceRow[]): Consensus {
+  const partners = acceptances.filter((a) => a.player_role === "partner");
+  const opponents = acceptances.filter((a) => a.player_role === "opponent");
+
+  const partnerRow = partners[0] ?? null;
+  const partnerStatus = partnerRow
+    ? (partnerRow.status as "accepted" | "rejected" | "pending")
+    : "absent";
+
+  const opponentsAccepted = opponents.filter((o) => o.status === "accepted").length;
+  const opponentsRejected = opponents.filter((o) => o.status === "rejected").length;
+  const opponentsPending = opponents.filter((o) => o.status === "pending").length;
+  const totalOpponents = opponents.length;
+
+  if (partnerStatus === "absent" && opponents.length === 0) {
+    return {
+      status: "no_partner",
+      partner: { row: null, status: "absent" },
+      opponentsAccepted,
+      opponentsRejected,
+      opponentsPending,
+      message: "Sem jogadores associados (não encontrados em contactos)",
+    };
+  }
+
+  // Rejeição: parceira rejeita OU ambos adversários rejeitam
+  if (partnerStatus === "rejected") {
+    return {
+      status: "rejected",
+      partner: { row: partnerRow, status: partnerStatus },
+      opponentsAccepted,
+      opponentsRejected,
+      opponentsPending,
+      message: "Parceira não concordou",
+    };
+  }
+  if (totalOpponents > 0 && opponentsRejected === totalOpponents) {
+    return {
+      status: "rejected",
+      partner: { row: partnerRow, status: partnerStatus },
+      opponentsAccepted,
+      opponentsRejected,
+      opponentsPending,
+      message: "Adversários não concordaram",
+    };
+  }
+
+  // Consenso: parceira aceita + 1+ adversário aceita
+  const partnerOK = partnerStatus === "accepted" || partnerStatus === "absent";
+  const opponentOK = totalOpponents === 0 || opponentsAccepted >= 1;
+  if (partnerOK && opponentOK && partnerStatus === "accepted") {
+    return {
+      status: "consensus",
+      partner: { row: partnerRow, status: partnerStatus },
+      opponentsAccepted,
+      opponentsRejected,
+      opponentsPending,
+      message: `Acordo dos jogadores: parceira ✓ + ${opponentsAccepted}/${totalOpponents} adversários ✓`,
+    };
+  }
+
+  // Pending
+  const missing: string[] = [];
+  if (partnerStatus === "pending") missing.push("parceira");
+  if (opponentsAccepted === 0 && opponentsPending > 0)
+    missing.push(`${opponentsPending} adversário${opponentsPending > 1 ? "s" : ""}`);
+  return {
+    status: "pending",
+    partner: { row: partnerRow, status: partnerStatus },
+    opponentsAccepted,
+    opponentsRejected,
+    opponentsPending,
+    message:
+      missing.length > 0
+        ? `Aguarda resposta: ${missing.join(", ")}`
+        : "A aguardar",
+  };
+}
+
 export default async function ReschedulePage({
   params,
   searchParams,
@@ -196,12 +297,21 @@ function RequestCard({
 }) {
   const g = req.game_snapshot;
   const created = new Date(req.created_at);
+  const consensus = computeConsensus(acceptances);
+
+  // Quando há consenso entre jogadores num pedido ainda pendente, destacamos
+  // visualmente porque é o "go-ahead" para o clube aprovar.
+  const ringClass = !isPending
+    ? "ring-slate-200"
+    : consensus.status === "consensus"
+    ? "ring-2 ring-emerald-400 shadow-md"
+    : consensus.status === "rejected"
+    ? "ring-2 ring-red-300"
+    : "ring-amber-200";
 
   return (
     <article
-      className={`rounded-2xl bg-white p-5 shadow-sm ring-1 ${
-        isPending ? "ring-amber-200" : "ring-slate-200"
-      }`}
+      className={`rounded-2xl bg-white p-5 shadow-sm ring-1 ${ringClass}`}
     >
       <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
@@ -249,8 +359,11 @@ function RequestCard({
 
       {acceptances.length > 0 && (
         <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3">
-          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Confirmação dos outros jogadores
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Confirmação dos outros jogadores
+            </div>
+            <ConsensusBadge consensus={computeConsensus(acceptances)} />
           </div>
           <div className="grid gap-1.5 sm:grid-cols-3">
             {acceptances.map((a, i) => (
@@ -366,6 +479,30 @@ function RequestCard({
         </form>
       )}
     </article>
+  );
+}
+
+function ConsensusBadge({ consensus }: { consensus: Consensus }) {
+  const styles: Record<ConsensusStatus, string> = {
+    consensus: "bg-emerald-500 text-white border-emerald-600",
+    rejected: "bg-red-500 text-white border-red-600",
+    pending: "bg-amber-100 text-amber-900 border-amber-300",
+    no_partner: "bg-slate-100 text-slate-600 border-slate-300",
+  };
+  const icons: Record<ConsensusStatus, string> = {
+    consensus: "✓",
+    rejected: "✗",
+    pending: "…",
+    no_partner: "—",
+  };
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${styles[consensus.status]}`}
+      title={consensus.message}
+    >
+      <span>{icons[consensus.status]}</span>
+      <span>{consensus.message}</span>
+    </span>
   );
 }
 
