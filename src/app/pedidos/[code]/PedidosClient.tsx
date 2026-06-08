@@ -2,6 +2,126 @@
 
 import { useState } from "react";
 
+// =============================================================================
+// ÍCONES (SVG line-style, herda currentColor)
+// =============================================================================
+const IconPhone = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="20" height="20" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+  </svg>
+);
+const IconMail = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="20" height="20" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <path d="m22 7-10 5L2 7" />
+  </svg>
+);
+const IconLock = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+const IconArrowRight = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <path d="M5 12h14M13 5l7 7-7 7" />
+  </svg>
+);
+const IconArrowLeft = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="12" height="12" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <path d="M19 12H5M12 5l-7 7 7 7" />
+  </svg>
+);
+const IconCheck = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <path d="m5 12 5 5L20 7" />
+  </svg>
+);
+const IconCalendar = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+  </svg>
+);
+const IconClock = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 6v6l4 2" />
+  </svg>
+);
+const IconPin = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+const IconEdit = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+const IconPlus = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+  >
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+const IconRacket = (p: { className?: string }) => (
+  <svg
+    className={p.className}
+    width="32" height="32" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+  >
+    <ellipse cx="9" cy="9" rx="6" ry="6" />
+    <path d="M13.5 13.5 21 21" />
+    <path d="M5 9h8M9 5v8M6 7l6 6M12 7l-6 6" />
+  </svg>
+);
+
 export interface GameForUI {
   id: number;
   scheduledAt: string; // ISO
@@ -29,19 +149,21 @@ interface LookupResponse {
 
 interface Props {
   competitionCode: string;
+  accentColor: string;
 }
 
-/**
- * Fluxo:
- *   1. Tela inicial: pede telemóvel
- *   2. POST /api/pedidos/{code}/lookup
- *      - Se 1 jogador → mostra logo os jogos dele
- *      - Se vários (casal partilha número) → mostra dropdown para escolher
- *      - Se nenhum → mensagem de erro
- *   3. Mostra jogos do jogador identificado, com botão "Pedir alteração"
- *   4. Modal para preencher motivo + sugestão
- */
-export function PedidosClient({ competitionCode }: Props) {
+// =============================================================================
+// CLASSES PARTILHADAS (design system dark)
+// =============================================================================
+const cardClass =
+  "rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl";
+const inputBaseClass =
+  "w-full rounded-xl border border-white/15 bg-white/95 text-base !text-slate-900 shadow-inner placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 disabled:opacity-50";
+
+// =============================================================================
+// COMPONENTE PRINCIPAL
+// =============================================================================
+export function PedidosClient({ competitionCode, accentColor }: Props) {
   // Identificador pode ser telemóvel OU email (auto-detect por '@')
   const [identifier, setIdentifier] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
@@ -49,7 +171,9 @@ export function PedidosClient({ competitionCode }: Props) {
 
   // Estado após lookup
   const [players, setPlayers] = useState<PlayerOption[] | null>(null);
-  const [selectedPlayer, setSelectedPlayer] = useState<PlayerOption | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerOption | null>(
+    null,
+  );
   const [games, setGames] = useState<GameForUI[]>([]);
   const [competitionDates, setCompetitionDates] = useState<
     { from: string; to: string } | null
@@ -92,30 +216,31 @@ export function PedidosClient({ competitionCode }: Props) {
     setSubmittedId(null);
   }
 
-  // Detecta visualmente o tipo de input para feedback (placeholder + icon)
   const looksLikeEmail = identifier.includes("@");
 
-  // Tela 1: pede telemóvel
+  // =========================================================================
+  // TELA 1: pedir identificador
+  // =========================================================================
   if (!players) {
     return (
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <h2 className="mb-1 text-lg font-extrabold text-slate-900">
+      <div className={cardClass}>
+        <h2 className="mb-1 text-xl font-extrabold text-white">
           Identifica-te
         </h2>
-        <p className="mb-4 text-sm text-slate-600">
-          Indica o teu <b>telemóvel</b> ou <b>email</b> para vermos os teus
-          jogos.
+        <p className="mb-5 text-sm text-slate-300">
+          Indica o teu <b className="text-white">telemóvel</b> ou{" "}
+          <b className="text-white">email</b> para vermos os teus jogos.
         </p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             void doLookup();
           }}
-          className="space-y-3"
+          className="space-y-4"
         >
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg">
-              {looksLikeEmail ? "✉️" : "📱"}
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              {looksLikeEmail ? <IconMail /> : <IconPhone />}
             </span>
             <input
               type="text"
@@ -126,40 +251,48 @@ export function PedidosClient({ competitionCode }: Props) {
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="923 456 789 ou o.teu@email.com"
               disabled={lookingUp}
-              className="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-4 py-3 text-base !text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100"
+              className={`${inputBaseClass} pl-11 pr-4 py-3.5`}
               autoFocus
             />
           </div>
           {lookupError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-200">
               {lookupError}
             </div>
           )}
           <button
             type="submit"
             disabled={lookingUp || !identifier.trim()}
-            className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-base font-bold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-50"
+            className="w-full rounded-xl px-4 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+            style={{
+              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
+              boxShadow: `0 10px 30px -10px ${accentColor}`,
+            }}
           >
-            {lookingUp ? "A procurar..." : "Ver os meus jogos"}
+            <span className="inline-flex items-center justify-center gap-2">
+              {lookingUp ? "A procurar..." : "Ver os meus jogos"}
+              {!lookingUp && <IconArrowRight />}
+            </span>
           </button>
-          <p className="text-center text-[11px] text-slate-400">
-            O teu contacto é usado apenas para validar a identidade e
-            contactar-te sobre a alteração.
+          <p className="inline-flex items-center justify-center gap-1.5 w-full text-center text-[11px] text-slate-400">
+            <IconLock className="text-slate-500" />
+            O teu contacto é usado apenas para validar identidade.
           </p>
         </form>
       </div>
     );
   }
 
-  // Tela 2 (só se há +1 jogador com mesmo número): pede para escolher
+  // =========================================================================
+  // TELA 2: escolher entre múltiplos jogadores (casais com mesmo nº)
+  // =========================================================================
   if (!selectedPlayer && players.length > 1) {
     return (
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <h2 className="mb-1 text-lg font-extrabold text-slate-900">
-          Quem és?
-        </h2>
-        <p className="mb-4 text-sm text-slate-600">
-          Este número está associado a mais de uma inscrição. Escolhe a tua.
+      <div className={cardClass}>
+        <h2 className="mb-1 text-xl font-extrabold text-white">Quem és?</h2>
+        <p className="mb-5 text-sm text-slate-300">
+          Este contacto está associado a mais de uma inscrição. Escolhe a
+          tua.
         </p>
         <div className="space-y-2">
           {players.map((p) => (
@@ -167,108 +300,149 @@ export function PedidosClient({ competitionCode }: Props) {
               key={p.name}
               onClick={() => void doLookup(p.name)}
               disabled={lookingUp}
-              className="flex w-full items-center justify-between rounded-xl border-2 border-slate-200 bg-white p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-50"
+              className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-white/5 p-4 text-left transition-all hover:border-emerald-400/50 hover:bg-emerald-500/10 disabled:opacity-50"
             >
               <div>
-                <div className="font-semibold text-slate-900">{p.name}</div>
+                <div className="font-semibold text-white">{p.name}</div>
                 {p.category && (
-                  <div className="mt-0.5 text-xs text-slate-500">
+                  <div className="mt-0.5 text-xs text-slate-400">
                     Categoria {p.category}
                   </div>
                 )}
               </div>
-              <span className="text-slate-400">→</span>
+              <span className="text-slate-400 transition-transform group-hover:translate-x-1">
+                <IconArrowRight />
+              </span>
             </button>
           ))}
         </div>
         <button
           onClick={reset}
-          className="mt-4 w-full text-center text-xs text-slate-400 underline hover:text-slate-600"
+          className="mt-5 inline-flex w-full items-center justify-center gap-1.5 text-center text-xs text-slate-400 hover:text-white"
         >
-          ← Voltar (mudar telemóvel)
+          <IconArrowLeft />
+          Mudar contacto
         </button>
       </div>
     );
   }
 
-  // Tela 3: lista de jogos do jogador
+  // =========================================================================
+  // TELA 3: jogos do jogador identificado
+  // =========================================================================
   return (
     <div>
-      <div className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-200">
-        <div className="text-xs font-semibold text-emerald-700">
+      {/* Identificação confirmada */}
+      <div
+        className="mb-4 rounded-2xl border p-4 backdrop-blur-xl"
+        style={{
+          background: `${accentColor}20`,
+          borderColor: `${accentColor}50`,
+        }}
+      >
+        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+          <IconCheck className="h-3 w-3" />
           Identificado como
         </div>
-        <div className="mt-0.5 text-base font-extrabold text-slate-900">
-          {selectedPlayer!.name}
-          {selectedPlayer!.category && (
-            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-900">
-              {selectedPlayer!.category}
-            </span>
-          )}
+        <div className="mt-1 flex items-baseline justify-between gap-2">
+          <div className="text-lg font-extrabold text-white">
+            {selectedPlayer!.name}
+            {selectedPlayer!.category && (
+              <span
+                className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                style={{
+                  background: `${accentColor}40`,
+                  color: "#fff",
+                }}
+              >
+                {selectedPlayer!.category}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={reset}
+            className="text-[11px] text-emerald-200 underline hover:text-white"
+          >
+            Mudar
+          </button>
         </div>
-        <button
-          onClick={reset}
-          className="mt-1 text-[11px] text-emerald-700 underline hover:text-emerald-900"
-        >
-          Não sou eu, mudar
-        </button>
       </div>
 
+      {/* Lista jogos / estado vazio */}
       {games.length === 0 ? (
-        <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200">
-          <div className="text-3xl">🎾</div>
-          <h2 className="mt-2 text-lg font-bold text-slate-900">
+        <div className={`${cardClass} text-center`}>
+          <div
+            className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full"
+            style={{
+              background: `${accentColor}20`,
+              color: accentColor,
+            }}
+          >
+            <IconRacket />
+          </div>
+          <h2 className="text-lg font-bold text-white">
             Sem jogos definidos ainda
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            O organizador ainda não publicou os teus jogos no PadelTeams. Volta
-            mais tarde.
+          <p className="mt-1.5 text-sm text-slate-300">
+            O organizador ainda não publicou os teus jogos no PadelTeams.
+            Volta mais tarde.
           </p>
         </div>
       ) : (
         <>
-          <h2 className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-slate-500">
-            Os teus jogos ({games.length})
+          <h2 className="mb-3 px-1 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Os teus jogos <span className="text-emerald-400">({games.length})</span>
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {games.map((g) => (
               <article
                 key={g.id}
-                className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
+                className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-xl shadow-black/20 backdrop-blur-xl transition-all hover:border-white/20"
               >
-                <div className="flex items-start gap-3">
-                  <div className="shrink-0 rounded-lg bg-slate-100 px-3 py-2 text-center">
-                    <div className="text-xs font-bold uppercase text-slate-500">
+                <div className="flex items-stretch">
+                  {/* Hora + Campo (lado esquerdo, accent color) */}
+                  <div
+                    className="flex shrink-0 flex-col items-center justify-center px-4 py-4 text-white"
+                    style={{ background: `${accentColor}30` }}
+                  >
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">
                       {formatDayShort(g.scheduledAt)}
                     </div>
-                    <div className="text-xl font-extrabold leading-none text-slate-900">
+                    <div className="text-2xl font-black leading-none">
                       {formatTime(g.scheduledAt)}
                     </div>
-                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <div className="mt-1.5 inline-flex items-center rounded-md bg-black/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">
                       {g.field}
                     </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-900">
+
+                  {/* Teams */}
+                  <div className="flex min-w-0 flex-1 flex-col justify-center px-4 py-3">
+                    <div className="text-sm font-semibold text-white">
                       {g.teamA}
                     </div>
-                    <div className="my-1 text-xs font-bold text-emerald-600">
+                    <div
+                      className="my-1.5 text-[10px] font-black"
+                      style={{ color: accentColor }}
+                    >
                       VS
                     </div>
-                    <div className="text-sm font-semibold text-slate-900">
+                    <div className="text-sm font-semibold text-white">
                       {g.teamB}
                     </div>
-                    <button
-                      onClick={() => {
-                        setSelectedGame(g);
-                        setSubmittedId(null);
-                      }}
-                      className="mt-3 w-full rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-600"
-                    >
-                      ✎ Pedir alteração de horário
-                    </button>
                   </div>
                 </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedGame(g);
+                    setSubmittedId(null);
+                  }}
+                  className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-2.5 text-xs font-bold text-emerald-300 transition-all hover:bg-emerald-500/10 hover:text-emerald-200"
+                >
+                  <IconEdit />
+                  Pedir alteração de horário
+                </button>
               </article>
             ))}
           </div>
@@ -278,10 +452,9 @@ export function PedidosClient({ competitionCode }: Props) {
       {selectedGame && selectedPlayer && (
         <RequestModal
           competitionCode={competitionCode}
+          accentColor={accentColor}
           game={selectedGame}
           requesterName={selectedPlayer.name}
-          // O telemóvel vem do contacto na DB (uniforme E.164), independente
-          // de o jogador se ter identificado por phone ou email.
           requesterPhone={selectedPlayer.phone ?? identifier}
           competitionDates={competitionDates}
           onClose={() => {
@@ -296,17 +469,15 @@ export function PedidosClient({ competitionCode }: Props) {
   );
 }
 
+// =============================================================================
+// REQUEST MODAL
+// =============================================================================
 interface TimeSlot {
-  /** YYYY-MM-DD */
   day: string;
-  /** HH:MM (24h) */
   from: string;
-  /** HH:MM (24h) */
   to: string;
 }
 
-/** Constrói lista de dias disponíveis para o dropdown a partir do range
- * da competição. */
 function buildDayOptions(
   dates: { from: string; to: string } | null,
   excludeGameDay?: string,
@@ -323,8 +494,6 @@ function buildDayOptions(
 }
 
 function formatSlotsForApi(slots: TimeSlot[]): string {
-  // Converte os slots num texto estruturado mas lível para o admin do clube.
-  // Ex: "Sábado, 14 de junho 17:00–22:00 · Domingo, 15 de junho 9:00–13:00"
   return slots
     .filter((s) => s.day && s.from && s.to)
     .map((s) => `${formatDayLong(s.day)} ${s.from}–${s.to}`)
@@ -333,6 +502,7 @@ function formatSlotsForApi(slots: TimeSlot[]): string {
 
 function RequestModal({
   competitionCode,
+  accentColor,
   game,
   requesterName,
   requesterPhone,
@@ -342,6 +512,7 @@ function RequestModal({
   submittedId,
 }: {
   competitionCode: string;
+  accentColor: string;
   game: GameForUI;
   requesterName: string;
   requesterPhone: string;
@@ -351,12 +522,14 @@ function RequestModal({
   submittedId: string | null;
 }) {
   const [reason, setReason] = useState("");
-  // Múltiplos slots de disponibilidade (default: 1 vazio)
   const [slots, setSlots] = useState<TimeSlot[]>([
     { day: "", from: "17:00", to: "22:00" },
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptances, setAcceptances] = useState<
+    { player_name: string; player_role: string; acceptance_token: string }[]
+  >([]);
 
   const dayOptions = buildDayOptions(
     competitionDates,
@@ -368,20 +541,12 @@ function RequestModal({
       prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
     );
   }
-
   function addSlot() {
     setSlots((prev) => [...prev, { day: "", from: "17:00", to: "22:00" }]);
   }
-
   function removeSlot(idx: number) {
     setSlots((prev) => prev.filter((_, i) => i !== idx));
   }
-
-  // Quando submetido, guardamos as acceptances criadas para construir o
-  // texto do WhatsApp com os links únicos
-  const [acceptances, setAcceptances] = useState<
-    { player_name: string; player_role: string; acceptance_token: string }[]
-  >([]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -416,13 +581,12 @@ function RequestModal({
     }
   }
 
+  // Tela de sucesso
   if (submittedId) {
     const preferredText = formatSlotsForApi(slots);
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
 
-    // Mensagem WhatsApp com info do pedido + links únicos por jogador
-    // (cada um vê o seu próprio link para Aceitar/Rejeitar)
     const intro =
       `Olá! Pedi alteração de horário para o nosso jogo:\n\n` +
       `📅 ${formatDayLong(game.scheduledAt.slice(0, 10))} às ${formatTime(game.scheduledAt)}\n` +
@@ -436,24 +600,34 @@ function RequestModal({
     const waText = encodeURIComponent(intro);
 
     return (
-      <ModalShell onClose={onClose} title="✓ Pedido enviado">
+      <ModalShell onClose={onClose} title="Pedido enviado">
         <div className="space-y-4">
-          <div className="text-center text-5xl">✅</div>
-          <p className="text-center text-sm text-slate-700">
+          <div
+            className="mx-auto grid h-16 w-16 place-items-center rounded-full"
+            style={{
+              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}aa)`,
+              boxShadow: `0 0 40px ${accentColor}60`,
+            }}
+          >
+            <IconCheck className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-center text-sm text-slate-200">
             O teu pedido foi registado.
           </p>
 
           {acceptances.length > 0 ? (
-            <div className="rounded-lg bg-emerald-50 p-3 text-left text-xs text-emerald-900 ring-1 ring-emerald-200">
-              <b className="block mb-1">Próximo passo</b>
-              Cada um dos outros {acceptances.length} jogadores tem o seu
-              link único para aceitar/rejeitar. Partilha a mensagem
-              abaixo no grupo WhatsApp:
+            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-100">
+              <b className="mb-1 flex items-center gap-1.5 text-emerald-300">
+                <IconPhone className="h-3 w-3" />
+                SMS enviado
+              </b>
+              Os {acceptances.length} jogadores envolvidos receberam um SMS
+              com o link para aceitar. Podes também partilhar no grupo WhatsApp:
             </div>
           ) : (
-            <div className="rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900 ring-1 ring-amber-200">
-              Não conseguimos identificar os outros jogadores nos
-              contactos. O clube vai avaliar directamente.
+            <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-3.5 text-xs text-amber-100">
+              Não conseguimos identificar os outros jogadores nos contactos.
+              O clube vai avaliar directamente.
             </div>
           )}
 
@@ -461,7 +635,7 @@ function RequestModal({
             href={`https://wa.me/?text=${waText}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-600"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02] hover:bg-green-600 active:scale-[0.98]"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zM6.597 20.235c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.881.002-5.459-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.881-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.982zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
@@ -470,7 +644,7 @@ function RequestModal({
           </a>
           <button
             onClick={onClose}
-            className="block w-full text-center text-sm text-slate-500 underline hover:text-slate-700"
+            className="block w-full text-center text-sm text-slate-400 underline hover:text-white"
           >
             Fechar
           </button>
@@ -479,24 +653,42 @@ function RequestModal({
     );
   }
 
+  // Tela de formulário
   return (
     <ModalShell onClose={onClose} title="Pedido de alteração">
-      <div className="mb-4 rounded-lg bg-slate-50 p-3 text-sm">
-        <div className="font-semibold text-slate-900">
-          {game.teamA} <span className="text-emerald-600">VS</span> {game.teamB}
+      <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
+        <div className="text-sm font-bold text-white">
+          {game.teamA}{" "}
+          <span style={{ color: accentColor }}>VS</span> {game.teamB}
         </div>
-        <div className="mt-1 text-xs text-slate-600">
-          📅 {formatDayLong(game.scheduledAt.slice(0, 10))} às{" "}
-          {formatTime(game.scheduledAt)} · 🏟 {game.field}
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-1">
+            <IconCalendar />
+            {formatDayLong(game.scheduledAt.slice(0, 10))}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <IconClock />
+            {formatTime(game.scheduledAt)}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <IconPin />
+            {game.field}
+          </span>
         </div>
       </div>
 
-      <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-        Identificado como <b>{requesterName}</b>{" "}
-        <span className="font-mono text-emerald-700">({requesterPhone})</span>
+      <div
+        className="mb-4 rounded-xl border px-3 py-2 text-xs"
+        style={{
+          background: `${accentColor}20`,
+          borderColor: `${accentColor}50`,
+          color: "#fff",
+        }}
+      >
+        Identificado como <b>{requesterName}</b>
       </div>
 
-      <form onSubmit={submit} className="space-y-3">
+      <form onSubmit={submit} className="space-y-4">
         <Field label="Motivo">
           <textarea
             required
@@ -505,43 +697,42 @@ function RequestModal({
             onChange={(e) => setReason(e.target.value)}
             placeholder="Conflito com viagem de trabalho, doença, etc."
             rows={3}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm !text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className={`${inputBaseClass} px-3 py-2.5 text-sm`}
           />
         </Field>
+
         <div>
           <div className="mb-2 flex items-baseline justify-between">
-            <span className="block text-xs font-semibold text-slate-700">
+            <span className="block text-xs font-bold uppercase tracking-wider text-slate-300">
               Disponibilidade para reagendar
             </span>
-            <span className="text-[10px] text-slate-400">
-              (opcional, ajuda o clube)
-            </span>
+            <span className="text-[10px] text-slate-500">opcional</span>
           </div>
 
           {slots.map((slot, idx) => (
             <div
               key={idx}
-              className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5"
+              className="mb-2 rounded-xl border border-white/10 bg-white/5 p-3"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Opção {idx + 1}
                 </span>
                 {slots.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeSlot(idx)}
-                    className="text-[11px] text-red-500 underline hover:text-red-700"
+                    className="text-[11px] text-red-300 underline hover:text-red-200"
                   >
                     Remover
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-[1fr] gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
                 <select
                   value={slot.day}
                   onChange={(e) => updateSlot(idx, { day: e.target.value })}
-                  className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm !text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className={`${inputBaseClass} px-2.5 py-2 text-sm`}
                 >
                   <option value="">— Escolher dia —</option>
                   {dayOptions.map((d) => (
@@ -550,24 +741,24 @@ function RequestModal({
                     </option>
                   ))}
                 </select>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
-                  <span className="hidden sm:inline">das</span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <span>das</span>
                   <input
                     type="time"
                     value={slot.from}
                     onChange={(e) => updateSlot(idx, { from: e.target.value })}
                     step={900}
-                    className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm !text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className={`${inputBaseClass} px-2 py-1.5 text-sm`}
                   />
                 </div>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1.5 text-xs text-slate-400">
                   <span>às</span>
                   <input
                     type="time"
                     value={slot.to}
                     onChange={(e) => updateSlot(idx, { to: e.target.value })}
                     step={900}
-                    className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm !text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className={`${inputBaseClass} px-2 py-1.5 text-sm`}
                   />
                 </div>
               </div>
@@ -577,33 +768,41 @@ function RequestModal({
           <button
             type="button"
             onClick={addSlot}
-            className="w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/20 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 transition-all hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-200"
           >
-            + Adicionar outro horário disponível
+            <IconPlus />
+            Adicionar outro horário disponível
           </button>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
             {error}
           </div>
         )}
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-1">
           <button
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 transition-all hover:bg-white/10 disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="flex-[2] rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+            className="flex-[2] rounded-xl px-4 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+            style={{
+              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
+              boxShadow: `0 8px 24px -8px ${accentColor}`,
+            }}
           >
-            {submitting ? "A enviar..." : "Submeter pedido"}
+            <span className="inline-flex items-center justify-center gap-2">
+              {submitting ? "A enviar..." : "Submeter pedido"}
+              {!submitting && <IconArrowRight />}
+            </span>
           </button>
         </div>
       </form>
@@ -611,6 +810,9 @@ function RequestModal({
   );
 }
 
+// =============================================================================
+// MODAL SHELL (também com glassmorphism dark)
+// =============================================================================
 function ModalShell({
   children,
   onClose,
@@ -622,24 +824,24 @@ function ModalShell({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-md sm:items-center"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl"
+        className="w-full max-w-md overflow-hidden rounded-t-3xl border border-white/10 bg-slate-900/95 shadow-2xl shadow-black/80 backdrop-blur-xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <h2 className="text-base font-bold text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="text-2xl leading-none text-slate-400 hover:text-slate-700"
+            className="grid h-8 w-8 place-items-center rounded-lg text-2xl leading-none text-slate-400 transition hover:bg-white/10 hover:text-white"
             aria-label="Fechar"
           >
             ×
           </button>
         </div>
-        {children}
+        <div className="p-5">{children}</div>
       </div>
     </div>
   );
@@ -654,7 +856,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold text-slate-700">
+      <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
         {label}
       </span>
       {children}
@@ -662,6 +864,9 @@ function Field({
   );
 }
 
+// =============================================================================
+// HELPERS
+// =============================================================================
 function formatTime(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -669,7 +874,9 @@ function formatTime(iso: string): string {
 
 function formatDayShort(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("pt-PT", { weekday: "short", day: "2-digit" });
+  const w = d.toLocaleDateString("pt-PT", { weekday: "short" });
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${w.toUpperCase().slice(0, 3)} ${dd}`;
 }
 
 function formatDayLong(day: string): string {
