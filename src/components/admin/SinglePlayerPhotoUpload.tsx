@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { detectFacing, type Facing, type FacingResult } from "@/lib/face-direction";
+import { PhotoCropper } from "./PhotoCropper";
 
 /**
  * Upload de UMA foto individual (jogador). Faz a remoção de fundo com
@@ -31,6 +32,13 @@ export function SinglePlayerPhotoUpload({
   >(null);
   const hiddenRef = useRef<HTMLInputElement>(null);
 
+  // Crop step: depois de seleccionar a foto, mostramos cropper INTERACTIVO
+  // antes do background-removal. Útil para focar cabeça+ombros (avatar).
+  const [cropSrcUrl, setCropSrcUrl] = useState<string | null>(null);
+  // Foto original do file picker — guardada para reabrir cropper se quiser
+  // re-ajustar o crop sem recarregar o ficheiro
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (!bgRemovedBlob || !hiddenRef.current) return;
     const dt = new DataTransfer();
@@ -38,24 +46,30 @@ export function SinglePlayerPhotoUpload({
     hiddenRef.current.files = dt.files;
   }, [bgRemovedBlob]);
 
-  async function onSelect(f: File | null) {
+  /**
+   * Fase 1: utilizador escolhe ficheiro → abrimos o cropper.
+   * A detecção facial (IA) corre em paralelo na foto ORIGINAL.
+   */
+  function onSelect(f: File | null) {
     if (!f) return;
     setError(null);
     setFile(f);
     setBgRemovedBlob(null);
     setBgRemovedUrl(null);
     setFacing(null);
-    setPreview(URL.createObjectURL(f));
-    setProcessing(true);
 
-    // Detecção facial (IA) corre em paralelo com a remoção de fundo, na
-    // foto ORIGINAL (mais fiável que na recortada).
+    const url = URL.createObjectURL(f);
+    setOriginalUrl(url);
+    setPreview(url);
+    // Abre cropper para o user ajustar
+    setCropSrcUrl(url);
+
+    // Detecção facial (na foto original — mais fiável que na recortada)
     if (detectEnabled && onFacing) {
       setFacing("detecting");
       detectFacing(f)
         .then((r) => {
           setFacing(r);
-          // Para o form: "error" não mexe no mirror (igual a unknown).
           onFacing(r.facing === "error" ? "unknown" : r.facing);
         })
         .catch((e) =>
@@ -65,10 +79,21 @@ export function SinglePlayerPhotoUpload({
           }),
         );
     }
+  }
 
+  /**
+   * Fase 2: utilizador confirmou o crop → corremos background removal
+   * SÓ na área recortada (mais rápido e focado).
+   */
+  async function onCropConfirmed(croppedBlob: Blob, croppedUrl: string) {
+    setCropSrcUrl(null); // fecha cropper
+    setPreview(croppedUrl); // mostra preview do crop
+    setProcessing(true);
     try {
       const { removeBackground } = await import("@imgly/background-removal");
-      const blob = await removeBackground(f, { output: { format: "image/png" } });
+      const blob = await removeBackground(croppedBlob, {
+        output: { format: "image/png" },
+      });
       setBgRemovedBlob(blob);
       setBgRemovedUrl(URL.createObjectURL(blob));
     } catch (e) {
@@ -81,11 +106,17 @@ export function SinglePlayerPhotoUpload({
   function reset() {
     setFile(null);
     setPreview(null);
+    setOriginalUrl(null);
+    setCropSrcUrl(null);
     setBgRemovedBlob(null);
     setBgRemovedUrl(null);
     setError(null);
     setFacing(null);
     if (hiddenRef.current) hiddenRef.current.value = "";
+  }
+
+  function reCrop() {
+    if (originalUrl) setCropSrcUrl(originalUrl);
   }
 
   const facingKind =
@@ -158,16 +189,31 @@ export function SinglePlayerPhotoUpload({
             <>
               <div className="font-semibold text-emerald-600">Foto pronta</div>
               <div className="mt-1">Fundo removido. Vai ser guardada como PNG transparente.</div>
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-2 font-semibold text-emerald-600 hover:underline"
-              >
-                Trocar foto
-              </button>
+              <div className="mt-2 flex flex-wrap gap-3">
+                {originalUrl && (
+                  <button
+                    type="button"
+                    onClick={reCrop}
+                    className="font-semibold text-cyan-600 hover:underline"
+                  >
+                    Re-cropar
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="font-semibold text-emerald-600 hover:underline"
+                >
+                  Trocar foto
+                </button>
+              </div>
             </>
           ) : processing ? (
             <div>A correr o modelo de remoção de fundo… (~5-10 s na primeira foto)</div>
+          ) : cropSrcUrl ? (
+            <div className="font-semibold text-cyan-700">
+              A ajustar crop… (vê o ecrã)
+            </div>
           ) : (
             <div>
               Clica na caixa para carregar uma foto. Funciona melhor com fotos
@@ -194,6 +240,22 @@ export function SinglePlayerPhotoUpload({
       </div>
 
       <input ref={hiddenRef} type="file" name="photo" className="hidden" />
+
+      {/* Cropper modal — aparece imediatamente após escolher foto, e pode
+          ser re-aberto depois com "Re-cropar" */}
+      {cropSrcUrl && (
+        <PhotoCropper
+          sourceUrl={cropSrcUrl}
+          aspect={3 / 4}
+          onCropped={onCropConfirmed}
+          onCancel={() => {
+            setCropSrcUrl(null);
+            // Se nunca chegou a confirmar um crop e não há nada guardado,
+            // limpa tudo (volta ao estado inicial)
+            if (!bgRemovedBlob) reset();
+          }}
+        />
+      )}
 
       <style>{`
         .bg-checker {
