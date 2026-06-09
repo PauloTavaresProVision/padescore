@@ -5,6 +5,9 @@
 #      NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 #      NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 #      SUPABASE_SERVICE_ROLE_KEY=eyJ...
+#      PADELTEAMS_BEARER_TOKEN=QOoT4l...           # API PadelTeams
+#      WESENDER_API_KEY=4cc2ee06...                # SMS Wesender
+#      NEXT_PUBLIC_APP_URL=https://teu-dominio.ao  # usado em SMS para link /c/{token}
 # 2. docker compose up -d --build
 # 3. Reverse-proxy (Nginx/Caddy/Traefik) → http://127.0.0.1:3000 com HTTPS
 # =====================================================================
@@ -18,6 +21,7 @@ services:
         # NEXT_PUBLIC_* são embebidas no build (têm de estar aqui).
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     image: padescore:latest
     restart: unless-stopped
     ports:
@@ -31,6 +35,12 @@ services:
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      # Integração PadelTeams (cavalete + pedidos de alteração)
+      PADELTEAMS_BEARER_TOKEN: ${PADELTEAMS_BEARER_TOKEN}
+      # SMS Wesender (notificação dos jogadores quando alguém pede alteração)
+      WESENDER_API_KEY: ${WESENDER_API_KEY}
+      # URL pública para os links curtos /c/{token} no SMS
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/login"]
       interval: 30s
