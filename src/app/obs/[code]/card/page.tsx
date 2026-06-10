@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -6,6 +8,10 @@ import {
   INTERVAL_BASE_H,
 } from "@/components/IntervalCard";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
+
+// Logo do sponsor no canto inferior direito do cartão: basta colocar o
+// ficheiro em public/byte-digital.png — se não existir, o slot não aparece.
+const SPONSOR_FILE = "byte-digital.png";
 
 export const dynamic = "force-dynamic";
 
@@ -81,10 +87,14 @@ export default async function ObsIntervalCardPage({
 
   const h = Math.round(INTERVAL_BASE_H * scale);
 
-  // Num browser normal o fundo é escuro (pré-visualização fiel à transmissão,
-  // senão os espaços entre painéis ficavam brancos). Dentro do OBS existe
-  // window.obsstudio e o script repõe transparente para se ver o vídeo.
-  // ?bg=transparent força transparente noutros webviews (ex.: YoloBox).
+  const sponsorUrl = existsSync(join(process.cwd(), "public", SPONSOR_FILE))
+    ? `/${SPONSOR_FILE}`
+    : null;
+
+  // Num browser normal o fundo é escuro (pré-visualização fiel à transmissão).
+  // Dentro do OBS existe window.obsstudio e o script repõe transparente para
+  // se ver o vídeo. ?bg=transparent força transparente noutros webviews
+  // (ex.: YoloBox).
   const forceTransparent = bg === "transparent";
 
   return (
@@ -95,7 +105,8 @@ export default async function ObsIntervalCardPage({
           padding: 0 !important;
           width: 100% !important;
           min-width: ${Math.round(INTERVAL_BASE_MIN_W * scale)}px !important;
-          height: ${h}px !important;
+          min-height: ${h}px !important;
+          height: 100% !important;
           overflow: hidden !important;
           background: ${forceTransparent ? "transparent" : "#101010"} !important;
         }
@@ -128,6 +139,7 @@ export default async function ObsIntervalCardPage({
             }
           }
           elapsedSeconds={elapsedSeconds}
+          sponsorUrl={sponsorUrl}
           scale={scale}
         />
       </div>

@@ -1,19 +1,20 @@
 // =============================================================================
-// OBS — CARTÃO DE INTERVALO (dark premium, mockup do designer)
+// OBS — CARTÃO DE INTERVALO (tradução 1:1 do HTML do designer)
 // -----------------------------------------------------------------------------
-// Painel wide para a cena de INTERVALO da transmissão. 3 painéis com moldura
-// prateada sobre fundo transparente; o central é ligeiramente mais baixo e
-// fica recuado (centrado na vertical), como no mockup:
+// Caixa ÚNICA com 3 secções em grid (logo | marcador | duração+sponsor),
+// separadas por linhas finas — não são painéis soltos:
 //
-//   ┌────────┐  ┌─────────────────────────────────────┐  ┌──────────────┐
-//   │        │  │ ▓ M1 OPEN MASCULINO         ▞▞ lime │  │ DURAÇÃO DO   │
-//   │  logo  │  │ ▌CARLOS SOUSA / SERGIO V ●  1  7 10 │  │    JOGO      │
-//   │        │  │  NICOLAU M. / WOJTEK D      7  6  7 │  │ ┌──────────┐ │
-//   │        │  │ ▓ STANDARD BANK OPEN PADEL          │  │ │ 1H 27MIN │ │
-//   └────────┘  └─────────────────────────────────────┘  └──────────────┘
+//   ┌────────┬──────────────────────────────────────┬───────────────┐
+//   │        │ M1 OPEN MASCULINO                  ▚ │ DURAÇÃO DO    │
+//   │  logo  │ ▌CARLOS SOUSA / SERGIO V ●  1  7  10 │ ┌───────────┐ │
+//   │        │ ─────────────lime──────────────────── │ │ 1H 27MIN  │ │
+//   │        │  NICOLAU M. / WOJTEK D      7  6   7 │ │ terminado   │
+//   │        │ ▓ STANDARD BANK OPEN PADEL           │ │   sponsor   │
+//   └────────┴──────────────────────────────────────┴───────────────┘
 //
 // Componente PURO (sem hooks): o refresh vem do polling do layout /obs.
-// Pixels reais multiplicados por `scale` (regra YoloBox).
+// O CSS vem num <style> embebido (multiplicado por `scale`), incluindo a
+// media query do designer que compacta o cartão abaixo de 1400px.
 // =============================================================================
 
 import type {
@@ -22,41 +23,22 @@ import type {
   ScoreboardState,
 } from "./Scoreboard";
 
-const LIME = "#C3F005";
+const LIME = "#d7ff00";
 
-// Dimensões BASE (scale=1) — proporções tiradas do mockup (~4.4:1).
-const BASE_LOGO_W = 200;
-const BASE_RIGHT_W = 250;
-const BASE_SET_W = 88;
-const BASE_HDR_H = 44;
-const BASE_TEAM_H = 95;
-const BASE_FOOTER_H = 30;
-const FRAME = 4; // espessura da moldura prateada
-const GAP = 14; // espaço entre painéis
-
-// Painel central (mais baixo, recuado na vertical).
-const CENTER_H = BASE_HDR_H + BASE_TEAM_H * 2 + BASE_FOOTER_H + FRAME * 2; // 272
-
-// Painéis laterais definem a altura total. A LARGURA é fluida (100% do
-// Browser Source) — o painel central estica; este é o mínimo para não
-// esmagar os nomes com 3 sets.
-export const INTERVAL_BASE_H = 300;
-export const INTERVAL_BASE_MIN_W =
-  BASE_LOGO_W +
-  GAP +
-  (380 + BASE_SET_W * 3 + FRAME * 2) +
-  GAP +
-  BASE_RIGHT_W; // 1130 com 3 sets
+// Dimensões do design (scale=1): variante grande e compacta (<1400px).
+export const INTERVAL_BASE_W = 1780;
+export const INTERVAL_BASE_H = 360;
+export const INTERVAL_BASE_MIN_W = 1280; // largura da variante compacta
 
 const CATEGORY_LABELS: Record<string, string> = {
-  M1: "M1 OPEN MASCULINO",
-  M2: "M2 OPEN MASCULINO",
-  M3: "M3 OPEN MASCULINO",
-  M4: "M4 OPEN MASCULINO",
-  F1: "F1 OPEN FEMININO",
-  F2: "F2 OPEN FEMININO",
-  F3: "F3 OPEN FEMININO",
-  F4: "F4 OPEN FEMININO",
+  M1: "M1 Open Masculino",
+  M2: "M2 Open Masculino",
+  M3: "M3 Open Masculino",
+  M4: "M4 Open Masculino",
+  F1: "F1 Open Feminino",
+  F2: "F2 Open Feminino",
+  F3: "F3 Open Feminino",
+  F4: "F4 Open Feminino",
 };
 
 export function IntervalCard({
@@ -64,6 +46,7 @@ export function IntervalCard({
   tournament,
   state,
   elapsedSeconds,
+  sponsorUrl,
   scale = 1,
 }: {
   match: ScoreboardMatch & { category?: string | null };
@@ -71,9 +54,11 @@ export function IntervalCard({
   state: ScoreboardState;
   /** Calculado no servidor a cada request (o polling re-renderiza). */
   elapsedSeconds: number | null;
+  /** Logo do sponsor no canto inferior direito (ex.: /byte-digital.png). */
+  sponsorUrl?: string | null;
   scale?: number;
 }) {
-  const s = (n: number) => n * scale;
+  const s = (n: number) => Math.round(n * scale * 100) / 100;
 
   // Sets: completos + corrente (se decorre). Mínimo 1 coluna.
   const sets: { a: number; b: number }[] = [...state.sets_history];
@@ -85,366 +70,125 @@ export function IntervalCard({
   }
   if (sets.length === 0) sets.push({ a: state.games_a, b: state.games_b });
 
-  const winner: "A" | "B" | null = state.is_finished ? state.winner : null;
+  // Linha destacada (lime + barra + bola): vencedor se terminou, senão quem serve.
+  const active: "A" | "B" =
+    (state.is_finished ? state.winner : state.server) ?? "A";
 
   const nameA = teamName(match.team_a_player1, match.team_a_player2);
   const nameB = teamName(match.team_b_player1, match.team_b_player2);
 
   const categoryLabel = match.category
     ? (CATEGORY_LABELS[match.category] ?? match.category)
-    : match.court_name?.toUpperCase() || tournament.name.toUpperCase();
+    : match.court_name || tournament.name;
 
-  const fontStack =
-    '"Segoe UI Variable Display", "Segoe UI", "Arial Narrow", Arial, sans-serif';
+  // Auto-shrink dos nomes: nomes longos encolhem a letra (só nessa linha) em
+  // vez de cortar com "…". Calculado para as DUAS variantes do design
+  // (grande/compacta) e aplicado via CSS vars --fitL/--fitS (~0.76em por
+  // carácter em Arial 900 uppercase, já com folga para o letter-spacing).
+  const n = sets.length;
+  const fit = (name: string, hasDot: boolean) => {
+    const chars = Math.max(1, name.length);
+    const availL = 1780 - 300 - 340 - 120 * n - 68 - (hasDot ? 36 : 0);
+    const availS = 1280 - 230 - 270 - 88 * n - 52 - (hasDot ? 36 : 0);
+    const clampFit = (x: number) => Math.max(0.6, Math.min(1, x));
+    return {
+      fitL: clampFit(availL / (0.76 * chars * 34)),
+      fitS: clampFit(availS / (0.76 * chars * 25)),
+    };
+  };
 
-  // Font-size dos nomes adaptável à largura real do Browser Source: em vez
-  // de truncar com ellipsis, encolhe até caber o nome mais longo numa linha
-  // (~0.7em por carácter em uppercase bold). Larguras fixas que sobram:
-  // logo + gaps + molduras + barra lime + paddings + colunas de sets +
-  // painel direito + folga para o dot do vencedor.
-  const maxChars = Math.max(nameA.length, nameB.length);
-  const fixedW =
-    BASE_LOGO_W + GAP * 2 + FRAME * 2 + 9 + 32 + sets.length * BASE_SET_W + BASE_RIGHT_W + 30;
-  const nameFontSize = `clamp(${s(15)}px, calc((100vw - ${s(fixedW)}px) / ${(
-    0.7 * maxChars
-  ).toFixed(2)}), ${s(28)}px)`;
+  const css = buildCss(s, n);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: s(GAP),
-        width: "100%",
-        boxSizing: "border-box",
-        height: s(INTERVAL_BASE_H),
-        fontFamily: fontStack,
-        filter: "drop-shadow(0 6px 18px rgba(0,0,0,.55))",
-      }}
-    >
-      {/* ================= PAINEL LOGO ================= */}
-      <SilverFrame s={s} width={BASE_LOGO_W} height={INTERVAL_BASE_H}>
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            placeItems: "center",
-            padding: s(14),
-            boxSizing: "border-box",
-          }}
-        >
+    <div>
+      <style>{css}</style>
+      <div className="scoreboard">
+        {/* ============ LOGO ============ */}
+        <div className="left-panel">
           {tournament.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={tournament.logo_url}
-              alt=""
-              style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain",
-              }}
-            />
+            <img className="event-logo" src={tournament.logo_url} alt="" />
           ) : (
             <span style={{ fontSize: s(64), fontWeight: 900, color: "#fff" }}>
               {tournament.name.slice(0, 1)}
             </span>
           )}
         </div>
-      </SilverFrame>
 
-      {/* ================= PAINEL CENTRAL (recuado) ================= */}
-      <SilverFrame s={s} flex height={CENTER_H}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          {/* Header metálico com riscas lime */}
-          <div
-            style={{
-              position: "relative",
-              height: s(BASE_HDR_H),
-              background: "linear-gradient(180deg, #FFFFFF 0%, #D7D7D7 100%)",
-              display: "flex",
-              alignItems: "center",
-              padding: `0 ${s(24)}px`,
-              overflow: "hidden",
-              flexShrink: 0,
-            }}
-          >
-            <span
-              style={{
-                color: "#0b0b0b",
-                fontWeight: 900,
-                fontSize: s(20),
-                letterSpacing: s(2),
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {categoryLabel}
-            </span>
-            {/* Speed-lines diagonais no canto direito */}
-            <Diag s={s} right={74} width={30} color="#0b0b0b" />
-            <Diag s={s} right={46} width={11} color={LIME} />
-            <Diag s={s} right={10} width={24} color={LIME} />
+        {/* ============ MARCADOR ============ */}
+        <div className="center-panel">
+          <div className="match-title">
+            {categoryLabel}
+            <span className="title-edge" />
           </div>
 
-          {/* Linha A */}
-          <TeamRow
-            s={s}
-            name={nameA}
-            nameFontSize={nameFontSize}
-            scores={sets.map((x) => x.a)}
-            isWinner={winner === "A"}
-            finished={state.is_finished}
-          />
-          {/* Linha B */}
-          <TeamRow
-            s={s}
-            name={nameB}
-            nameFontSize={nameFontSize}
-            scores={sets.map((x) => x.b)}
-            isWinner={winner === "B"}
-            finished={state.is_finished}
-            divider
-          />
-
-          {/* Footer prateado */}
-          <div
-            style={{
-              position: "relative",
-              height: s(BASE_FOOTER_H),
-              background: "linear-gradient(180deg, #EDEDED 0%, #C9C9C9 100%)",
-              display: "grid",
-              placeItems: "center",
-              overflow: "hidden",
-              flexShrink: 0,
-            }}
-          >
-            <span
-              style={{
-                color: "#3c3c3c",
-                fontWeight: 800,
-                fontSize: s(13),
-                letterSpacing: s(5),
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {tournament.name}
-            </span>
-            <Diag s={s} left={14} width={10} color="#9a9a9a" />
+          <div className="score-rows">
+            <TeamRowHtml
+              name={nameA}
+              scores={sets.map((x) => x.a)}
+              active={active === "A"}
+              {...fit(nameA, active === "A")}
+            />
+            <TeamRowHtml
+              name={nameB}
+              scores={sets.map((x) => x.b)}
+              active={active === "B"}
+              {...fit(nameB, active === "B")}
+            />
           </div>
+
+          <div className="bottom-bar">{tournament.name}</div>
         </div>
-      </SilverFrame>
 
-      {/* ================= PAINEL DURAÇÃO ================= */}
-      <SilverFrame s={s} width={BASE_RIGHT_W} height={INTERVAL_BASE_H}>
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: s(14),
-            padding: `0 ${s(14)}px`,
-            boxSizing: "border-box",
-          }}
-        >
-          <div
-            style={{
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: s(16),
-              letterSpacing: s(2.4),
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Duração do Jogo
+        {/* ============ DURAÇÃO + SPONSOR ============ */}
+        <div className="right-panel">
+          <div className="duration-title">Duração do Jogo</div>
+          <div className="duration-box">{formatDuration(elapsedSeconds)}</div>
+          <div className="match-status">
+            {state.is_finished ? "Jogo Terminado" : "Em Curso"}
           </div>
-          <div
-            style={{
-              border: `${s(3)}px solid ${LIME}`,
-              borderRadius: s(10),
-              color: LIME,
-              fontWeight: 900,
-              fontSize: s(30),
-              letterSpacing: s(1.5),
-              padding: `${s(8)}px ${s(18)}px`,
-              fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {formatDuration(elapsedSeconds)}
-          </div>
-          <div
-            style={{
-              color: "rgba(255,255,255,.85)",
-              fontWeight: 700,
-              fontSize: s(12),
-              letterSpacing: s(3),
-              textTransform: "uppercase",
-            }}
-          >
-            {state.is_finished ? "Jogo terminado" : "Em curso"}
-          </div>
+          {sponsorUrl && (
+            <div className="sponsor-logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={sponsorUrl} alt="" />
+            </div>
+          )}
         </div>
-      </SilverFrame>
-    </div>
-  );
-}
-
-// =============================================================================
-// Sub-componentes
-// =============================================================================
-
-/** Painel com moldura prateada (gradient) e interior preto. */
-function SilverFrame({
-  s,
-  width,
-  height,
-  flex,
-  children,
-}: {
-  s: (n: number) => number;
-  width?: number;
-  height: number;
-  flex?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        width: width !== undefined ? s(width) : undefined,
-        height: s(height),
-        flex: flex ? 1 : undefined,
-        // min-width:auto impediria o painel central de encolher abaixo do
-        // nome mais longo (nowrap) e estourava o container — 0 deixa o
-        // ellipsis dos nomes actuar.
-        minWidth: flex ? 0 : undefined,
-        flexShrink: width !== undefined ? 0 : undefined,
-        background:
-          "linear-gradient(135deg, #F2F2F2 0%, #B9B9B9 35%, #8E8E8E 70%, #DEDEDE 100%)",
-        borderRadius: s(18),
-        padding: s(FRAME),
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          background: "#0B0B0B",
-          borderRadius: s(14),
-          overflow: "hidden",
-        }}
-      >
-        {children}
       </div>
     </div>
   );
 }
 
-function TeamRow({
-  s,
+function TeamRowHtml({
   name,
-  nameFontSize,
   scores,
-  isWinner,
-  finished,
-  divider,
+  active,
+  fitL,
+  fitS,
 }: {
-  s: (n: number) => number;
   name: string;
-  nameFontSize: string;
   scores: number[];
-  isWinner: boolean;
-  finished: boolean;
-  divider?: boolean;
+  active: boolean;
+  /** Factor de encolhimento da letra (1 = tamanho do design). */
+  fitL: number;
+  fitS: number;
 }) {
   return (
     <div
-      style={{
-        flex: 1,
-        display: "flex",
-        alignItems: "stretch",
-        borderTop: divider ? `${s(2)}px solid #6a6a6a` : undefined,
-        minHeight: 0,
-      }}
+      className={active ? "player-row active" : "player-row"}
+      style={
+        {
+          "--fitL": fitL.toFixed(3),
+          "--fitS": fitS.toFixed(3),
+        } as React.CSSProperties
+      }
     >
-      {/* Barra lime do vencedor */}
-      <span
-        style={{
-          width: s(9),
-          flexShrink: 0,
-          background: isWinner ? LIME : "transparent",
-        }}
-      />
-      {/* Nome */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: s(14),
-          padding: `0 ${s(16)}px`,
-          minWidth: 0,
-        }}
-      >
-        <span
-          style={{
-            color: isWinner ? LIME : "#fff",
-            fontWeight: 800,
-            fontSize: nameFontSize,
-            letterSpacing: s(0.5),
-            textTransform: "uppercase",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            lineHeight: 1.1,
-          }}
-        >
-          {name}
-        </span>
-        {isWinner && finished && (
-          <span
-            style={{
-              flexShrink: 0,
-              width: s(16),
-              height: s(16),
-              borderRadius: "50%",
-              background: LIME,
-              boxShadow: `0 0 ${s(10)}px ${LIME}`,
-            }}
-          />
-        )}
+      <div className="player-name">
+        <span className="player-name-text">{name}</span>
+        {active && <span className="serve-dot" />}
       </div>
-
-      {/* Scores por set */}
       {scores.map((v, i) => (
-        <div
-          key={i}
-          style={{
-            width: s(BASE_SET_W),
-            flexShrink: 0,
-            display: "grid",
-            placeItems: "center",
-            borderLeft: `${s(2)}px solid #5a5a5a`,
-            color: "#fff",
-            fontWeight: 900,
-            fontSize: s(46),
-            fontVariantNumeric: "tabular-nums",
-            lineHeight: 1,
-          }}
-        >
+        <div key={i} className="score-cell">
           {v}
         </div>
       ))}
@@ -452,34 +196,216 @@ function TeamRow({
   );
 }
 
-/** Risca diagonal decorativa (speed-line) nos painéis metálicos. */
-function Diag({
-  s,
-  right,
-  left,
-  width,
-  color,
-}: {
-  s: (n: number) => number;
-  right?: number;
-  left?: number;
-  width: number;
-  color: string;
-}) {
-  return (
-    <span
-      style={{
-        position: "absolute",
-        top: s(-6),
-        bottom: s(-6),
-        right: right !== undefined ? s(right) : undefined,
-        left: left !== undefined ? s(left) : undefined,
-        width: s(width),
-        background: color,
-        transform: "skewX(-24deg)",
-      }}
-    />
-  );
+// =============================================================================
+// CSS do designer, parametrizado por scale e nº de sets
+// =============================================================================
+
+function buildCss(s: (n: number) => number, nSets: number): string {
+  return `
+.scoreboard {
+  width: ${s(1780)}px;
+  height: ${s(360)}px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: ${s(300)}px 1fr ${s(340)}px;
+  background: rgba(0, 0, 0, 0.88);
+  border: ${s(2)}px solid rgba(255, 255, 255, 0.45);
+  border-radius: ${s(28)}px;
+  overflow: hidden;
+  box-shadow: 0 ${s(16)}px ${s(45)}px rgba(0, 0, 0, 0.55);
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: border-box;
+}
+.scoreboard *, .scoreboard *::before, .scoreboard *::after { box-sizing: border-box; }
+
+.left-panel {
+  background: rgba(5, 5, 5, 0.96);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${s(26)}px;
+  min-width: 0;
+}
+.event-logo { width: 100%; height: 100%; object-fit: contain; }
+
+.center-panel {
+  display: grid;
+  grid-template-rows: ${s(60)}px 1fr ${s(52)}px;
+  background: rgba(5, 5, 5, 0.94);
+  min-width: 0;
+}
+
+.match-title {
+  background: linear-gradient(90deg, #ffffff 0%, #e8e8e8 78%, #cfcfcf 100%);
+  color: #070707;
+  font-size: ${s(28)}px;
+  font-weight: 900;
+  letter-spacing: ${s(1)}px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  padding-left: ${s(38)}px;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.title-edge {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: ${s(120)}px;
+  height: 100%;
+  background: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.18) 100%);
+  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.score-rows { display: grid; grid-template-rows: 1fr 1fr; min-width: 0; }
+
+.player-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(${nSets}, ${s(120)}px);
+  border-bottom: 1px solid rgba(210, 245, 0, 0.8);
+  min-width: 0;
+}
+.player-row:last-child { border-bottom: none; }
+
+.player-name {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 ${s(34)}px;
+  color: #ffffff;
+  font-size: calc(${s(34)}px * var(--fitL, 1));
+  font-weight: 900;
+  letter-spacing: ${s(0.5)}px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.player-name-text { overflow: hidden; text-overflow: ellipsis; }
+.player-row.active .player-name { color: ${LIME}; }
+.player-row.active .player-name::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: ${s(18)}px;
+  bottom: ${s(18)}px;
+  width: ${s(14)}px;
+  background: ${LIME};
+  border-radius: 0 ${s(8)}px ${s(8)}px 0;
+}
+
+.serve-dot {
+  width: ${s(18)}px;
+  height: ${s(18)}px;
+  background: ${LIME};
+  border-radius: 50%;
+  margin-left: ${s(18)}px;
+  flex-shrink: 0;
+}
+
+.score-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: ${s(66)}px;
+  font-weight: 900;
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(15, 15, 15, 0.82);
+  font-variant-numeric: tabular-nums;
+}
+
+.bottom-bar {
+  background: linear-gradient(90deg, #f5f5f5 0%, #dcdcdc 100%);
+  color: #5f5f5f;
+  font-size: ${s(20)}px;
+  font-weight: 900;
+  letter-spacing: ${s(7)}px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.right-panel {
+  background: rgba(7, 7, 7, 0.96);
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: ${s(34)}px ${s(24)}px ${s(24)}px;
+  gap: ${s(18)}px;
+  min-width: 0;
+}
+
+.duration-title {
+  color: #ffffff;
+  font-size: ${s(24)}px;
+  font-weight: 900;
+  letter-spacing: ${s(2)}px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.duration-box {
+  width: 100%;
+  border: ${s(2)}px solid ${LIME};
+  border-radius: ${s(16)}px;
+  padding: ${s(16)}px ${s(12)}px;
+  color: ${LIME};
+  font-size: ${s(34)}px;
+  font-weight: 900;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.match-status {
+  color: #ffffff;
+  font-size: ${s(20)}px;
+  font-weight: 900;
+  letter-spacing: ${s(2)}px;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.sponsor-logo {
+  margin-top: auto;
+  width: 100%;
+  height: ${s(78)}px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sponsor-logo img { max-width: 90%; max-height: ${s(78)}px; object-fit: contain; }
+
+@media (max-width: ${s(1400)}px) {
+  .scoreboard {
+    width: ${s(1280)}px;
+    height: ${s(270)}px;
+    grid-template-columns: ${s(230)}px 1fr ${s(270)}px;
+  }
+  .center-panel { grid-template-rows: ${s(48)}px 1fr ${s(42)}px; }
+  .match-title { font-size: ${s(22)}px; padding-left: ${s(28)}px; }
+  .player-row { grid-template-columns: 1fr repeat(${nSets}, ${s(88)}px); }
+  .player-name { font-size: calc(${s(25)}px * var(--fitS, 1)); padding: 0 ${s(26)}px; }
+  .score-cell { font-size: ${s(48)}px; }
+  .duration-title { font-size: ${s(18)}px; }
+  .duration-box { font-size: ${s(26)}px; }
+  .match-status { font-size: ${s(16)}px; }
+  .bottom-bar { font-size: ${s(15)}px; letter-spacing: ${s(5)}px; }
+  .right-panel { padding: ${s(24)}px ${s(18)}px ${s(18)}px; gap: ${s(12)}px; }
+  .sponsor-logo { height: ${s(58)}px; }
+  .sponsor-logo img { max-height: ${s(58)}px; }
+}
+`;
 }
 
 function teamName(p1: string, p2: string | null): string {
