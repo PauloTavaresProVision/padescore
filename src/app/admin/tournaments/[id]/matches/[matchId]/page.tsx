@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Scoreboard } from "@/components/Scoreboard";
+import { ScoreboardStrip } from "@/components/ScoreboardStrip";
 import { CopyButton } from "@/components/CopyButton";
 import { AdminControls } from "./AdminControls";
 import { setTvMatch, clearTvMatch } from "./actions";
@@ -70,6 +71,20 @@ export default async function MatchDetailPage({
   const teamA = [match.team_a_player1, match.team_a_player2].filter(Boolean).join(" / ");
   const teamB = [match.team_b_player1, match.team_b_player2].filter(Boolean).join(" / ");
 
+  // Preview do marcador espelha o overlay OBS real: layout escolhido no
+  // torneio (obs_layout) + nomes CURTOS (como o /obs usa).
+  const obsLayout =
+    (tournament as { obs_layout?: string }).obs_layout === "strip"
+      ? "strip"
+      : "classic";
+  const previewMatch = {
+    ...match,
+    team_a_player1: match.team_a_player1_short ?? match.team_a_player1,
+    team_a_player2: match.team_a_player2_short ?? match.team_a_player2,
+    team_b_player1: match.team_b_player1_short ?? match.team_b_player1,
+    team_b_player2: match.team_b_player2_short ?? match.team_b_player2,
+  };
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -126,12 +141,23 @@ export default async function MatchDetailPage({
             </span>
           </div>
           <div className="flex items-center justify-center py-2">
-            <Scoreboard
-              match={match}
-              tournament={tournament}
-              config={configFromMatch(match)}
-              initialState={safeState}
-            />
+            {obsLayout === "strip" ? (
+              <ScoreboardStrip
+                match={previewMatch}
+                tournament={tournament}
+                config={configFromMatch(match)}
+                initialState={safeState}
+                preferShortNames
+              />
+            ) : (
+              <Scoreboard
+                match={previewMatch}
+                tournament={tournament}
+                config={configFromMatch(match)}
+                initialState={safeState}
+                preferShortNames
+              />
+            )}
           </div>
         </div>
       </section>
