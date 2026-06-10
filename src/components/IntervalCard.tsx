@@ -13,8 +13,12 @@
 //   └────────┴──────────────────────────────────────┴───────────────┘
 //
 // Componente PURO (sem hooks): o refresh vem do polling do layout /obs.
-// O CSS vem num <style> embebido (multiplicado por `scale`), incluindo a
-// media query do designer que compacta o cartão abaixo de 1400px.
+//
+// DIMENSIONAMENTO 100% CSS (sem JS): a unidade base é
+//   --u = min(size·100vw/1780, 100vh/360)
+// e todas as medidas do design são calc(var(--u) · N). Resultado: o cartão
+// ocupa `size` da largura do Browser Source/janela, nunca excede a altura,
+// e nunca corta — em qualquer resolução, com ou sem JavaScript.
 // =============================================================================
 
 import type {
@@ -25,8 +29,7 @@ import type {
 
 const LIME = "#d7ff00";
 
-// Dimensões do design (scale=1). Em janelas mais estreitas que isto, a
-// página aplica zoom-to-fit (encolhe o cartão inteiro sem cortar nada).
+// Dimensões do design (unidades base).
 export const INTERVAL_BASE_W = 1780;
 export const INTERVAL_BASE_H = 360;
 
@@ -47,7 +50,7 @@ export function IntervalCard({
   state,
   elapsedSeconds,
   sponsorUrl,
-  scale = 1,
+  size = 0.6,
 }: {
   match: ScoreboardMatch & { category?: string | null };
   tournament: ScoreboardTournament;
@@ -56,10 +59,9 @@ export function IntervalCard({
   elapsedSeconds: number | null;
   /** Logo do sponsor no canto inferior direito (ex.: /byte-digital.png). */
   sponsorUrl?: string | null;
-  scale?: number;
+  /** Fracção da largura da janela que o cartão ocupa (0.1–1, default 0.6). */
+  size?: number;
 }) {
-  const s = (n: number) => Math.round(n * scale * 100) / 100;
-
   // Sets: completos + corrente (se decorre). Mínimo 1 coluna.
   const sets: { a: number; b: number }[] = [...state.sets_history];
   if (
@@ -91,7 +93,7 @@ export function IntervalCard({
     return Math.max(0.6, Math.min(1, avail / (0.76 * chars * 34)));
   };
 
-  const css = buildCss(s, n);
+  const css = buildCss(size, n);
 
   return (
     <div>
@@ -103,7 +105,13 @@ export function IntervalCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img className="event-logo" src={tournament.logo_url} alt="" />
           ) : (
-            <span style={{ fontSize: s(64), fontWeight: 900, color: "#fff" }}>
+            <span
+              style={{
+                fontSize: "calc(var(--u) * 64)",
+                fontWeight: 900,
+                color: "#fff",
+              }}
+            >
               {tournament.name.slice(0, 1)}
             </span>
           )}
@@ -184,22 +192,34 @@ function TeamRowHtml({
 }
 
 // =============================================================================
-// CSS do designer, parametrizado por scale e nº de sets
+// CSS do designer, em unidades --u (1/1780 da largura ocupada) — sem px fixos
 // =============================================================================
 
-function buildCss(s: (n: number) => number, nSets: number): string {
+function buildCss(size: number, nSets: number): string {
+  // u(n): n unidades do design → comprimento real via CSS var.
+  const u = (n: number) => `calc(var(--u) * ${n})`;
+
   return `
+#sb-mount {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .scoreboard {
-  width: ${s(1780)}px;
-  height: ${s(360)}px;
-  margin: 0 auto;
+  --u: min(${size} * 100vw / ${INTERVAL_BASE_W}, 100vh / ${INTERVAL_BASE_H});
+  width: ${u(1780)};
+  height: ${u(360)};
+  flex-shrink: 0;
   display: grid;
-  grid-template-columns: ${s(300)}px 1fr ${s(340)}px;
+  grid-template-columns: ${u(300)} 1fr ${u(340)};
   background: rgba(0, 0, 0, 0.88);
-  border: ${s(2)}px solid rgba(255, 255, 255, 0.45);
-  border-radius: ${s(28)}px;
+  border: ${u(2)} solid rgba(255, 255, 255, 0.45);
+  border-radius: ${u(28)};
   overflow: hidden;
-  box-shadow: 0 ${s(16)}px ${s(45)}px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 ${u(16)} ${u(45)} rgba(0, 0, 0, 0.55);
   font-family: Arial, Helvetica, sans-serif;
   box-sizing: border-box;
 }
@@ -211,28 +231,35 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${s(26)}px;
+  padding: ${u(26)};
   min-width: 0;
+  /* overflow hidden + min-height 0: sem isto, o tamanho intrínseco do
+     conteúdo (logo, fontes) força a linha do grid a crescer para lá da
+     altura do cartão e o rodapé sai cortado. */
+  min-height: 0;
+  overflow: hidden;
 }
 .event-logo { width: 100%; height: 100%; object-fit: contain; }
 
 .center-panel {
   display: grid;
-  grid-template-rows: ${s(60)}px 1fr ${s(52)}px;
+  grid-template-rows: ${u(60)} 1fr ${u(52)};
   background: rgba(5, 5, 5, 0.94);
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .match-title {
   background: linear-gradient(90deg, #ffffff 0%, #e8e8e8 78%, #cfcfcf 100%);
   color: #070707;
-  font-size: ${s(28)}px;
+  font-size: ${u(28)};
   font-weight: 900;
-  letter-spacing: ${s(1)}px;
+  letter-spacing: ${u(1)};
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  padding-left: ${s(38)}px;
+  padding-left: ${u(38)};
   position: relative;
   overflow: hidden;
   white-space: nowrap;
@@ -241,19 +268,21 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   position: absolute;
   right: 0;
   top: 0;
-  width: ${s(120)}px;
+  width: ${u(120)};
   height: 100%;
   background: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.18) 100%);
   clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
 }
 
-.score-rows { display: grid; grid-template-rows: 1fr 1fr; min-width: 0; }
+.score-rows { display: grid; grid-template-rows: 1fr 1fr; min-width: 0; min-height: 0; overflow: hidden; }
 
 .player-row {
   display: grid;
-  grid-template-columns: 1fr repeat(${nSets}, ${s(120)}px);
+  grid-template-columns: 1fr repeat(${nSets}, ${u(120)});
   border-bottom: 1px solid rgba(210, 245, 0, 0.8);
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 .player-row:last-child { border-bottom: none; }
 
@@ -261,11 +290,11 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 0 ${s(34)}px;
+  padding: 0 ${u(34)};
   color: #ffffff;
-  font-size: calc(${s(34)}px * var(--fit, 1));
+  font-size: calc(var(--u) * 34 * var(--fit, 1));
   font-weight: 900;
-  letter-spacing: ${s(0.5)}px;
+  letter-spacing: ${u(0.5)};
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
@@ -277,19 +306,19 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   content: "";
   position: absolute;
   left: 0;
-  top: ${s(18)}px;
-  bottom: ${s(18)}px;
-  width: ${s(14)}px;
+  top: ${u(18)};
+  bottom: ${u(18)};
+  width: ${u(14)};
   background: ${LIME};
-  border-radius: 0 ${s(8)}px ${s(8)}px 0;
+  border-radius: 0 ${u(8)} ${u(8)} 0;
 }
 
 .serve-dot {
-  width: ${s(18)}px;
-  height: ${s(18)}px;
+  width: ${u(18)};
+  height: ${u(18)};
   background: ${LIME};
   border-radius: 50%;
-  margin-left: ${s(18)}px;
+  margin-left: ${u(18)};
   flex-shrink: 0;
 }
 
@@ -298,19 +327,21 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: ${s(66)}px;
+  font-size: ${u(66)};
+  line-height: 1;
   font-weight: 900;
   border-left: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(15, 15, 15, 0.82);
   font-variant-numeric: tabular-nums;
+  min-height: 0;
 }
 
 .bottom-bar {
   background: linear-gradient(90deg, #f5f5f5 0%, #dcdcdc 100%);
   color: #5f5f5f;
-  font-size: ${s(20)}px;
+  font-size: ${u(20)};
   font-weight: 900;
-  letter-spacing: ${s(7)}px;
+  letter-spacing: ${u(7)};
   text-transform: uppercase;
   display: flex;
   align-items: center;
@@ -325,27 +356,29 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: ${s(34)}px ${s(24)}px ${s(24)}px;
-  gap: ${s(18)}px;
+  padding: ${u(34)} ${u(24)} ${u(24)};
+  gap: ${u(18)};
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .duration-title {
   color: #ffffff;
-  font-size: ${s(24)}px;
+  font-size: ${u(24)};
   font-weight: 900;
-  letter-spacing: ${s(2)}px;
+  letter-spacing: ${u(2)};
   text-transform: uppercase;
   text-align: center;
 }
 
 .duration-box {
   width: 100%;
-  border: ${s(2)}px solid ${LIME};
-  border-radius: ${s(16)}px;
-  padding: ${s(16)}px ${s(12)}px;
+  border: ${u(2)} solid ${LIME};
+  border-radius: ${u(16)};
+  padding: ${u(16)} ${u(12)};
   color: ${LIME};
-  font-size: ${s(34)}px;
+  font-size: ${u(34)};
   font-weight: 900;
   text-align: center;
   background: rgba(255, 255, 255, 0.04);
@@ -355,9 +388,9 @@ function buildCss(s: (n: number) => number, nSets: number): string {
 
 .match-status {
   color: #ffffff;
-  font-size: ${s(20)}px;
+  font-size: ${u(20)};
   font-weight: 900;
-  letter-spacing: ${s(2)}px;
+  letter-spacing: ${u(2)};
   text-transform: uppercase;
   text-align: center;
   opacity: 0.9;
@@ -366,13 +399,12 @@ function buildCss(s: (n: number) => number, nSets: number): string {
 .sponsor-logo {
   margin-top: auto;
   width: 100%;
-  height: ${s(78)}px;
+  height: ${u(78)};
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.sponsor-logo img { max-width: 90%; max-height: ${s(78)}px; object-fit: contain; }
-
+.sponsor-logo img { max-width: 90%; max-height: ${u(78)}; object-fit: contain; }
 `;
 }
 
