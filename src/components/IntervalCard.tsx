@@ -51,6 +51,7 @@ export function IntervalCard({
   elapsedSeconds,
   sponsorUrl,
   size = 0.6,
+  pos = "center",
 }: {
   match: ScoreboardMatch & { category?: string | null };
   tournament: ScoreboardTournament;
@@ -61,6 +62,8 @@ export function IntervalCard({
   sponsorUrl?: string | null;
   /** Fracção da largura da janela que o cartão ocupa (0.1–1, default 0.6). */
   size?: number;
+  /** Posição vertical no Browser Source (top | center | bottom). */
+  pos?: "top" | "center" | "bottom";
 }) {
   // Sets: completos + corrente (se decorre). Mínimo 1 coluna.
   const sets: { a: number; b: number }[] = [...state.sets_history];
@@ -93,7 +96,7 @@ export function IntervalCard({
     return Math.max(0.6, Math.min(1, avail / (0.76 * chars * 34)));
   };
 
-  const css = buildCss(size, n);
+  const css = buildCss(size, n, pos);
 
   return (
     <div>
@@ -195,21 +198,33 @@ function TeamRowHtml({
 // CSS do designer, em unidades --u (1/1780 da largura ocupada) — sem px fixos
 // =============================================================================
 
-function buildCss(size: number, nSets: number): string {
+function buildCss(
+  size: number,
+  nSets: number,
+  pos: "top" | "center" | "bottom",
+): string {
   // u(n): n unidades do design → comprimento real via CSS var.
   const u = (n: number) => `calc(var(--u) * ${n})`;
 
+  const align =
+    pos === "top" ? "flex-start" : pos === "bottom" ? "flex-end" : "center";
+
   return `
 #sb-mount {
+  /* unidade base: 1/1780 da largura ocupada pelo cartão, limitada pela
+     altura. Definida aqui (no contentor) para o padding também a ver. */
+  --u: min(${size} * 100vw / ${INTERVAL_BASE_W}, 100vh / ${INTERVAL_BASE_H});
   width: 100%;
   height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: ${align};
   justify-content: center;
+  /* margem de segurança em cima/baixo para o lower-third não ficar colado */
+  padding: ${u(28)} 0;
+  box-sizing: border-box;
 }
 
 .scoreboard {
-  --u: min(${size} * 100vw / ${INTERVAL_BASE_W}, 100vh / ${INTERVAL_BASE_H});
   width: ${u(1780)};
   height: ${u(360)};
   flex-shrink: 0;

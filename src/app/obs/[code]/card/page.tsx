@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
  * actualizam sozinhos sem JS próprio.
  *
  * ?size=N → percentagem da largura ocupada pelo cartão (10–100, default 60).
+ * ?pos=top|center|bottom → posição vertical (default center).
  * O dimensionamento é 100% CSS (vw/vh) — nunca corta, em nenhuma janela.
  */
 export default async function ObsIntervalCardPage({
@@ -29,10 +30,10 @@ export default async function ObsIntervalCardPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ scale?: string; bg?: string; size?: string }>;
+  searchParams: Promise<{ bg?: string; size?: string; pos?: string }>;
 }) {
   const { code } = await params;
-  const { bg, size: sizeRaw } = await searchParams;
+  const { bg, size: sizeRaw, pos: posRaw } = await searchParams;
   // Fracção da largura do Browser Source que o cartão ocupa (default 60%,
   // estilo lower-third). ?size=100 → largura toda.
   const size = (() => {
@@ -40,6 +41,8 @@ export default async function ObsIntervalCardPage({
     if (!Number.isFinite(n)) return 0.6;
     return Math.min(100, Math.max(10, n)) / 100;
   })();
+  const pos: "top" | "center" | "bottom" =
+    posRaw === "top" || posRaw === "bottom" ? posRaw : "center";
 
   const supabase = createAdminClient();
   const serverNow = Date.now();
@@ -128,6 +131,7 @@ export default async function ObsIntervalCardPage({
           elapsedSeconds={elapsedSeconds}
           sponsorUrl={sponsorUrl}
           size={size}
+          pos={pos}
         />
       </div>
     </>
