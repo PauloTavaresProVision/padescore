@@ -189,7 +189,7 @@ export default async function MatchDetailPage({
           <LinkCard
             icon={<BroadcastIcon className="h-5 w-5" />}
             title="Overlay OBS"
-            description="Browser Source · canto superior esquerdo · fundo transparente."
+            description="Browser Source 1920×1080 · posiciona-se sozinho (?pos, ?size) · transparente."
             url={overlayUrl}
             accent="cyan"
           />

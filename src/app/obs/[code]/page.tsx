@@ -1,49 +1,47 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  Scoreboard,
-  SCOREBOARD_BASE_W,
-  SCOREBOARD_BASE_H,
-} from "@/components/Scoreboard";
-import {
-  ScoreboardStrip,
-  STRIP_BASE_W,
-  STRIP_BASE_H,
-} from "@/components/ScoreboardStrip";
+import { Scoreboard } from "@/components/Scoreboard";
+import { ScoreboardStrip } from "@/components/ScoreboardStrip";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
 import { configFromMatch } from "@/lib/scoring/apply";
 
 export const dynamic = "force-dynamic";
+
+// Browser Source de referência (Full HD). O overlay renderiza em PIXELS
+// REAIS 1:1 dentro deste canvas — nada de CSS zoom/scale (que borraria).
+const REF_W = 1920;
+const REF_H = 1080;
+const EDGE_PAD = 40; // margem às bordas no modo posicionado
+
+// Dimensões base (scale=1) de cada layout. Espelham as constantes internas
+// dos componentes — que, sendo "use client", chegariam a este Server
+// Component como client-references (funções), não como números. Classic
+// SCOREBOARD_BASE_W×H = 735×208; strip STRIP_BASE_W×H = 672×150.
+const DIMS = {
+  classic: { w: 735, h: 208 },
+  strip: { w: 672, h: 150 },
+} as const;
 
 export default async function ObsOverlayPage({
   params,
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ scale?: string; layout?: string }>;
+  searchParams: Promise<{
+    scale?: string;
+    layout?: string;
+    size?: string;
+    pos?: string;
+  }>;
 }) {
   const { code } = await params;
-  const { scale: scaleRaw, layout: layoutRaw } = await searchParams;
-  // ?scale=N → multiplica TODOS os pixels do scoreboard nativamente.
-  //
-  // REGRA DE OURO p/ qualidade: o render TEM de sair do tamanho final
-  // que terá na transmissão. Qualquer downscale (no YoloBox ou em
-  // qualquer lado) destrói qualidade — esticar e encolher imagens
-  // pixeliza.
-  //
-  // Default scale=1 → 735×208 nativo (≈38% width × 19% height de um
-  // broadcast 1920×1080). Configura o YoloBox com Scale slider a 100%
-  // (sem mexer) — captura exactamente esses 735×208 e renderiza-os 1:1
-  // no broadcast. Resultado: nitidez nativa.
-  //
-  // Se quiseres maior na transmissão, NÃO uses Scale no YoloBox —
-  // muda o ?scale=N do URL para algo maior (ex: ?scale=1.5 = 1102×312)
-  // e mantém o YoloBox a 100%.
-  const scale = (() => {
-    const n = Number(scaleRaw);
-    if (!Number.isFinite(n)) return 1;
-    return Math.min(5, Math.max(0.5, n));
-  })();
+  const {
+    scale: scaleRaw,
+    layout: layoutRaw,
+    size: sizeRaw,
+    pos: posRaw,
+  } = await searchParams;
+
   const supabase = createAdminClient();
   // `serverNow` é capturado no início do request para o tempo decorrido
   // ser calculado server-side (sem precisar de JS no client).
@@ -86,8 +84,41 @@ export default async function ObsOverlayPage({
       ? layoutRaw
       : ((tournament as { obs_layout?: string }).obs_layout ?? "classic");
   const isStrip = layout === "strip";
-  const w = Math.round((isStrip ? STRIP_BASE_W : SCOREBOARD_BASE_W) * scale);
-  const h = Math.round((isStrip ? STRIP_BASE_H : SCOREBOARD_BASE_H) * scale);
+  const BASE_W = isStrip ? DIMS.strip.w : DIMS.classic.w;
+  const BASE_H = isStrip ? DIMS.strip.h : DIMS.classic.h;
+
+  // ── Dois modos ────────────────────────────────────────────────────────
+  // LEGACY (retrocompat YoloBox): ?scale dado e SEM ?size/?pos → o body é
+  // exactamente do tamanho do overlay (BASE×scale) e o YoloBox capta 1:1.
+  //
+  // POSICIONADO (default, igual ao cartão de intervalo): Browser Source
+  // 1920×1080, o overlay renderiza em pixels reais e coloca-se num canto
+  // via ?pos, com o tamanho dado por ?size (fracção da largura). Nunca é
+  // preciso esticar a fonte no OBS → nitidez nativa.
+  const legacy = scaleRaw != null && sizeRaw == null && posRaw == null;
+
+  let scale: number;
+  if (legacy) {
+    const n = Number(scaleRaw);
+    scale = Number.isFinite(n) ? Math.min(5, Math.max(0.5, n)) : 1;
+  } else {
+    // ?size = fracção da largura de 1920 ocupada pelo overlay (default 40%).
+    // Limitado também pela altura para nunca cortar. scale = px / BASE.
+    const sizeFrac = (() => {
+      const n = Number(sizeRaw);
+      if (!Number.isFinite(n)) return 0.4;
+      return Math.min(100, Math.max(10, n)) / 100;
+    })();
+    const byWidth = (sizeFrac * REF_W) / BASE_W;
+    const byHeight = (0.9 * REF_H) / BASE_H;
+    scale = Math.min(byWidth, byHeight);
+  }
+
+  // Posição no canvas (modo posicionado). "vert-horz", default bottom-left.
+  const { alignItems, justifyContent } = parsePos(posRaw);
+
+  const w = Math.round(BASE_W * scale);
+  const h = Math.round(BASE_H * scale);
 
   // Calcula elapsed seconds NO SERVIDOR a cada request — para o YoloBox
   // (sem JS) ver o tempo. Cada meta-refresh dispara um novo request e
@@ -103,12 +134,10 @@ export default async function ObsOverlayPage({
       )
     : null;
 
-  return (
-    // O scoreboard renderiza em PIXELS REAIS escalados (não CSS scale/zoom).
-    // Com scale=2.6 sai naturalmente em ~1911×541 — o YoloBox capta nessa
-    // resolução, fica nítido, sem transformações nem ambiguidades.
-    <>
-      <style>{`
+  // CSS do body: legacy → tamanho do overlay; posicionado → viewport
+  // 1920×1080 transparente com o overlay encostado a um canto.
+  const bodyCss = legacy
+    ? `
         html, body {
           margin: 0 !important;
           padding: 0 !important;
@@ -117,64 +146,104 @@ export default async function ObsOverlayPage({
           overflow: hidden !important;
           background: transparent !important;
         }
-      `}</style>
+      `
+    : `
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow: hidden !important;
+          background: transparent !important;
+        }
+        #sb-mount {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: ${alignItems};
+          justify-content: ${justifyContent};
+          padding: ${EDGE_PAD}px;
+          box-sizing: border-box;
+        }
+        /* o overlay tem largura/altura fixas (pixels reais) — não deixar o
+           flex comprimi-lo */
+        #sb-mount > * { flex: 0 0 auto; }
+      `;
+
+  const board = isStrip ? (
+    <ScoreboardStrip
+      match={match}
+      tournament={tournament}
+      config={configFromMatch(match)}
+      initialState={state ?? EMPTY_STATE}
+      preferShortNames
+      scale={scale}
+      live={false}
+    />
+  ) : (
+    <Scoreboard
+      match={match}
+      tournament={tournament}
+      config={configFromMatch(match)}
+      initialState={state ?? EMPTY_STATE}
+      variant="overlay"
+      preferShortNames
+      scale={scale}
+      initialElapsedSeconds={initialElapsedSeconds}
+      live={false}
+    />
+  );
+
+  return (
+    // O scoreboard renderiza em PIXELS REAIS escalados (não CSS scale/zoom).
+    // No modo posicionado fica num Browser Source 1920×1080 e encosta-se a
+    // um canto — sem transformações, nitidez nativa.
+    <>
+      <style>{bodyCss}</style>
       {/* sb-mount: o script no layout substitui este innerHTML a cada 1s
           com o HTML novo vindo de uma nova requisição à mesma URL. */}
-      <div id="sb-mount">
-        {isStrip ? (
-          <ScoreboardStrip
-            match={match}
-            tournament={tournament}
-            config={configFromMatch(match)}
-            initialState={
-              state ?? {
-                points_a: "0",
-                points_b: "0",
-                games_a: 0,
-                games_b: 0,
-                sets_a: 0,
-                sets_b: 0,
-                sets_history: [],
-                server: "A",
-                in_tiebreak: false,
-                in_super_tiebreak: false,
-                is_finished: false,
-                winner: null,
-              }
-            }
-            preferShortNames
-            scale={scale}
-            live={false}
-          />
-        ) : (
-          <Scoreboard
-            match={match}
-            tournament={tournament}
-            config={configFromMatch(match)}
-            initialState={
-              state ?? {
-                points_a: "0",
-                points_b: "0",
-                games_a: 0,
-                games_b: 0,
-                sets_a: 0,
-                sets_b: 0,
-                sets_history: [],
-                server: "A",
-                in_tiebreak: false,
-                in_super_tiebreak: false,
-                is_finished: false,
-                winner: null,
-              }
-            }
-            variant="overlay"
-            preferShortNames
-            scale={scale}
-            initialElapsedSeconds={initialElapsedSeconds}
-            live={false}
-          />
-        )}
-      </div>
+      <div id="sb-mount">{board}</div>
     </>
   );
 }
+
+/**
+ * Posição no canvas → flex align/justify. Aceita "vert-horz" em qualquer
+ * ordem: top|middle|bottom + left|center|right (ex.: "bottom-left",
+ * "top-right", "middle-center"). Default: top-left.
+ */
+function parsePos(raw: string | undefined): {
+  alignItems: string;
+  justifyContent: string;
+} {
+  const parts = (raw ?? "top-left").toLowerCase().split(/[-_ ]/);
+  const has = (k: string) => parts.includes(k);
+  // Convenção sem ambiguidade: vertical usa top/middle/bottom; horizontal
+  // usa left/center/right. ("middle" = centro vertical, "center" = horizontal.)
+  const alignItems = has("top")
+    ? "flex-start"
+    : has("middle")
+      ? "center"
+      : "flex-end"; // default bottom
+  const justifyContent = has("right")
+    ? "flex-end"
+    : has("center")
+      ? "center"
+      : "flex-start"; // default left
+  return { alignItems, justifyContent };
+}
+
+const EMPTY_STATE = {
+  points_a: "0",
+  points_b: "0",
+  games_a: 0,
+  games_b: 0,
+  sets_a: 0,
+  sets_b: 0,
+  sets_history: [],
+  server: "A" as const,
+  in_tiebreak: false,
+  in_super_tiebreak: false,
+  is_finished: false,
+  winner: null,
+};
