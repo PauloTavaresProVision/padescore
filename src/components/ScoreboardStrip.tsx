@@ -57,7 +57,7 @@ type MatchRow = Partial<ScoreboardMatch> & {
 
 export function ScoreboardStrip({
   match: initialMatch,
-  tournament: _tournament,
+  tournament,
   config,
   initialState,
   preferShortNames,
@@ -182,12 +182,20 @@ export function ScoreboardStrip({
   const nameA = teamLabel(match.team_a_player1, match.team_a_player2);
   const nameB = teamLabel(match.team_b_player1, match.team_b_player2);
 
-  // S1/S2 = sets completos; JG = jogos do set em curso (ou 3º set completo)
-  const s1 = state.sets_history[0] ?? null;
-  const s2 = state.sets_history[1] ?? null;
-  const s3 = state.sets_history[2] ?? null;
-  const jgA = s3 ? s3.a : state.games_a;
-  const jgB = s3 ? s3.b : state.games_b;
+  // Cada coluna corresponde a um set: S1=set 1, S2=set 2, JG=set 3.
+  // O set EM CURSO aparece na sua própria coluna (a actualizar ao vivo);
+  // sets ainda não jogados ficam "–". Highlight lime só em sets COMPLETOS
+  // ganhos por essa equipa.
+  const currentIdx = state.is_finished ? -1 : state.sets_history.length;
+  const setCol = (i: number): { a: number; b: number; done: boolean } | null => {
+    const done = state.sets_history[i];
+    if (done) return { ...done, done: true };
+    if (i === currentIdx) return { a: state.games_a, b: state.games_b, done: false };
+    return null;
+  };
+  const s1 = setCol(0);
+  const s2 = setCol(1);
+  const s3 = setCol(2);
 
   const winner: "A" | "B" | null = state.is_finished ? state.winner : null;
 
@@ -215,18 +223,19 @@ export function ScoreboardStrip({
       }}
     >
       {/* ---------- Header row ---------- */}
-      {/* Tab PADEL LIVE (na coluna dos nomes; resto da célula transparente) */}
-      <div style={{ display: "flex", alignItems: "flex-end" }}>
+      {/* Tab com o nome do torneio (na coluna dos nomes; resto transparente) */}
+      <div style={{ display: "flex", alignItems: "flex-end", minWidth: 0 }}>
         <div
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: s(7),
+            maxWidth: "100%",
             background: LIME,
             color: "#101400",
             fontWeight: 800,
-            fontSize: s(15),
-            letterSpacing: s(0.8),
+            fontSize: s(14),
+            letterSpacing: s(0.6),
             padding: `${s(7)}px ${s(14)}px ${s(5)}px ${s(11)}px`,
             borderRadius: `${s(8)}px ${s(8)}px 0 0`,
             textTransform: "uppercase",
@@ -239,9 +248,18 @@ export function ScoreboardStrip({
               height: s(9),
               borderRadius: "50%",
               border: `${s(2.5)}px solid #101400`,
+              flexShrink: 0,
             }}
           />
-          PADEL LIVE
+          <span
+            style={{
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {tournament.name || "PADEL LIVE"}
+          </span>
         </div>
       </div>
       <HeaderCell s={s} first>
@@ -273,9 +291,9 @@ export function ScoreboardStrip({
         isWinner={winner === "A"}
         roundTop
       />
-      <ScoreCell s={s} value={s1 ? s1.a : null} won={!!s1 && s1.a > s1.b} />
-      <ScoreCell s={s} value={s2 ? s2.a : null} won={!!s2 && s2.a > s2.b} />
-      <ScoreCell s={s} value={jgA} won={!!s3 && s3.a > s3.b} />
+      <ScoreCell s={s} value={s1 ? s1.a : null} won={!!s1?.done && s1.a > s1.b} />
+      <ScoreCell s={s} value={s2 ? s2.a : null} won={!!s2?.done && s2.a > s2.b} />
+      <ScoreCell s={s} value={s3 ? s3.a : null} won={!!s3?.done && s3.a > s3.b} />
       <PointsCell s={s} value={state.points_a} golden={isGoldenPoint} />
 
       {/* ---------- Row B ---------- */}
@@ -288,9 +306,9 @@ export function ScoreboardStrip({
         roundBottom
         borderTop
       />
-      <ScoreCell s={s} value={s1 ? s1.b : null} won={!!s1 && s1.b > s1.a} borderTop />
-      <ScoreCell s={s} value={s2 ? s2.b : null} won={!!s2 && s2.b > s2.a} borderTop />
-      <ScoreCell s={s} value={jgB} won={!!s3 && s3.b > s3.a} borderTop />
+      <ScoreCell s={s} value={s1 ? s1.b : null} won={!!s1?.done && s1.b > s1.a} borderTop />
+      <ScoreCell s={s} value={s2 ? s2.b : null} won={!!s2?.done && s2.b > s2.a} borderTop />
+      <ScoreCell s={s} value={s3 ? s3.b : null} won={!!s3?.done && s3.b > s3.a} borderTop />
       <PointsCell s={s} value={state.points_b} golden={isGoldenPoint} bottom />
     </div>
   );
