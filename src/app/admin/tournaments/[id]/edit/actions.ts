@@ -52,6 +52,11 @@ export async function updateTournament(tournamentId: string, formData: FormData)
   const tvBg = formData.get("tv_background") as File | null;
   const tvStandby = formData.get("tv_standby") as File | null;
 
+  // Layout do scoreboard TV ('classic' | 'strip')
+  const tvLayoutRaw = String(formData.get("tv_layout") ?? "");
+  const tvLayout =
+    tvLayoutRaw === "strip" || tvLayoutRaw === "classic" ? tvLayoutRaw : null;
+
   // Tempos de rotação das cenas do cavalete (em segundos)
   const sceneMainRaw = formData.get("scene_main_duration_sec");
   const sceneSponsorsRaw = formData.get("scene_sponsors_duration_sec");
@@ -77,6 +82,7 @@ export async function updateTournament(tournamentId: string, formData: FormData)
     logo_url?: string | null;
     tv_background_url?: string | null;
     tv_standby_url?: string | null;
+    tv_layout?: string;
     scene_main_duration_sec?: number;
     scene_sponsors_duration_sec?: number;
     updated_at: string;
@@ -85,6 +91,7 @@ export async function updateTournament(tournamentId: string, formData: FormData)
     primary_color,
     updated_at: new Date().toISOString(),
   };
+  if (tvLayout != null) patch.tv_layout = tvLayout;
   if (sceneMain != null) patch.scene_main_duration_sec = sceneMain;
   if (sceneSponsors != null) patch.scene_sponsors_duration_sec = sceneSponsors;
 

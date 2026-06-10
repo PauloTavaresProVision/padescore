@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TVScoreboard } from "@/components/TVScoreboard";
+import { TVScoreboardStrip } from "@/components/TVScoreboardStrip";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
 import { configFromMatch } from "@/lib/scoring/apply";
@@ -12,7 +13,7 @@ export default async function TvPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ celebrate?: string; standby?: string }>;
+  searchParams: Promise<{ celebrate?: string; standby?: string; layout?: string }>;
 }) {
   const { code } = await params;
   const sp = await searchParams;
@@ -51,18 +52,23 @@ export default async function TvPage({
   const [{ data: tournament }, { data: state }] = await Promise.all([
     supabase
       .from("tournaments")
-      .select(
-        "id, name, logo_url, primary_color, tv_background_url, tv_standby_url",
-      )
+      .select("*")
       .eq("id", match.tournament_id)
       .single(),
     supabase.from("match_state").select("*").eq("match_id", match.id).single(),
   ]);
   if (!tournament) notFound();
 
+  // Layout: setting do torneio, com override ?layout=strip|classic p/ preview
+  const layout =
+    sp.layout === "strip" || sp.layout === "classic"
+      ? sp.layout
+      : ((tournament as { tv_layout?: string }).tv_layout ?? "classic");
+  const Board = layout === "strip" ? TVScoreboardStrip : TVScoreboard;
+
   return (
     <>
-      <TVScoreboard
+      <Board
         match={match}
         tournament={tournament}
         config={configFromMatch(match)}
