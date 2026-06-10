@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   IntervalCard,
-  INTERVAL_BASE_W,
+  INTERVAL_BASE_MIN_W,
   INTERVAL_BASE_H,
 } from "@/components/IntervalCard";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
@@ -26,10 +26,10 @@ export default async function ObsIntervalCardPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ scale?: string }>;
+  searchParams: Promise<{ scale?: string; bg?: string }>;
 }) {
   const { code } = await params;
-  const { scale: scaleRaw } = await searchParams;
+  const { scale: scaleRaw, bg } = await searchParams;
   const scale = (() => {
     const n = Number(scaleRaw);
     if (!Number.isFinite(n)) return 1;
@@ -79,8 +79,13 @@ export default async function ObsIntervalCardPage({
       )
     : null;
 
-  const w = Math.round(INTERVAL_BASE_W * scale);
   const h = Math.round(INTERVAL_BASE_H * scale);
+
+  // Num browser normal o fundo é escuro (pré-visualização fiel à transmissão,
+  // senão os espaços entre painéis ficavam brancos). Dentro do OBS existe
+  // window.obsstudio e o script repõe transparente para se ver o vídeo.
+  // ?bg=transparent força transparente noutros webviews (ex.: YoloBox).
+  const forceTransparent = bg === "transparent";
 
   return (
     <>
@@ -88,12 +93,20 @@ export default async function ObsIntervalCardPage({
         html, body {
           margin: 0 !important;
           padding: 0 !important;
-          width: ${w}px !important;
+          width: 100% !important;
+          min-width: ${Math.round(INTERVAL_BASE_MIN_W * scale)}px !important;
           height: ${h}px !important;
           overflow: hidden !important;
-          background: transparent !important;
+          background: ${forceTransparent ? "transparent" : "#101010"} !important;
         }
       `}</style>
+      {!forceTransparent && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if (window.obsstudio) document.documentElement.style.setProperty('background', 'transparent', 'important');`,
+          }}
+        />
+      )}
       <div id="sb-mount">
         <IntervalCard
           match={match}

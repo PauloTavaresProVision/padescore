@@ -27,7 +27,6 @@ const LIME = "#C3F005";
 // Dimensões BASE (scale=1) — proporções tiradas do mockup (~4.4:1).
 const BASE_LOGO_W = 200;
 const BASE_RIGHT_W = 250;
-const BASE_NAMES_W = 560;
 const BASE_SET_W = 88;
 const BASE_HDR_H = 44;
 const BASE_TEAM_H = 95;
@@ -38,14 +37,16 @@ const GAP = 14; // espaço entre painéis
 // Painel central (mais baixo, recuado na vertical).
 const CENTER_H = BASE_HDR_H + BASE_TEAM_H * 2 + BASE_FOOTER_H + FRAME * 2; // 272
 
-// Painéis laterais definem a altura total.
+// Painéis laterais definem a altura total. A LARGURA é fluida (100% do
+// Browser Source) — o painel central estica; este é o mínimo para não
+// esmagar os nomes com 3 sets.
 export const INTERVAL_BASE_H = 300;
-export const INTERVAL_BASE_W =
+export const INTERVAL_BASE_MIN_W =
   BASE_LOGO_W +
   GAP +
-  (BASE_NAMES_W + BASE_SET_W * 3 + FRAME * 2) +
+  (380 + BASE_SET_W * 3 + FRAME * 2) +
   GAP +
-  BASE_RIGHT_W; // 1310 com 3 sets
+  BASE_RIGHT_W; // 1130 com 3 sets
 
 const CATEGORY_LABELS: Record<string, string> = {
   M1: "M1 OPEN MASCULINO",
@@ -96,12 +97,26 @@ export function IntervalCard({
   const fontStack =
     '"Segoe UI Variable Display", "Segoe UI", "Arial Narrow", Arial, sans-serif';
 
+  // Font-size dos nomes adaptável à largura real do Browser Source: em vez
+  // de truncar com ellipsis, encolhe até caber o nome mais longo numa linha
+  // (~0.7em por carácter em uppercase bold). Larguras fixas que sobram:
+  // logo + gaps + molduras + barra lime + paddings + colunas de sets +
+  // painel direito + folga para o dot do vencedor.
+  const maxChars = Math.max(nameA.length, nameB.length);
+  const fixedW =
+    BASE_LOGO_W + GAP * 2 + FRAME * 2 + 9 + 32 + sets.length * BASE_SET_W + BASE_RIGHT_W + 30;
+  const nameFontSize = `clamp(${s(15)}px, calc((100vw - ${s(fixedW)}px) / ${(
+    0.7 * maxChars
+  ).toFixed(2)}), ${s(28)}px)`;
+
   return (
     <div
       style={{
         display: "flex",
         alignItems: "center",
         gap: s(GAP),
+        width: "100%",
+        boxSizing: "border-box",
         height: s(INTERVAL_BASE_H),
         fontFamily: fontStack,
         filter: "drop-shadow(0 6px 18px rgba(0,0,0,.55))",
@@ -183,6 +198,7 @@ export function IntervalCard({
           <TeamRow
             s={s}
             name={nameA}
+            nameFontSize={nameFontSize}
             scores={sets.map((x) => x.a)}
             isWinner={winner === "A"}
             finished={state.is_finished}
@@ -191,6 +207,7 @@ export function IntervalCard({
           <TeamRow
             s={s}
             name={nameB}
+            nameFontSize={nameFontSize}
             scores={sets.map((x) => x.b)}
             isWinner={winner === "B"}
             finished={state.is_finished}
@@ -309,6 +326,10 @@ function SilverFrame({
         width: width !== undefined ? s(width) : undefined,
         height: s(height),
         flex: flex ? 1 : undefined,
+        // min-width:auto impediria o painel central de encolher abaixo do
+        // nome mais longo (nowrap) e estourava o container — 0 deixa o
+        // ellipsis dos nomes actuar.
+        minWidth: flex ? 0 : undefined,
         flexShrink: width !== undefined ? 0 : undefined,
         background:
           "linear-gradient(135deg, #F2F2F2 0%, #B9B9B9 35%, #8E8E8E 70%, #DEDEDE 100%)",
@@ -335,6 +356,7 @@ function SilverFrame({
 function TeamRow({
   s,
   name,
+  nameFontSize,
   scores,
   isWinner,
   finished,
@@ -342,6 +364,7 @@ function TeamRow({
 }: {
   s: (n: number) => number;
   name: string;
+  nameFontSize: string;
   scores: number[];
   isWinner: boolean;
   finished: boolean;
@@ -380,7 +403,7 @@ function TeamRow({
           style={{
             color: isWinner ? LIME : "#fff",
             fontWeight: 800,
-            fontSize: s(28),
+            fontSize: nameFontSize,
             letterSpacing: s(0.5),
             textTransform: "uppercase",
             whiteSpace: "nowrap",
