@@ -132,7 +132,9 @@ export default async function TournamentDetailPage({
           <div>
             <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Campos</h2>
             <p className="mt-0.5 text-sm text-slate-500">
-              Define os campos do torneio. Cada jogo é atribuído a um campo (e cada totem corresponde a um campo).
+              {tournament.padelteams_competition_code
+                ? "Sincronizado com o PadelTeams. Os campos são geridos lá — aqui só vês a lista actual."
+                : "Define os campos do torneio. Cada jogo é atribuído a um campo (e cada cavalete corresponde a 2 campos)."}
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -177,9 +179,53 @@ export default async function TournamentDetailPage({
             </Link>
           </div>
         </div>
-        <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
-          <CourtsManager tournamentId={id} initialCourts={courts} />
-        </div>
+        {tournament.padelteams_competition_code ? (
+          <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50/60 px-4 py-3 text-xs text-blue-900">
+              <b>Modo PadelTeams</b> · Os campos são geridos no painel deles
+              (associados via{" "}
+              <Link
+                href={`/admin/tournaments/${id}/padelteams`}
+                className="font-semibold text-blue-700 underline hover:text-blue-900"
+              >
+                Integração PadelTeams
+              </Link>
+              ). Para alterar ordem ou nomes, mexe lá.
+            </div>
+            {courts.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                Nenhum campo importado ainda.
+              </div>
+            ) : (
+              <ol className="divide-y divide-slate-100">
+                {courts.map((c, i) => (
+                  <li
+                    key={c.id}
+                    className="flex items-center justify-between gap-3 px-1 py-2.5 text-sm"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-500">
+                        {i + 1}
+                      </span>
+                      <span className="font-semibold text-slate-900">
+                        {c.name}
+                      </span>
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {(matchesByCourt.get(c.id) ?? 0) > 0
+                        ? `${matchesByCourt.get(c.id)} jogos`
+                        : "—"}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 shadow-[0_1px_3px_rgba(16,24,40,0.06)]">
+            <CourtsManager tournamentId={id} initialCourts={courts} />
+          </div>
+        )}
       </div>
 
       {/* Jogos */}
