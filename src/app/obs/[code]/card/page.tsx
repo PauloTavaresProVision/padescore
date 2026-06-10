@@ -88,11 +88,10 @@ export default async function ObsIntervalCardPage({
     ? `/${SPONSOR_FILE}`
     : null;
 
-  // Num browser normal o fundo é escuro (pré-visualização fiel à transmissão).
-  // Dentro do OBS existe window.obsstudio e o script repõe transparente para
-  // se ver o vídeo. ?bg=transparent força transparente noutros webviews
-  // (ex.: YoloBox).
-  const forceTransparent = bg === "transparent";
+  // Fundo TRANSPARENTE por defeito — pronto a colar no OBS/YoloBox sem
+  // parâmetros (vê-se o vídeo à volta do cartão). ?bg=dark pinta o fundo
+  // escuro, útil só para pré-visualizar no browser.
+  const darkPreview = bg === "dark";
 
   return (
     <>
@@ -103,16 +102,9 @@ export default async function ObsIntervalCardPage({
           width: 100% !important;
           height: 100% !important;
           overflow: hidden !important;
-          background: ${forceTransparent ? "transparent" : "#101010"} !important;
+          background: ${darkPreview ? "#101010" : "transparent"} !important;
         }
       `}</style>
-      {!forceTransparent && (
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `if (window.obsstudio) document.documentElement.style.setProperty('background', 'transparent', 'important');`,
-          }}
-        />
-      )}
       <div id="sb-mount">
         <IntervalCard
           match={match}
