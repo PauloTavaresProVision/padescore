@@ -46,6 +46,7 @@ export default async function MatchDetailPage({
   const operatorCode = match.operator_short_code ?? match.operator_token;
   const operatorUrl = `${baseUrl}/score/${operatorCode}`;
   const overlayUrl = `${baseUrl}/obs/${match.short_code}`;
+  const intervalCardUrl = `${baseUrl}/obs/${match.short_code}/card`;
   const scoreboardUrl = `${baseUrl}/tv/${match.short_code}`;
   // Canal de TV do torneio (link fixo; troca-se o jogo à distância).
   const tvLiveUrl = tournament.tv_code
@@ -190,6 +191,13 @@ export default async function MatchDetailPage({
             title="Overlay OBS"
             description="Browser Source · canto superior esquerdo · fundo transparente."
             url={overlayUrl}
+            accent="cyan"
+          />
+          <LinkCard
+            icon={<BroadcastIcon className="h-5 w-5" />}
+            title="Cartão de intervalo (OBS)"
+            description="Browser Source da cena de intervalo · resultado por sets + duração."
+            url={intervalCardUrl}
             accent="cyan"
           />
           <LinkCard
