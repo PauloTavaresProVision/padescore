@@ -13,7 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ref={ref}
       {...props}
       className={[
-        "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900",
+        "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm !text-slate-900",
         "placeholder:text-slate-400",
         "transition outline-none",
         invalid
