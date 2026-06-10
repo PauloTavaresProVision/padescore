@@ -32,14 +32,21 @@ export default async function ObsIntervalCardPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ scale?: string; bg?: string }>;
+  searchParams: Promise<{ scale?: string; bg?: string; size?: string }>;
 }) {
   const { code } = await params;
-  const { scale: scaleRaw, bg } = await searchParams;
+  const { scale: scaleRaw, bg, size: sizeRaw } = await searchParams;
   const scale = (() => {
     const n = Number(scaleRaw);
     if (!Number.isFinite(n)) return 1;
     return Math.min(5, Math.max(0.5, n));
+  })();
+  // Fracção da largura do Browser Source que o cartão ocupa (default 60%,
+  // estilo lower-third). ?size=100 → largura toda.
+  const size = (() => {
+    const n = Number(sizeRaw);
+    if (!Number.isFinite(n)) return 0.6;
+    return Math.min(100, Math.max(10, n)) / 100;
   })();
 
   const supabase = createAdminClient();
@@ -104,25 +111,28 @@ export default async function ObsIntervalCardPage({
           margin: 0 !important;
           padding: 0 !important;
           width: 100% !important;
-          min-height: ${h}px !important;
           height: 100% !important;
           overflow: hidden !important;
           background: ${forceTransparent ? "transparent" : "#101010"} !important;
         }
       `}</style>
-      {/* Zoom-to-fit: em janelas mais estreitas que o design (1780×scale) o
-          cartão encolhe por inteiro em vez de cortar. O zoom é aplicado ao
-          #sb-mount — o polling do layout troca o innerHTML mas mantém o nó,
-          por isso não há flicker. */}
+      {/* Dimensionamento: o cartão ocupa size% da largura da janela/Browser
+          Source E nunca excede a altura disponível — nunca corta em nenhuma
+          direcção. O zoom é aplicado ao #sb-mount, que o polling mantém. */}
       <script
         dangerouslySetInnerHTML={{
           __html: `(function(){
             var W = ${Math.round(INTERVAL_BASE_W * scale)};
+            var H = ${h};
+            var SIZE = ${size};
             function fit(){
               var m = document.getElementById('sb-mount');
               if (!m) return;
-              var z = Math.min(1, window.innerWidth / W);
+              var z = Math.min(SIZE * window.innerWidth / W, window.innerHeight / H);
+              m.style.width = W + 'px';
               m.style.zoom = z;
+              // centra horizontalmente (a margem é em unidades já com zoom)
+              m.style.marginLeft = Math.max(0, (window.innerWidth - W * z) / 2 / z) + 'px';
             }
             window.addEventListener('resize', fit);
             // 1º fit adiado para depois da hidratação do React (evita
