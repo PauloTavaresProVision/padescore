@@ -25,9 +25,9 @@ const TOURNAMENT_ID = "eacd0cfe-787b-444a-b8e6-3695529bb97a";
 
 const PAIRS: { name: string; court1: string; court2: string }[] = [
   { name: "CV1 (STANDARD BANK + ALPROME)", court1: "STANDARD BANK", court2: "ALPROME" },
-  { name: "CV2 (DOM + DELTA Q)", court1: "DOM", court2: "DELTA Q" },
-  { name: "CV3 (GIANT + CASA DOS FRESCOS)", court1: "GIANT SEGUROS", court2: "CASA DOS FRESCOS" },
-  { name: "CV4 (ATC + ATLÂNTIDA)", court1: "ATC", court2: "ATLÂNTIDA" },
+  { name: "CV2 (DOM + CASA DOS FRESCOS)", court1: "DOM", court2: "CASA DOS FRESCOS" },
+  { name: "CV3 (DELTA Q + ATC)", court1: "DELTA Q", court2: "ATC" },
+  { name: "CV4 (GIANT SEGUROS + ATLÂNTIDA)", court1: "GIANT SEGUROS", court2: "ATLÂNTIDA" },
 ];
 
 async function main() {
