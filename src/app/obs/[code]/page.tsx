@@ -5,6 +5,11 @@ import {
   SCOREBOARD_BASE_W,
   SCOREBOARD_BASE_H,
 } from "@/components/Scoreboard";
+import {
+  ScoreboardStrip,
+  STRIP_BASE_W,
+  STRIP_BASE_H,
+} from "@/components/ScoreboardStrip";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
 import { configFromMatch } from "@/lib/scoring/apply";
 
@@ -15,10 +20,10 @@ export default async function ObsOverlayPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ scale?: string }>;
+  searchParams: Promise<{ scale?: string; layout?: string }>;
 }) {
   const { code } = await params;
-  const { scale: scaleRaw } = await searchParams;
+  const { scale: scaleRaw, layout: layoutRaw } = await searchParams;
   // ?scale=N → multiplica TODOS os pixels do scoreboard nativamente.
   //
   // REGRA DE OURO p/ qualidade: o render TEM de sair do tamanho final
@@ -39,8 +44,6 @@ export default async function ObsOverlayPage({
     if (!Number.isFinite(n)) return 1;
     return Math.min(5, Math.max(0.5, n));
   })();
-  const w = Math.round(SCOREBOARD_BASE_W * scale);
-  const h = Math.round(SCOREBOARD_BASE_H * scale);
   const supabase = createAdminClient();
   // `serverNow` é capturado no início do request para o tempo decorrido
   // ser calculado server-side (sem precisar de JS no client).
@@ -69,12 +72,22 @@ export default async function ObsOverlayPage({
   const [{ data: tournament }, { data: state }] = await Promise.all([
     supabase
       .from("tournaments")
-      .select("id, name, logo_url, primary_color")
+      .select("*")
       .eq("id", match.tournament_id)
       .single(),
     supabase.from("match_state").select("*").eq("match_id", match.id).single(),
   ]);
   if (!tournament) notFound();
+
+  // Layout do overlay: setting do torneio (tournaments.obs_layout) com
+  // override ?layout=strip|classic para preview/transição sem mexer no admin.
+  const layout =
+    layoutRaw === "strip" || layoutRaw === "classic"
+      ? layoutRaw
+      : ((tournament as { obs_layout?: string }).obs_layout ?? "classic");
+  const isStrip = layout === "strip";
+  const w = Math.round((isStrip ? STRIP_BASE_W : SCOREBOARD_BASE_W) * scale);
+  const h = Math.round((isStrip ? STRIP_BASE_H : SCOREBOARD_BASE_H) * scale);
 
   // Calcula elapsed seconds NO SERVIDOR a cada request — para o YoloBox
   // (sem JS) ver o tempo. Cada meta-refresh dispara um novo request e
@@ -108,32 +121,59 @@ export default async function ObsOverlayPage({
       {/* sb-mount: o script no layout substitui este innerHTML a cada 1s
           com o HTML novo vindo de uma nova requisição à mesma URL. */}
       <div id="sb-mount">
-        <Scoreboard
-          match={match}
-          tournament={tournament}
-          config={configFromMatch(match)}
-          initialState={
-            state ?? {
-              points_a: "0",
-              points_b: "0",
-              games_a: 0,
-              games_b: 0,
-              sets_a: 0,
-              sets_b: 0,
-              sets_history: [],
-              server: "A",
-              in_tiebreak: false,
-              in_super_tiebreak: false,
-              is_finished: false,
-              winner: null,
+        {isStrip ? (
+          <ScoreboardStrip
+            match={match}
+            tournament={tournament}
+            config={configFromMatch(match)}
+            initialState={
+              state ?? {
+                points_a: "0",
+                points_b: "0",
+                games_a: 0,
+                games_b: 0,
+                sets_a: 0,
+                sets_b: 0,
+                sets_history: [],
+                server: "A",
+                in_tiebreak: false,
+                in_super_tiebreak: false,
+                is_finished: false,
+                winner: null,
+              }
             }
-          }
-          variant="overlay"
-          preferShortNames
-          scale={scale}
-          initialElapsedSeconds={initialElapsedSeconds}
-          live={false}
-        />
+            preferShortNames
+            scale={scale}
+            live={false}
+          />
+        ) : (
+          <Scoreboard
+            match={match}
+            tournament={tournament}
+            config={configFromMatch(match)}
+            initialState={
+              state ?? {
+                points_a: "0",
+                points_b: "0",
+                games_a: 0,
+                games_b: 0,
+                sets_a: 0,
+                sets_b: 0,
+                sets_history: [],
+                server: "A",
+                in_tiebreak: false,
+                in_super_tiebreak: false,
+                is_finished: false,
+                winner: null,
+              }
+            }
+            variant="overlay"
+            preferShortNames
+            scale={scale}
+            initialElapsedSeconds={initialElapsedSeconds}
+            live={false}
+          />
+        )}
       </div>
     </>
   );

@@ -254,8 +254,8 @@ export default async function EditTournamentPage({
         </Fieldset>
 
         <Fieldset
-          legend="Scoreboard TV"
-          hint="Layout do ecrã de transmissão (/tv/live/...)."
+          legend="Overlay OBS"
+          hint="Layout do overlay transparente para transmissão (/obs/...). A TV e o resto não mudam."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <label
@@ -263,9 +263,9 @@ export default async function EditTournamentPage({
             >
               <input
                 type="radio"
-                name="tv_layout"
+                name="obs_layout"
                 value="classic"
-                defaultChecked={(tournament.tv_layout ?? "classic") === "classic"}
+                defaultChecked={(tournament.obs_layout ?? "classic") === "classic"}
                 className="mt-1 h-4 w-4 border-slate-300 text-emerald-600 focus:ring-emerald-500"
               />
               <span>
@@ -273,8 +273,8 @@ export default async function EditTournamentPage({
                   Clássico
                 </span>
                 <span className="mt-0.5 block text-xs text-slate-500">
-                  Ecrã completo com fundo do torneio, fotos dos jogadores,
-                  sets e relógio de jogo. O layout actual.
+                  Overlay actual: logo do torneio, nomes, sets e relógio de
+                  jogo.
                 </span>
               </span>
             </label>
@@ -283,9 +283,9 @@ export default async function EditTournamentPage({
             >
               <input
                 type="radio"
-                name="tv_layout"
+                name="obs_layout"
                 value="strip"
-                defaultChecked={tournament.tv_layout === "strip"}
+                defaultChecked={tournament.obs_layout === "strip"}
                 className="mt-1 h-4 w-4 border-slate-300 text-emerald-600 focus:ring-emerald-500"
               />
               <span>
@@ -293,8 +293,8 @@ export default async function EditTournamentPage({
                   Strip broadcast
                 </span>
                 <span className="mt-0.5 block text-xs text-slate-500">
-                  Barra compacta no canto superior (estilo World Padel Tour):
-                  S1 · S2 · JG · PT, bola de serviço e nomes curtos.
+                  Barra compacta estilo World Padel Tour: PADEL LIVE · S1 ·
+                  S2 · JG · PT, bola de serviço e nomes curtos.
                 </span>
               </span>
             </label>
@@ -302,7 +302,7 @@ export default async function EditTournamentPage({
           <p className="text-xs text-slate-500">
             Podes pré-visualizar qualquer jogo com{" "}
             <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px]">
-              /tv/CODIGO?layout=strip
+              /obs/CODIGO?layout=strip
             </code>{" "}
             sem mudar este setting.
           </p>

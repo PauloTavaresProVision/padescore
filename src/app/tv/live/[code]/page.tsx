@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TVScoreboard } from "@/components/TVScoreboard";
-import { TVScoreboardStrip } from "@/components/TVScoreboardStrip";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
 import { configFromMatch } from "@/lib/scoring/apply";
@@ -108,18 +107,11 @@ export default async function TvLivePage({
     .eq("match_id", match.id)
     .single();
 
-  // Layout: setting do torneio (tournaments.tv_layout)
-  const layout =
-    (tournament as { tv_layout?: string }).tv_layout === "strip"
-      ? "strip"
-      : "classic";
-  const Board = layout === "strip" ? TVScoreboardStrip : TVScoreboard;
-
   return (
     <>
       <TvLivePoller code={code} activeCode={match.short_code} />
       {/* key força re-mount limpo quando o jogo activo muda */}
-      <Board
+      <TVScoreboard
         key={match.id}
         match={match}
         tournament={tournament}
