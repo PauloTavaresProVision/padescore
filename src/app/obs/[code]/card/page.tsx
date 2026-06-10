@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   IntervalCard,
-  INTERVAL_BASE_MIN_W,
+  INTERVAL_BASE_W,
   INTERVAL_BASE_H,
 } from "@/components/IntervalCard";
 import { resolveStartedAt } from "@/lib/scoring/started-at";
@@ -104,13 +104,34 @@ export default async function ObsIntervalCardPage({
           margin: 0 !important;
           padding: 0 !important;
           width: 100% !important;
-          min-width: ${Math.round(INTERVAL_BASE_MIN_W * scale)}px !important;
           min-height: ${h}px !important;
           height: 100% !important;
           overflow: hidden !important;
           background: ${forceTransparent ? "transparent" : "#101010"} !important;
         }
       `}</style>
+      {/* Zoom-to-fit: em janelas mais estreitas que o design (1780×scale) o
+          cartão encolhe por inteiro em vez de cortar. O zoom é aplicado ao
+          #sb-mount — o polling do layout troca o innerHTML mas mantém o nó,
+          por isso não há flicker. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){
+            var W = ${Math.round(INTERVAL_BASE_W * scale)};
+            function fit(){
+              var m = document.getElementById('sb-mount');
+              if (!m) return;
+              var z = Math.min(1, window.innerWidth / W);
+              m.style.zoom = z;
+            }
+            window.addEventListener('resize', fit);
+            // 1º fit adiado para depois da hidratação do React (evita
+            // mismatch de atributos no arranque).
+            window.addEventListener('load', fit);
+            setTimeout(fit, 400);
+          })();`,
+        }}
+      />
       {!forceTransparent && (
         <script
           dangerouslySetInnerHTML={{

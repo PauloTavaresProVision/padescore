@@ -25,10 +25,10 @@ import type {
 
 const LIME = "#d7ff00";
 
-// Dimensões do design (scale=1): variante grande e compacta (<1400px).
+// Dimensões do design (scale=1). Em janelas mais estreitas que isto, a
+// página aplica zoom-to-fit (encolhe o cartão inteiro sem cortar nada).
 export const INTERVAL_BASE_W = 1780;
 export const INTERVAL_BASE_H = 360;
-export const INTERVAL_BASE_MIN_W = 1280; // largura da variante compacta
 
 const CATEGORY_LABELS: Record<string, string> = {
   M1: "M1 Open Masculino",
@@ -82,19 +82,13 @@ export function IntervalCard({
     : match.court_name || tournament.name;
 
   // Auto-shrink dos nomes: nomes longos encolhem a letra (só nessa linha) em
-  // vez de cortar com "…". Calculado para as DUAS variantes do design
-  // (grande/compacta) e aplicado via CSS vars --fitL/--fitS (~0.76em por
-  // carácter em Arial 900 uppercase, já com folga para o letter-spacing).
+  // vez de cortar com "…" (~0.76em por carácter em Arial 900 uppercase, já
+  // com folga para o letter-spacing).
   const n = sets.length;
   const fit = (name: string, hasDot: boolean) => {
     const chars = Math.max(1, name.length);
-    const availL = 1780 - 300 - 340 - 120 * n - 68 - (hasDot ? 36 : 0);
-    const availS = 1280 - 230 - 270 - 88 * n - 52 - (hasDot ? 36 : 0);
-    const clampFit = (x: number) => Math.max(0.6, Math.min(1, x));
-    return {
-      fitL: clampFit(availL / (0.76 * chars * 34)),
-      fitS: clampFit(availS / (0.76 * chars * 25)),
-    };
+    const avail = 1780 - 300 - 340 - 120 * n - 68 - (hasDot ? 36 : 0);
+    return Math.max(0.6, Math.min(1, avail / (0.76 * chars * 34)));
   };
 
   const css = buildCss(s, n);
@@ -127,13 +121,13 @@ export function IntervalCard({
               name={nameA}
               scores={sets.map((x) => x.a)}
               active={active === "A"}
-              {...fit(nameA, active === "A")}
+              fit={fit(nameA, active === "A")}
             />
             <TeamRowHtml
               name={nameB}
               scores={sets.map((x) => x.b)}
               active={active === "B"}
-              {...fit(nameB, active === "B")}
+              fit={fit(nameB, active === "B")}
             />
           </div>
 
@@ -163,25 +157,18 @@ function TeamRowHtml({
   name,
   scores,
   active,
-  fitL,
-  fitS,
+  fit,
 }: {
   name: string;
   scores: number[];
   active: boolean;
   /** Factor de encolhimento da letra (1 = tamanho do design). */
-  fitL: number;
-  fitS: number;
+  fit: number;
 }) {
   return (
     <div
       className={active ? "player-row active" : "player-row"}
-      style={
-        {
-          "--fitL": fitL.toFixed(3),
-          "--fitS": fitS.toFixed(3),
-        } as React.CSSProperties
-      }
+      style={{ "--fit": fit.toFixed(3) } as React.CSSProperties}
     >
       <div className="player-name">
         <span className="player-name-text">{name}</span>
@@ -276,7 +263,7 @@ function buildCss(s: (n: number) => number, nSets: number): string {
   align-items: center;
   padding: 0 ${s(34)}px;
   color: #ffffff;
-  font-size: calc(${s(34)}px * var(--fitL, 1));
+  font-size: calc(${s(34)}px * var(--fit, 1));
   font-weight: 900;
   letter-spacing: ${s(0.5)}px;
   text-transform: uppercase;
@@ -386,25 +373,6 @@ function buildCss(s: (n: number) => number, nSets: number): string {
 }
 .sponsor-logo img { max-width: 90%; max-height: ${s(78)}px; object-fit: contain; }
 
-@media (max-width: ${s(1400)}px) {
-  .scoreboard {
-    width: ${s(1280)}px;
-    height: ${s(270)}px;
-    grid-template-columns: ${s(230)}px 1fr ${s(270)}px;
-  }
-  .center-panel { grid-template-rows: ${s(48)}px 1fr ${s(42)}px; }
-  .match-title { font-size: ${s(22)}px; padding-left: ${s(28)}px; }
-  .player-row { grid-template-columns: 1fr repeat(${nSets}, ${s(88)}px); }
-  .player-name { font-size: calc(${s(25)}px * var(--fitS, 1)); padding: 0 ${s(26)}px; }
-  .score-cell { font-size: ${s(48)}px; }
-  .duration-title { font-size: ${s(18)}px; }
-  .duration-box { font-size: ${s(26)}px; }
-  .match-status { font-size: ${s(16)}px; }
-  .bottom-bar { font-size: ${s(15)}px; letter-spacing: ${s(5)}px; }
-  .right-panel { padding: ${s(24)}px ${s(18)}px ${s(18)}px; gap: ${s(12)}px; }
-  .sponsor-logo { height: ${s(58)}px; }
-  .sponsor-logo img { max-height: ${s(58)}px; }
-}
 `;
 }
 
