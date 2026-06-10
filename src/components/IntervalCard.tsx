@@ -106,7 +106,8 @@ export function IntervalCard({
           width: s(BASE_LOGO_W),
           display: "grid",
           placeItems: "center",
-          background: "#D6D6D6",
+          background: "#FFFFFF",
+          borderRight: `${s(1)}px solid #C4C4C4`,
           flexShrink: 0,
         }}
       >
@@ -202,15 +203,15 @@ export function IntervalCard({
       {/* ---------- Painel direito: duração ---------- */}
       <div
         style={{
-          flex: 1,
-          minWidth: s(BASE_RIGHT_W),
+          width: s(BASE_RIGHT_W),
+          flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           gap: s(8),
           borderLeft: `${s(1)}px solid #C4C4C4`,
-          padding: `0 ${s(14)}px`,
+          padding: `0 ${s(12)}px`,
         }}
       >
         <div
@@ -220,19 +221,20 @@ export function IntervalCard({
             fontSize: s(14),
             letterSpacing: s(1.2),
             textTransform: "uppercase",
+            whiteSpace: "nowrap",
           }}
         >
           Duração do Jogo
         </div>
         <div
           style={{
-            background: "#3A3A3A",
+            background: "#101010",
             color: "#fff",
-            fontWeight: 800,
-            fontSize: s(20),
+            fontWeight: 900,
+            fontSize: s(22),
             letterSpacing: s(1),
-            padding: `${s(6)}px ${s(18)}px`,
-            borderRadius: s(4),
+            padding: `${s(7)}px ${s(20)}px`,
+            borderRadius: s(5),
             fontVariantNumeric: "tabular-nums",
           }}
         >
@@ -240,7 +242,7 @@ export function IntervalCard({
         </div>
         <div
           style={{
-            color: "#777",
+            color: state.is_finished ? "#5d7000" : "#777",
             fontWeight: 700,
             fontSize: s(10),
             letterSpacing: s(1.2),
@@ -317,16 +319,17 @@ function TeamRow({
           <span
             style={{
               flexShrink: 0,
-              width: s(10),
-              height: s(10),
+              width: s(14),
+              height: s(14),
               borderRadius: "50%",
               background: LIME,
+              boxShadow: `0 0 ${s(8)}px ${LIME}`,
             }}
           />
         )}
       </div>
 
-      {/* Scores por set (células claras) */}
+      {/* Scores por set (células brancas, alto contraste) */}
       {scores.map((v, i) => {
         const won = finished
           ? v > (opponentScores[i] ?? 0)
@@ -338,11 +341,11 @@ function TeamRow({
               width: s(setColW),
               display: "grid",
               placeItems: "center",
-              background: "#F4F4F4",
-              borderLeft: `${s(2)}px solid #E4E4E4`,
-              color: "#111",
-              fontWeight: won ? 900 : 700,
-              fontSize: s(28),
+              background: "#FFFFFF",
+              borderLeft: `${s(1)}px solid #D0D0D0`,
+              color: won ? "#000" : "#666",
+              fontWeight: 900,
+              fontSize: s(32),
               fontVariantNumeric: "tabular-nums",
               lineHeight: 1,
             }}
