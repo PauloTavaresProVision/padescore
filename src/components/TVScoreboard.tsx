@@ -657,6 +657,19 @@ export function TVScoreboard({
           0%, 100% { opacity: 0.8; }
           50%      { opacity: 1; }
         }
+        .tv-celebrate-category {
+          margin-top: 1.2vh;
+          padding: 0.5vh 1.6vw;
+          font-size: 1.5vw;
+          font-weight: 900;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: #eaf7ff;
+          background: rgba(66, 215, 255, 0.14);
+          border: 1px solid rgba(66, 215, 255, 0.55);
+          border-radius: 999px;
+          box-shadow: 0 0 22px rgba(66, 215, 255, 0.25);
+        }
         .tv-celebrate-photo {
           height: 46vh;
           margin: 1.2vh 0 0.4vh;
@@ -1231,6 +1244,7 @@ export function TVScoreboard({
           {celebrateWinner && (
             <WinnerCelebration
               winner={celebrateWinner}
+              category={match.category ? categoryLabel : null}
               photoUrl={
                 celebrateWinner === "A"
                   ? match.team_a_photo_url
@@ -1321,12 +1335,14 @@ export function TVScoreboard({
 // ---------------------------------------------------------------------------
 function WinnerCelebration({
   winner,
+  category,
   photoUrl,
   player1,
   player2,
   setsHistory,
 }: {
   winner: "A" | "B";
+  category: string | null;
   photoUrl: string | null;
   player1: string;
   player2: string | null;
@@ -1419,6 +1435,7 @@ function WinnerCelebration({
           <span className="tv-celebrate-trophy">🏆</span>
           <span>VENCEDOR</span>
         </div>
+        {category && <div className="tv-celebrate-category">{category}</div>}
         <div className="tv-celebrate-photo">
           {photoUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
