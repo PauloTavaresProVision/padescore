@@ -136,16 +136,12 @@ export function IntervalCard({
         <div className="center-panel">
           <div className="match-title">
             <span className="match-title-text">{categoryLabel}</span>
-            {setMinutes.length > 0 && (
-              <span className="set-times">
-                {setMinutes.map((m, i) => (
-                  <span key={i} className="set-time">
-                    {m}&apos;
-                  </span>
-                ))}
+            {/* um tempo por coluna de set, centrado sobre o score em baixo */}
+            {sets.map((_, i) => (
+              <span key={i} className="set-time">
+                {setMinutes[i] != null ? `${setMinutes[i]}'` : ""}
               </span>
-            )}
-            <span className="title-edge" />
+            ))}
           </div>
 
           <div className="score-rows">
@@ -293,37 +289,27 @@ function buildCss(
   font-weight: 900;
   letter-spacing: ${u(1)};
   text-transform: uppercase;
-  display: flex;
+  /* mesma grelha das linhas de score: categoria (1fr) + 1 coluna por set,
+     para os tempos ficarem centrados sobre os scores em baixo */
+  display: grid;
+  grid-template-columns: 1fr repeat(${nSets}, ${u(120)});
   align-items: center;
-  padding-left: ${u(38)};
-  position: relative;
   overflow: hidden;
   white-space: nowrap;
 }
-.match-title-text { overflow: hidden; text-overflow: ellipsis; }
-/* tempos por set (estilo Premier Padel: "65' 18'") — encostados à direita,
-   antes da aba decorativa */
-.set-times {
-  margin-left: auto;
-  display: flex;
-  align-items: baseline;
-  gap: ${u(16)};
-  padding-right: ${u(48)};
-  flex-shrink: 0;
+.match-title-text {
+  padding-left: ${u(38)};
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+/* tempo de cada set (estilo Premier Padel: "65' 18'"), centrado na coluna */
 .set-time {
+  text-align: center;
   color: #5a5a5a;
+  font-size: ${u(22)};
   font-weight: 800;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-}
-.title-edge {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: ${u(120)};
-  height: 100%;
-  background: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.18) 100%);
-  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
 }
 
 .score-rows { display: grid; grid-template-rows: 1fr 1fr; min-width: 0; min-height: 0; overflow: hidden; }
