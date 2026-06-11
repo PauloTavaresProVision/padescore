@@ -455,9 +455,11 @@ export function Scoreboard({
             const isLast = i === lastColIdx;
             const w = isLast ? COL_SCORE_LAST : COL_SCORE;
             let label = "";
+            let tbSet = false;
             if (col.kind === "set") {
-              const s = completedSets[col.index];
-              label = `Set ${col.index + 1}${isTiebreakSet(s) ? " (TB)" : ""}`;
+              const st = completedSets[col.index];
+              label = `Set ${col.index + 1}`;
+              tbSet = isTiebreakSet(st);
             } else if (col.kind === "games") {
               label = "Games";
             } else if (col.kind === "points") {
@@ -468,9 +470,11 @@ export function Scoreboard({
                 key={i}
                 style={{
                   display: "flex",
+                  flexDirection: "column",
                   height: "100%",
                   alignItems: "center",
                   justifyContent: "center",
+                  lineHeight: 1.05,
                   width: w,
                   borderLeft: borderDivider,
                   fontSize: s(16),
@@ -478,9 +482,14 @@ export function Scoreboard({
                   color: "#ffffff",
                   letterSpacing: "0.5px",
                   textTransform: "uppercase",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {label}
+                <span>{label}</span>
+                {/* "(TB)" numa 2ª linha mais pequena — não corta na altura */}
+                {tbSet && (
+                  <span style={{ fontSize: s(10), opacity: 0.8 }}>(TB)</span>
+                )}
               </div>
             );
           })}
