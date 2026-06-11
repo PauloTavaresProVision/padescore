@@ -49,6 +49,7 @@ export function IntervalCard({
   tournament,
   state,
   elapsedSeconds,
+  setDurations,
   sponsorUrl,
   size = 0.6,
   pos = "center",
@@ -58,6 +59,8 @@ export function IntervalCard({
   state: ScoreboardState;
   /** Calculado no servidor a cada request (o polling re-renderiza). */
   elapsedSeconds: number | null;
+  /** Duração de cada set (segundos) — mostrada no header como "65' 18'". */
+  setDurations?: { completed: number[]; current: number | null };
   /** Logo do sponsor no canto inferior direito (ex.: /byte-digital.png). */
   sponsorUrl?: string | null;
   /** Fracção da largura da janela que o cartão ocupa (0.1–1, default 0.6). */
@@ -85,6 +88,15 @@ export function IntervalCard({
   const categoryLabel = match.category
     ? (CATEGORY_LABELS[match.category] ?? match.category)
     : match.court_name || tournament.name;
+
+  // Minutos por set (estilo Premier Padel: "65' 18'"): sets terminados +
+  // o set em curso (se o jogo ainda não acabou). Arredondado ao minuto.
+  const setMinutes: number[] = [
+    ...(setDurations?.completed ?? []).map((s) => Math.round(s / 60)),
+    ...(setDurations?.current != null && !state.is_finished
+      ? [Math.round(setDurations.current / 60)]
+      : []),
+  ];
 
   // Auto-shrink dos nomes: nomes longos encolhem a letra (só nessa linha) em
   // vez de cortar com "…" (~0.76em por carácter em Arial 900 uppercase, já
@@ -123,7 +135,16 @@ export function IntervalCard({
         {/* ============ MARCADOR ============ */}
         <div className="center-panel">
           <div className="match-title">
-            {categoryLabel}
+            <span className="match-title-text">{categoryLabel}</span>
+            {setMinutes.length > 0 && (
+              <span className="set-times">
+                {setMinutes.map((m, i) => (
+                  <span key={i} className="set-time">
+                    {m}&apos;
+                  </span>
+                ))}
+              </span>
+            )}
             <span className="title-edge" />
           </div>
 
@@ -278,6 +299,22 @@ function buildCss(
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+}
+.match-title-text { overflow: hidden; text-overflow: ellipsis; }
+/* tempos por set (estilo Premier Padel: "65' 18'") — encostados à direita,
+   antes da aba decorativa */
+.set-times {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: ${u(16)};
+  padding-right: ${u(48)};
+  flex-shrink: 0;
+}
+.set-time {
+  color: #5a5a5a;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 .title-edge {
   position: absolute;
