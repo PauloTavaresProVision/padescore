@@ -69,6 +69,11 @@ const STAGE_W = 1080;
 const STAGE_H = 1920;
 // Cena Byte (scene-byte.png) — passa depois da publicidade, 5s.
 const BYTE_SCENE_SEC = 5;
+// Versão dos PNGs de fundo (scene-*.png). Os webviews dos kiosks cacheiam
+// imagens de forma agressiva: ao trocar um PNG mantendo o nome, alguns
+// kiosks continuam a mostrar o antigo. INCREMENTAR este número sempre que
+// um scene-*.png mudar força todos a buscar a versão nova (cache busting).
+const SCENE_ASSET_VERSION = 2;
 const HEADER_HEIGHT_PX = 405; // crop até final do "ANGOLA"
 
 const BLUE = "#2d8cff";
@@ -236,12 +241,14 @@ function Stage({
   // Cada cena tem o seu próprio PNG do designer com chrome completo
   // (header + títulos + caixas + footer). Código só desenha CONTEÚDO
   // DINÂMICO (logos, scores, jogadores) por cima.
-  const bgUrl =
+  const bgFile =
     bg === "sponsors"
-      ? "/cavalete/scene-sponsors-bg.png"
+      ? "scene-sponsors-bg.png"
       : bg === "byte"
-        ? "/cavalete/scene-byte.png"
-        : "/cavalete/scene-main-bg.png";
+        ? "scene-byte.png"
+        : "scene-main-bg.png";
+  // ?v= força o webview a ignorar a cópia em cache quando o PNG muda
+  const bgUrl = `/cavalete/${bgFile}?v=${SCENE_ASSET_VERSION}`;
 
   return (
     <div
