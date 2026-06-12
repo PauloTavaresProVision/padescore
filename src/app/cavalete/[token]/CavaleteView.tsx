@@ -57,6 +57,14 @@ interface CavaletePayload {
 // CONSTANTES
 // -----------------------------------------------------------------------------
 const POLL_INTERVAL_MS = 15_000;
+// Rotação dos logos de "NOSSOS PARCEIROS" (grid 3×2 = 6 slots). Quando há
+// mais de 6 parceiros, cada slot alterna entre os seus logos a cada
+// PARTNER_ROTATE_MS (+ pequeno stagger por slot para os fades não baterem
+// todos ao mesmo tempo). A duração da cena sponsors estende-se sozinha para
+// dar tempo a um ciclo completo (ver useEffect das cenas).
+const PARTNER_ROTATE_MS = 6000;
+const PARTNER_STAGGER_MS = 150;
+const PARTNER_FADE_MS = 600;
 const STAGE_W = 1080;
 const STAGE_H = 1920;
 const HEADER_HEIGHT_PX = 405; // crop até final do "ANGOLA"
@@ -157,7 +165,20 @@ export function CavaleteView({ token }: { token: string }) {
     // Durações vêm do payload (configuradas por torneio no admin).
     // Defaults aplicados pelo servidor: 40s main / 15s sponsors.
     const mainSec = data?.tournament.sceneDurations.mainSec ?? 40;
-    const sponsorsSec = data?.tournament.sceneDurations.sponsorsSec ?? 15;
+    const sponsorsCfgSec = data?.tournament.sceneDurations.sponsorsSec ?? 15;
+
+    // Duração ADAPTATIVA da cena sponsors: se houver mais de 6 parceiros, os
+    // slots rodam os logos extra. O slot mais cheio tem ceil(N/6) logos e o
+    // último slot roda mais devagar (stagger), por isso estendemos a cena o
+    // suficiente para um ciclo completo + margem — senão os últimos logos
+    // nunca chegam a aparecer antes de voltar aos jogos.
+    const nPartners = data?.sponsors.footer.length ?? 0;
+    const maxPerSlot = Math.ceil(nPartners / 6);
+    const slowestSlotMs = PARTNER_ROTATE_MS + 5 * PARTNER_STAGGER_MS;
+    const partnerCycleSec =
+      maxPerSlot > 1 ? (maxPerSlot * slowestSlotMs) / 1000 + 1.5 : 0;
+    const sponsorsSec = Math.max(sponsorsCfgSec, partnerCycleSec);
+
     const dur = (isMain ? mainSec : sponsorsSec) * 1000;
     const t = setTimeout(() => setSceneIdx((i) => (i + 1) % 2), dur);
     return () => clearTimeout(t);
@@ -857,9 +878,6 @@ function CompactTeam({
 // O código só posiciona LOGOS dinâmicos por cima das caixas.
 // Coordenadas em canvas 1080×1920 (PNG 941×1672 é esticado pelo Stage).
 // =============================================================================
-const PARTNER_ROTATE_MS = 6000;
-const PARTNER_FADE_MS = 600;
-
 // Coordenadas medidas directamente do scene-sponsors-bg.png (1080×1920)
 // via detecção de pixels brancos nas caixas desenhadas.
 const SPONSORS_LAYOUT = {
@@ -926,7 +944,7 @@ function SponsorsScene({ data }: { data: CavaletePayload }) {
             w={SPONSORS_LAYOUT.partnersGrid.cellW}
             h={SPONSORS_LAYOUT.partnersGrid.cellH}
             items={partnerSlotItems[i]!}
-            rotateMs={PARTNER_ROTATE_MS + i * 400}
+            rotateMs={PARTNER_ROTATE_MS + i * PARTNER_STAGGER_MS}
           />
         );
       })}
