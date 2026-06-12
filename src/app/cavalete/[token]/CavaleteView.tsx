@@ -67,6 +67,8 @@ const PARTNER_STAGGER_MS = 150;
 const PARTNER_FADE_MS = 600;
 const STAGE_W = 1080;
 const STAGE_H = 1920;
+// Cena Byte (scene-byte.png) — passa depois da publicidade, 5s.
+const BYTE_SCENE_SEC = 5;
 const HEADER_HEIGHT_PX = 405; // crop até final do "ANGOLA"
 
 const BLUE = "#2d8cff";
@@ -141,27 +143,26 @@ export function CavaleteView({ token }: { token: string }) {
     };
   }, [token]);
 
-  // Rotação entre cenas: Main (40s) → Sponsors (15s) → Main → ...
-  // Se não houver sponsors, fica sempre na Main.
+  // Rotação de cenas: Main (jogos) → Sponsors (publicidade) → Byte → Main…
+  // Sem sponsors configurados, fica sempre na Main (e também não passa a Byte,
+  // que é o fecho do bloco publicitário).
   const hasSponsors =
     (data?.sponsors.footer.length ?? 0) +
       (data?.sponsors.fullscreen.length ?? 0) >
     0;
-  // Em dev/teste, ?scene=sponsors força a Cena 3 (sem rotação)
+  const nScenes = hasSponsors ? 3 : 1; // 0=main, 1=sponsors, 2=byte
+  // Em dev/teste, ?scene=main|sponsors|byte força uma cena (sem rotação)
   const url = typeof window !== "undefined" ? new URL(window.location.href) : null;
   const forceScene = url?.searchParams.get("scene");
-  const [sceneIdx, setSceneIdx] = useState(0); // 0=main, 1=sponsors
+  const nPartners = data?.sponsors.footer.length ?? 0;
+  const [sceneIdx, setSceneIdx] = useState(0);
   useEffect(() => {
-    if (forceScene === "sponsors") {
-      setSceneIdx(1);
-      return;
-    }
-    if (forceScene === "main") {
-      setSceneIdx(0);
-      return;
-    }
-    if (!hasSponsors) return;
-    const isMain = sceneIdx === 0;
+    if (forceScene === "main") return void setSceneIdx(0);
+    if (forceScene === "sponsors") return void setSceneIdx(1);
+    if (forceScene === "byte") return void setSceneIdx(2);
+    if (nScenes <= 1) return;
+    const idx = sceneIdx % nScenes;
+
     // Durações vêm do payload (configuradas por torneio no admin).
     // Defaults aplicados pelo servidor: 40s main / 15s sponsors.
     const mainSec = data?.tournament.sceneDurations.mainSec ?? 40;
@@ -172,17 +173,20 @@ export function CavaleteView({ token }: { token: string }) {
     // último slot roda mais devagar (stagger), por isso estendemos a cena o
     // suficiente para um ciclo completo + margem — senão os últimos logos
     // nunca chegam a aparecer antes de voltar aos jogos.
-    const nPartners = data?.sponsors.footer.length ?? 0;
     const maxPerSlot = Math.ceil(nPartners / 6);
     const slowestSlotMs = PARTNER_ROTATE_MS + 5 * PARTNER_STAGGER_MS;
     const partnerCycleSec =
       maxPerSlot > 1 ? (maxPerSlot * slowestSlotMs) / 1000 + 1.5 : 0;
     const sponsorsSec = Math.max(sponsorsCfgSec, partnerCycleSec);
 
-    const dur = (isMain ? mainSec : sponsorsSec) * 1000;
-    const t = setTimeout(() => setSceneIdx((i) => (i + 1) % 2), dur);
+    const durSec =
+      idx === 1 ? sponsorsSec : idx === 2 ? BYTE_SCENE_SEC : mainSec;
+    const t = setTimeout(
+      () => setSceneIdx((i) => (i + 1) % nScenes),
+      durSec * 1000,
+    );
     return () => clearTimeout(t);
-  }, [sceneIdx, hasSponsors, forceScene, data?.tournament.sceneDurations]);
+  }, [sceneIdx, nScenes, nPartners, forceScene, data?.tournament.sceneDurations]);
 
   if (!data) {
     return (
@@ -192,10 +196,16 @@ export function CavaleteView({ token }: { token: string }) {
     );
   }
 
-  const showSponsors = hasSponsors && sceneIdx === 1;
+  const idx = hasSponsors ? sceneIdx % nScenes : 0;
+  const scene: "main" | "sponsors" | "byte" =
+    idx === 1 ? "sponsors" : idx === 2 ? "byte" : "main";
   return (
-    <Stage bg={showSponsors ? "sponsors" : "main"}>
-      {showSponsors ? <SponsorsScene data={data} /> : <MainScene data={data} />}
+    <Stage bg={scene}>
+      {scene === "sponsors" ? (
+        <SponsorsScene data={data} />
+      ) : scene === "byte" ? null : (
+        <MainScene data={data} />
+      )}
     </Stage>
   );
 }
@@ -209,7 +219,7 @@ function Stage({
   bg,
 }: {
   children: React.ReactNode;
-  bg: "main" | "sponsors";
+  bg: "main" | "sponsors" | "byte";
 }) {
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -229,7 +239,9 @@ function Stage({
   const bgUrl =
     bg === "sponsors"
       ? "/cavalete/scene-sponsors-bg.png"
-      : "/cavalete/scene-main-bg.png";
+      : bg === "byte"
+        ? "/cavalete/scene-byte.png"
+        : "/cavalete/scene-main-bg.png";
 
   return (
     <div
