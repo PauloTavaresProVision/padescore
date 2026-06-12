@@ -259,9 +259,10 @@ function MainScene({ data }: { data: CavaletePayload }) {
         position: "relative",
         zIndex: 1,
         height: "100%",
-        // padding-top = onde acaba o título "EM JOGO AGORA" do PNG (~440)
-        // + 30px de margem para o badge "CAMPO XX" do card1 ficar abaixo
-        padding: "670px 36px 4px",
+        // padding-top = onde acaba o "EM JOGO AGORA" do PNG (cabeçalho
+        // compacto acaba a ~481px no canvas 1920) + margem para o badge
+        // "CAMPO XX" do card1 ficar abaixo
+        padding: "520px 36px 4px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
