@@ -146,12 +146,17 @@ export function transformGame(
 //                  primeiro).
 // ============================================================================
 
+// Dia no fuso de Angola (WAT, UTC+1 fixo, sem horário de verão), em
+// "YYYY-MM-DD". Somamos 1h ao instante UTC e lemos a data UTC resultante —
+// assim a viragem do dia acontece à MEIA-NOITE de Angola, não à meia-noite
+// UTC (que seria 01:00 em Angola). Robusto: não depende do fuso do processo
+// nem do locale/ICU do servidor.
+function angolaDayKey(d: Date): string {
+  return new Date(d.getTime() + 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return angolaDayKey(a) === angolaDayKey(b);
 }
 
 export interface PerCourtBuckets {
