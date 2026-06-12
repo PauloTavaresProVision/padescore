@@ -286,6 +286,62 @@ function Stage({
 }
 
 // =============================================================================
+// RELÓGIO — hora de Angola (Africa/Luanda), a contar ao vivo. Canto superior.
+// =============================================================================
+function CavaleteClock() {
+  const [time, setTime] = useState("");
+  useEffect(() => {
+    const tick = () =>
+      setTime(
+        new Date().toLocaleTimeString("pt-PT", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "Africa/Luanda",
+        }),
+      );
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!time) return null; // evita mismatch de hidratação (só renderiza no cliente)
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 40,
+        left: 44,
+        zIndex: 5,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "8px 22px",
+        borderRadius: 16,
+        background: "rgba(2, 12, 36, .55)",
+        border: `2px solid ${BLUE}`,
+        boxShadow:
+          "inset 0 0 16px rgba(45,140,255,.2), 0 0 18px rgba(45,140,255,.4)",
+      }}
+    >
+      <ClockIcon size={34} color={CYAN} />
+      <span
+        style={{
+          fontFamily: FONT_BODY,
+          fontWeight: 800,
+          fontSize: 46,
+          color: "#fff",
+          letterSpacing: "1px",
+          fontVariantNumeric: "tabular-nums",
+          textShadow: "0 0 12px rgba(45,140,255,.5)",
+        }}
+      >
+        {time}
+      </span>
+    </div>
+  );
+}
+
+// =============================================================================
 // MAIN SCENE
 // =============================================================================
 function MainScene({ data }: { data: CavaletePayload }) {
@@ -308,6 +364,7 @@ function MainScene({ data }: { data: CavaletePayload }) {
         flexDirection: "column",
       }}
     >
+      <CavaleteClock />
       <div
         style={{
           display: "flex",
