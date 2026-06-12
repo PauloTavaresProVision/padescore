@@ -1276,10 +1276,14 @@ function PageDots({ count, active }: { count: number; active: number }) {
 // UTILS
 // =============================================================================
 function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
+  // Sempre na hora de Angola (Africa/Luanda, UTC+1) — independente do fuso
+  // do kiosk/servidor. Senão um kiosk mal configurado mostraria horas erradas.
+  return new Date(iso).toLocaleTimeString("pt-PT", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Africa/Luanda",
+  });
 }
 
 function ClockIcon({ size, color }: { size: number; color: string }) {

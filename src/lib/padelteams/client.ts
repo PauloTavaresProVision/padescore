@@ -319,14 +319,14 @@ export async function getCompetitionSnapshot(
 
 /**
  * Combina `date` (YYYY-MM-DD) + `time` (HH:MM:SS) num timestamp.
- * Importante: o PadelTeams devolve os tempos em hora LOCAL do torneio
- * (sem timezone). Para o nosso uso (totem em Angola), tratamos como
- * tempo local sem conversão — o JS interpreta como local time do server.
- *
- * Para o cavalete, basta-nos formatá-lo de volta como HH:MM para exibir,
- * então a precisão absoluta de timezone é menos crítica que a ordem
- * relativa entre jogos do mesmo dia.
+ * O PadelTeams devolve os tempos em hora LOCAL do torneio (Angola, WAT =
+ * UTC+1, sem horário de verão) e SEM offset. Marcamos o offset de Angola
+ * explicitamente — senão `new Date` interpreta a string no fuso do processo
+ * (UTC no servidor Docker) e o instante fica 1h errado, fazendo os jogos
+ * aparecerem +1h no cavalete.
  */
+export const ANGOLA_OFFSET = "+01:00";
+
 export function combineGameDateTime(game: PadelTeamsGame): Date {
-  return new Date(`${game.date}T${game.time}`);
+  return new Date(`${game.date}T${game.time}${ANGOLA_OFFSET}`);
 }
