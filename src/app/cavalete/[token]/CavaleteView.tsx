@@ -982,8 +982,9 @@ const SPONSORS_LAYOUT = {
 // logos. Basta colocar o ficheiro em public/cavalete/logopatrocinadores.png
 // (proporção ~1.47, a caixa branca). Se não existir, usa-se o grid 4×2 normal.
 const OFFICIALS_IMG = "/cavalete/logopatrocinadores.png";
-// Caixa branca dos patrocinadores oficiais (medida no PNG): x=48 y=540.
-const OFFICIALS_BOX = { x: 48, y: 540, w: 986, h: 672 };
+// Interior BRANCO da caixa (dentro das linhas azuis, medido no PNG:
+// x 54..1029, y 618..1207) com folga para a moldura azul respirar à volta.
+const OFFICIALS_BOX = { x: 66, y: 630, w: 948, h: 566 };
 
 function SponsorsScene({ data }: { data: CavaletePayload }) {
   const mainSponsors = data.sponsors.fullscreen.slice(0, 8); // até 8 no grid 4×2
