@@ -978,9 +978,18 @@ const SPONSORS_LAYOUT = {
   },
 };
 
+// Imagem única (opcional) dos PATROCINADORES OFICIAIS — substitui o grid de
+// logos. Basta colocar o ficheiro em public/cavalete/logopatrocinadores.png
+// (proporção ~1.47, a caixa branca). Se não existir, usa-se o grid 4×2 normal.
+const OFFICIALS_IMG = "/cavalete/logopatrocinadores.png";
+// Caixa branca dos patrocinadores oficiais (medida no PNG): x=48 y=540.
+const OFFICIALS_BOX = { x: 48, y: 540, w: 986, h: 672 };
+
 function SponsorsScene({ data }: { data: CavaletePayload }) {
   const mainSponsors = data.sponsors.fullscreen.slice(0, 8); // até 8 no grid 4×2
   const partnerPool = data.sponsors.footer;
+  // Tenta a imagem única; se o ficheiro não existir (404), cai no grid de logos.
+  const [officialsImgFailed, setOfficialsImgFailed] = useState(false);
 
   // Construir 6 listas DISJUNTAS (uma por slot do grid 3×2) usando
   // chunking por stride: o slot i recebe pool[i], pool[i+6], pool[i+12]...
@@ -996,11 +1005,29 @@ function SponsorsScene({ data }: { data: CavaletePayload }) {
 
   return (
     <>
-      {/* GRID 4×2 dos sponsors principais — POR CIMA da caixa branca do PNG */}
-      <MainSponsorsCard
-        slot={SPONSORS_LAYOUT.mainCard}
-        sponsors={mainSponsors}
-      />
+      {/* PATROCINADORES OFICIAIS — imagem única se existir, senão grid 4×2 */}
+      {officialsImgFailed ? (
+        <MainSponsorsCard
+          slot={SPONSORS_LAYOUT.mainCard}
+          sponsors={mainSponsors}
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={OFFICIALS_IMG}
+          alt=""
+          onError={() => setOfficialsImgFailed(true)}
+          style={{
+            position: "absolute",
+            left: OFFICIALS_BOX.x,
+            top: OFFICIALS_BOX.y,
+            width: OFFICIALS_BOX.w,
+            height: OFFICIALS_BOX.h,
+            objectFit: "contain",
+            zIndex: 2,
+          }}
+        />
+      )}
 
       {/* GRID 3×2 de logos parceiros — POR CIMA das 6 caixinhas do PNG */}
       {Array.from({ length: 6 }).map((_, i) => {
