@@ -637,9 +637,11 @@ function UpcomingRow({ game }: { game: CavaletteGame }) {
       style={{
         display: "grid",
         gridTemplateColumns:
-          "110px 160px minmax(0, 1fr) 60px minmax(0, 1fr) 36px",
+          "110px 190px minmax(0, 1fr) 60px minmax(0, 1fr) 36px",
         alignItems: "center",
         gap: 12,
+        height: "100%",
+        boxSizing: "border-box",
         padding: "10px 16px",
         border: `2px solid ${BLUE}`,
         borderRadius: 14,
@@ -711,9 +713,11 @@ function ResultRow({ game }: { game: CavaletteGame }) {
       style={{
         display: "grid",
         gridTemplateColumns:
-          "110px 160px minmax(0, 1fr) 50px minmax(0, 1fr) 180px",
+          "110px 190px minmax(0, 1fr) 50px minmax(0, 1fr) 180px",
         alignItems: "center",
         gap: 10,
+        height: "100%",
+        boxSizing: "border-box",
         padding: "10px 14px",
         border: `2px solid ${BLUE}`,
         borderRadius: 14,
@@ -775,13 +779,20 @@ function CompactPill({ name }: { name: string }) {
     <div
       style={{
         display: "inline-block",
+        maxWidth: "100%",
+        boxSizing: "border-box",
         background: LIME,
         color: "#001a1a",
         fontFamily: FONT_BODY,
         fontWeight: 900,
-        fontSize: 22,
-        letterSpacing: "1.5px",
-        padding: "5px 14px",
+        fontSize: 16,
+        letterSpacing: "0.3px",
+        padding: "5px 12px",
+        // nome do campo SEMPRE numa linha — senão "STANDARD BANK" quebra em 2
+        // e empurra a altura da row, sobrepondo a secção seguinte
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
         clipPath:
           "polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%)",
       }}
@@ -1185,7 +1196,14 @@ function PaginatedList<T>({
               }}
             >
               {page.map((item) => (
-                <div key={keyFn(item)}>{renderItem(item)}</div>
+                // altura fixa por row — garante que o conteúdo nunca transborda
+                // o espaço reservado e invade a secção seguinte
+                <div
+                  key={keyFn(item)}
+                  style={{ height: rowHeight, overflow: "hidden" }}
+                >
+                  {renderItem(item)}
+                </div>
               ))}
             </div>
           );
