@@ -191,8 +191,12 @@ export function bucketCourtGames(
     ? openInPast[openInPast.length - 1]
     : null;
 
-  // Upcoming = open games no futuro (depois de now)
-  const upcoming = open.filter((g) => new Date(g.startsAt) > now);
+  // Upcoming = open games no futuro DE HOJE (a secção chama-se "PRÓXIMOS
+  // JOGOS DE HOJE"). Os jogos de amanhã só aparecem quando virar o dia.
+  const upcoming = open.filter(
+    (g) =>
+      new Date(g.startsAt) > now && isSameDay(new Date(g.startsAt), today),
+  );
 
   // Results = closed games HOJE
   const results = gamesOnThisCourt
