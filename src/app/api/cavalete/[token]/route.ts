@@ -168,7 +168,10 @@ export async function GET(
       .map((o) => o.padelteams_game_id),
   );
 
-  // 5) Filtrar jogos para os fields deste cavalete e transformar
+  // 5) Filtrar jogos para os fields deste cavalete e transformar.
+  // Exclui jogos AINDA SEM ADVERSÁRIOS: nas fases eliminatórias a PadelTeams
+  // devolve "(a determinar)" sem jogadores nas duas equipas — não faz sentido
+  // mostrá-los no cavalete ("a determinar vs a determinar").
   const ourFieldIds = new Set(courtByFieldId.keys());
   const transformedGames: CavaletteGame[] = snapshot
     ? snapshot.games
@@ -176,6 +179,7 @@ export async function GET(
         .map((g) =>
           transformGame(g, { photoOverrides, courtByFieldId, featuredGameIds }),
         )
+        .filter((g) => !isUndefinedGame(g))
     : [];
 
   // 6) Categorizar por court
@@ -429,6 +433,22 @@ export async function GET(
       "Cache-Control": "no-store, no-cache, must-revalidate",
     },
   });
+}
+
+// ============================================================================
+// Jogo "a determinar" — fase eliminatória ainda sem adversários definidos.
+// A PadelTeams devolve "(a determinar)" e sem jogadores nas duas equipas.
+// ============================================================================
+function isUndefinedTeam(t: CavaletteGame["teamA"]): boolean {
+  const hasPlayers = (t?.players?.length ?? 0) > 0;
+  const name = (t?.name ?? "").toLowerCase();
+  return !hasPlayers || name.includes("determinar");
+}
+
+function isUndefinedGame(g: CavaletteGame): boolean {
+  // Só escondemos quando AMBAS as equipas estão por definir. Se um lado já
+  // está apurado, mostramos (informa que há jogo agendado e quem joga).
+  return isUndefinedTeam(g.teamA) && isUndefinedTeam(g.teamB);
 }
 
 // ============================================================================
