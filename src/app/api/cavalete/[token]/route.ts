@@ -325,6 +325,38 @@ export async function GET(
   const featured = transformedGames.filter(
     (g) => g.isFeatured && g.status === "open",
   );
+  // Dev/teste (?demo=1): injecta um destaque mock para ver a cena EM FOCO.
+  const demoCourt = cavaleteCourts[0];
+  if (demoMode && featured.length === 0 && demoCourt) {
+    const t = new Date(now);
+    t.setHours(18, 0, 0, 0);
+    featured.push({
+      padelteamsId: -99,
+      startsAt: t.toISOString(),
+      status: "open",
+      teamA: {
+        padelteamsId: -1,
+        name: "Carlos Sousa / Sérgio Vieira",
+        players: [
+          { padelteamsId: -1, name: "Carlos Sousa", photoUrl: null },
+          { padelteamsId: -1, name: "Sérgio Vieira", photoUrl: null },
+        ],
+      },
+      teamB: {
+        padelteamsId: -2,
+        name: "Nicolau M. / Wojtek D.",
+        players: [
+          { padelteamsId: -1, name: "Nicolau M.", photoUrl: null },
+          { padelteamsId: -1, name: "Wojtek D.", photoUrl: null },
+        ],
+      },
+      sets: [],
+      scoreLabel: null,
+      winner: null,
+      isFeatured: true,
+      court: demoCourt,
+    });
+  }
 
   // 8) Sponsors
   const sponsors = sponsorsRaw ?? [];

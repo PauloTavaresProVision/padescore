@@ -69,6 +69,8 @@ const STAGE_W = 1080;
 const STAGE_H = 1920;
 // Cena Byte (scene-byte.png) — passa depois da publicidade, 5s.
 const BYTE_SCENE_SEC = 5;
+// Cena Focus (destaque/finais) — segundos por cada jogo em destaque.
+const FOCUS_SCENE_SEC = 12;
 // Versão dos PNGs de fundo (scene-*.png). Os webviews dos kiosks cacheiam
 // imagens de forma agressiva: ao trocar um PNG mantendo o nome, alguns
 // kiosks continuam a mostrar o antigo. INCREMENTAR este número sempre que
@@ -148,50 +150,70 @@ export function CavaleteView({ token }: { token: string }) {
     };
   }, [token]);
 
-  // Rotação de cenas: Main (jogos) → Sponsors (publicidade) → Byte → Main…
-  // Sem sponsors configurados, fica sempre na Main (e também não passa a Byte,
-  // que é o fecho do bloco publicitário).
+  // Rotação de cenas (ordem): Main (jogos) → Focus (destaques/finais) →
+  // Sponsors (publicidade) → Byte. As cenas opcionais só entram se houver
+  // conteúdo: focus se houver jogos em destaque; sponsors+byte se houver
+  // patrocinadores.
   const hasSponsors =
     (data?.sponsors.footer.length ?? 0) +
       (data?.sponsors.fullscreen.length ?? 0) >
     0;
-  const nScenes = hasSponsors ? 3 : 1; // 0=main, 1=sponsors, 2=byte
-  // Em dev/teste, ?scene=main|sponsors|byte força uma cena (sem rotação)
+  const featuredGames = data?.featured ?? [];
+  const hasFocus = featuredGames.length > 0;
+  const scenes = buildScenes(hasFocus, hasSponsors);
+  const nScenes = scenes.length;
+
+  // Em dev/teste, ?scene=main|focus|sponsors|byte força uma cena (sem rotação)
   const url = typeof window !== "undefined" ? new URL(window.location.href) : null;
   const forceScene = url?.searchParams.get("scene");
   const nPartners = data?.sponsors.footer.length ?? 0;
   const [sceneIdx, setSceneIdx] = useState(0);
   useEffect(() => {
-    if (forceScene === "main") return void setSceneIdx(0);
-    if (forceScene === "sponsors") return void setSceneIdx(1);
-    if (forceScene === "byte") return void setSceneIdx(2);
-    if (nScenes <= 1) return;
-    const idx = sceneIdx % nScenes;
+    const list = buildScenes(hasFocus, hasSponsors);
+    if (forceScene) {
+      const i = list.indexOf(forceScene as SceneName);
+      return void setSceneIdx(i >= 0 ? i : 0);
+    }
+    if (list.length <= 1) return;
+    const cur = list[sceneIdx % list.length];
 
     // Durações vêm do payload (configuradas por torneio no admin).
-    // Defaults aplicados pelo servidor: 40s main / 15s sponsors.
     const mainSec = data?.tournament.sceneDurations.mainSec ?? 40;
     const sponsorsCfgSec = data?.tournament.sceneDurations.sponsorsSec ?? 15;
 
-    // Duração ADAPTATIVA da cena sponsors: se houver mais de 6 parceiros, os
-    // slots rodam os logos extra. O slot mais cheio tem ceil(N/6) logos e o
-    // último slot roda mais devagar (stagger), por isso estendemos a cena o
-    // suficiente para um ciclo completo + margem — senão os últimos logos
-    // nunca chegam a aparecer antes de voltar aos jogos.
+    // Duração ADAPTATIVA da cena sponsors: cobre 1 ciclo de rotação dos
+    // parceiros (slot mais cheio × stagger do slot mais lento + margem).
     const maxPerSlot = Math.ceil(nPartners / 6);
     const slowestSlotMs = PARTNER_ROTATE_MS + 5 * PARTNER_STAGGER_MS;
     const partnerCycleSec =
       maxPerSlot > 1 ? (maxPerSlot * slowestSlotMs) / 1000 + 1.5 : 0;
     const sponsorsSec = Math.max(sponsorsCfgSec, partnerCycleSec);
 
+    // Cena focus dura o suficiente para mostrar cada destaque (carrossel).
+    const focusSec = FOCUS_SCENE_SEC * Math.max(1, featuredGames.length);
+
     const durSec =
-      idx === 1 ? sponsorsSec : idx === 2 ? BYTE_SCENE_SEC : mainSec;
+      cur === "sponsors"
+        ? sponsorsSec
+        : cur === "byte"
+          ? BYTE_SCENE_SEC
+          : cur === "focus"
+            ? focusSec
+            : mainSec;
     const t = setTimeout(
-      () => setSceneIdx((i) => (i + 1) % nScenes),
+      () => setSceneIdx((i) => (i + 1) % list.length),
       durSec * 1000,
     );
     return () => clearTimeout(t);
-  }, [sceneIdx, nScenes, nPartners, forceScene, data?.tournament.sceneDurations]);
+  }, [
+    sceneIdx,
+    hasFocus,
+    hasSponsors,
+    nPartners,
+    featuredGames.length,
+    forceScene,
+    data?.tournament.sceneDurations,
+  ]);
 
   if (!data) {
     return (
@@ -201,18 +223,44 @@ export function CavaleteView({ token }: { token: string }) {
     );
   }
 
-  const idx = hasSponsors ? sceneIdx % nScenes : 0;
-  const scene: "main" | "sponsors" | "byte" =
-    idx === 1 ? "sponsors" : idx === 2 ? "byte" : "main";
+  const scene: SceneName = scenes[sceneIdx % nScenes] ?? "main";
   return (
     <Stage bg={scene}>
       {scene === "sponsors" ? (
         <SponsorsScene data={data} />
-      ) : scene === "byte" ? null : (
+      ) : scene === "byte" ? null : scene === "focus" ? (
+        <FocusCarousel games={featuredGames} />
+      ) : (
         <MainScene data={data} />
       )}
     </Stage>
   );
+}
+
+type SceneName = "main" | "focus" | "sponsors" | "byte";
+
+/** Ordem de rotação das cenas, conforme o que há para mostrar. */
+function buildScenes(hasFocus: boolean, hasSponsors: boolean): SceneName[] {
+  const s: SceneName[] = ["main"];
+  if (hasFocus) s.push("focus");
+  if (hasSponsors) s.push("sponsors", "byte");
+  return s;
+}
+
+/** Carrossel dos jogos em destaque dentro da cena focus (um por vez). */
+function FocusCarousel({ games }: { games: CavaletteGame[] }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (games.length <= 1) return;
+    const t = setTimeout(
+      () => setIdx((i) => (i + 1) % games.length),
+      FOCUS_SCENE_SEC * 1000,
+    );
+    return () => clearTimeout(t);
+  }, [idx, games.length]);
+  const game = games[idx % games.length];
+  if (!game) return null;
+  return <FocusScene game={game} />;
 }
 
 // =============================================================================
@@ -224,7 +272,7 @@ function Stage({
   bg,
 }: {
   children: React.ReactNode;
-  bg: "main" | "sponsors" | "byte";
+  bg: SceneName;
 }) {
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -241,14 +289,17 @@ function Stage({
   // Cada cena tem o seu próprio PNG do designer com chrome completo
   // (header + títulos + caixas + footer). Código só desenha CONTEÚDO
   // DINÂMICO (logos, scores, jogadores) por cima.
+  // A cena focus desenha o próprio fundo (gradiente) — não tem PNG.
   const bgFile =
     bg === "sponsors"
       ? "scene-sponsors-bg.png"
       : bg === "byte"
         ? "scene-byte.png"
-        : "scene-main-bg.png";
+        : bg === "focus"
+          ? null
+          : "scene-main-bg.png";
   // ?v= força o webview a ignorar a cópia em cache quando o PNG muda
-  const bgUrl = `/cavalete/${bgFile}?v=${SCENE_ASSET_VERSION}`;
+  const bgUrl = bgFile ? `/cavalete/${bgFile}?v=${SCENE_ASSET_VERSION}` : null;
 
   return (
     <div
@@ -272,7 +323,7 @@ function Stage({
           color: "#fff",
           fontFamily: FONT_DISPLAY,
           backgroundColor: "#020817",
-          backgroundImage: `url('${bgUrl}')`,
+          backgroundImage: bgUrl ? `url('${bgUrl}')` : "none",
           backgroundSize: `${STAGE_W}px ${STAGE_H}px`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "0 0",
@@ -985,6 +1036,174 @@ const OFFICIALS_IMG = "/cavalete/logopatrocinadores.png";
 // Interior BRANCO da caixa (dentro das linhas azuis, medido no PNG:
 // x 54..1029, y 618..1207) com folga para a moldura azul respirar à volta.
 const OFFICIALS_BOX = { x: 66, y: 630, w: 948, h: 566 };
+
+// =============================================================================
+// FOCUS SCENE — cartaz de DESTAQUE (finais): duplas com fotos, VS e horário.
+// Mostra os jogos marcados como is_featured no admin. 1080×1920, fundo
+// gerado (sem PNG), no estilo do mockup aprovado.
+// =============================================================================
+function PlayerSilhouette({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 100 122" style={{ width: "62%", opacity: 0.45 }}>
+      <circle cx="50" cy="34" r="21" fill={color} />
+      <path
+        d="M50 58 C26 58 15 82 13 122 L87 122 C85 82 74 58 50 58 Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
+function FocusPhoto({ url, accent }: { url: string | null; accent: string }) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        minWidth: 0,
+        aspectRatio: "3 / 4",
+        borderRadius: 20,
+        overflow: "hidden",
+        background:
+          "linear-gradient(180deg, rgba(20,44,92,.55) 0%, rgba(6,14,38,.9) 100%)",
+        border: `3px solid ${accent}`,
+        boxShadow: `inset 0 0 40px rgba(45,140,255,.30), 0 0 26px rgba(45,140,255,.40)`,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      {url ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={url}
+          alt=""
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <PlayerSilhouette color={accent} />
+      )}
+    </div>
+  );
+}
+
+function FocusTeam({
+  label,
+  players,
+  accent,
+}: {
+  label: string;
+  players: CavalettePlayer[];
+  accent: string;
+}) {
+  const two = players.slice(0, 2);
+  while (two.length < 2) two.push({ padelteamsId: -1, name: "", photoUrl: null });
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <SectionTitle>DUPLA {label}</SectionTitle>
+      <div style={{ display: "flex", gap: 20, height: 360, padding: "0 8px" }}>
+        {two.map((p, i) => (
+          <FocusPhoto key={i} url={p.photoUrl} accent={accent} />
+        ))}
+      </div>
+      <div
+        style={{
+          textAlign: "center",
+          color: "#fff",
+          fontFamily: FONT_DISPLAY,
+          fontSize: 58,
+          lineHeight: 1.04,
+          letterSpacing: "1px",
+          textTransform: "uppercase",
+          textShadow: "0 0 18px rgba(45,140,255,.5)",
+        }}
+      >
+        {two.map((p, i) => (
+          <div key={i}>{p.name}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FocusScene({ game }: { game: CavaletteGame }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 1,
+        padding: "56px 44px 40px",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        background:
+          "radial-gradient(120% 70% at 50% 0%, #0a2a6b 0%, #051438 45%, #020817 100%)",
+      }}
+    >
+      {/* CAMPO X */}
+      <div
+        style={{
+          alignSelf: "center",
+          padding: "14px 56px",
+          borderRadius: 18,
+          border: `3px solid ${BLUE}`,
+          background: "rgba(2,12,36,.55)",
+          boxShadow:
+            "inset 0 0 22px rgba(45,140,255,.3), 0 0 26px rgba(45,140,255,.45)",
+          color: "#fff",
+          fontFamily: FONT_DISPLAY,
+          fontSize: 76,
+          letterSpacing: "2px",
+          textTransform: "uppercase",
+          textShadow: "0 0 20px rgba(45,140,255,.6)",
+        }}
+      >
+        {game.court?.name ?? "FINAL"}
+      </div>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 20 }}>
+        <FocusTeam label="A" players={game.teamA.players} accent={CYAN} />
+
+        {/* VS */}
+        <div
+          style={{
+            textAlign: "center",
+            color: LIME,
+            fontFamily: FONT_DISPLAY,
+            fontSize: 110,
+            fontStyle: "italic",
+            lineHeight: 0.9,
+            textShadow: `0 0 26px rgba(155,240,0,.7)`,
+          }}
+        >
+          VS
+        </div>
+
+        <FocusTeam label="B" players={game.teamB.players} accent={BLUE} />
+      </div>
+
+      {/* HORÁRIO DO JOGO */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginTop: 16 }}>
+        <SectionTitle>HORÁRIO DO JOGO</SectionTitle>
+        <div
+          style={{
+            padding: "10px 60px",
+            borderRadius: 16,
+            background: LIME,
+            color: "#03210a",
+            fontFamily: FONT_DISPLAY,
+            fontSize: 80,
+            letterSpacing: "2px",
+            fontVariantNumeric: "tabular-nums",
+            boxShadow: "0 0 28px rgba(155,240,0,.5)",
+          }}
+        >
+          {formatTime(game.startsAt)}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SponsorsScene({ data }: { data: CavaletePayload }) {
   const mainSponsors = data.sponsors.fullscreen.slice(0, 8); // até 8 no grid 4×2
