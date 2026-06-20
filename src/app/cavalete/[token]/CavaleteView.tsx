@@ -1038,38 +1038,56 @@ const OFFICIALS_IMG = "/cavalete/logopatrocinadores.png";
 const OFFICIALS_BOX = { x: 66, y: 630, w: 948, h: 566 };
 
 // =============================================================================
-// FOCUS SCENE — cartaz de DESTAQUE (finais): duplas com fotos, VS e horário.
-// Mostra os jogos marcados como is_featured no admin. 1080×1920, fundo
-// gerado (sem PNG), no estilo do mockup aprovado.
+// FOCUS SCENE — cartaz de DESTAQUE/finais sobre os PNGs do designer.
+//   FinalSresultado.png  → "PRÓXIMO JOGO" (mostra horário)
+//   FinalCresultado.png  → "RESULTADO EM ANDAMENTO" (mostra pontuação)
+// O PNG traz todo o chrome (logo, molduras, VS, tabela); o código só
+// posiciona fotos, nomes e números nas zonas medidas (canvas 1080×1920).
 // =============================================================================
-function PlayerSilhouette({ color }: { color: string }) {
-  return (
-    <svg viewBox="0 0 100 122" style={{ width: "62%", opacity: 0.45 }}>
-      <circle cx="50" cy="34" r="21" fill={color} />
-      <path
-        d="M50 58 C26 58 15 82 13 122 L87 122 C85 82 74 58 50 58 Z"
-        fill={color}
-      />
-    </svg>
-  );
-}
 
-function FocusPhoto({ url, accent }: { url: string | null; accent: string }) {
+// Zonas medidas no FinalSresultado (próximo jogo).
+const FOCUS_S = {
+  bg: "FinalSresultado.png",
+  campo: { cx: 540, y: 235 },
+  photoA: [
+    { x: 152, y: 351, w: 348, h: 544 },
+    { x: 580, y: 351, w: 348, h: 544 },
+  ],
+  nameA: [
+    { x: 152, y: 922, w: 348, h: 132 },
+    { x: 580, y: 922, w: 348, h: 132 },
+  ],
+  photoB: [
+    { x: 152, y: 1173, w: 348, h: 350 },
+    { x: 580, y: 1173, w: 348, h: 350 },
+  ],
+  nameB: [
+    { x: 152, y: 1560, w: 348, h: 120 },
+    { x: 580, y: 1560, w: 348, h: 120 },
+  ],
+  horario: { cx: 540, y: 1740, w: 470, h: 130 },
+};
+
+function FocusPhotoAbs({
+  zone,
+  url,
+}: {
+  zone: { x: number; y: number; w: number; h: number };
+  url: string | null;
+}) {
   return (
     <div
       style={{
-        flex: 1,
-        minWidth: 0,
-        aspectRatio: "3 / 4",
-        borderRadius: 20,
+        position: "absolute",
+        left: zone.x,
+        top: zone.y,
+        width: zone.w,
+        height: zone.h,
         overflow: "hidden",
-        background:
-          "linear-gradient(180deg, rgba(20,44,92,.55) 0%, rgba(6,14,38,.9) 100%)",
-        border: `3px solid ${accent}`,
-        boxShadow: `inset 0 0 40px rgba(45,140,255,.30), 0 0 26px rgba(45,140,255,.40)`,
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
+        zIndex: 2,
       }}
     >
       {url ? (
@@ -1080,127 +1098,211 @@ function FocusPhoto({ url, accent }: { url: string | null; accent: string }) {
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       ) : (
-        <PlayerSilhouette color={accent} />
+        <svg viewBox="0 0 100 122" style={{ width: "60%", opacity: 0.4 }}>
+          <circle cx="50" cy="34" r="21" fill={BLUE} />
+          <path
+            d="M50 58 C26 58 15 82 13 122 L87 122 C85 82 74 58 50 58 Z"
+            fill={BLUE}
+          />
+        </svg>
       )}
     </div>
   );
 }
 
-function FocusTeam({
-  label,
-  players,
-  accent,
+function FocusName({
+  zone,
+  name,
 }: {
-  label: string;
-  players: CavalettePlayer[];
-  accent: string;
+  zone: { x: number; y: number; w: number; h: number };
+  name: string;
 }) {
-  const two = players.slice(0, 2);
-  while (two.length < 2) two.push({ padelteamsId: -1, name: "", photoUrl: null });
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <SectionTitle>DUPLA {label}</SectionTitle>
-      <div style={{ display: "flex", gap: 20, height: 360, padding: "0 8px" }}>
-        {two.map((p, i) => (
-          <FocusPhoto key={i} url={p.photoUrl} accent={accent} />
-        ))}
-      </div>
-      <div
-        style={{
-          textAlign: "center",
-          color: "#fff",
-          fontFamily: FONT_DISPLAY,
-          fontSize: 58,
-          lineHeight: 1.04,
-          letterSpacing: "1px",
-          textTransform: "uppercase",
-          textShadow: "0 0 18px rgba(45,140,255,.5)",
-        }}
-      >
-        {two.map((p, i) => (
-          <div key={i}>{p.name}</div>
-        ))}
-      </div>
+    <div
+      style={{
+        position: "absolute",
+        left: zone.x,
+        top: zone.y,
+        width: zone.w,
+        height: zone.h,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 14px",
+        boxSizing: "border-box",
+        textAlign: "center",
+        color: "#fff",
+        fontFamily: FONT_DISPLAY,
+        fontSize: 52,
+        lineHeight: 1.0,
+        letterSpacing: "1px",
+        textTransform: "uppercase",
+        zIndex: 3,
+      }}
+    >
+      {name}
     </div>
   );
 }
 
+// Zonas medidas no FinalCresultado (resultado em andamento). As molduras são
+// mais baixas porque a tabela de pontuação ocupa o centro.
+const FOCUS_C = {
+  bg: "FinalCresultado.png",
+  photoA: [
+    { x: 110, y: 525, w: 350, h: 325 },
+    { x: 600, y: 525, w: 350, h: 325 },
+  ],
+  nameA: [
+    { x: 110, y: 866, w: 350, h: 98 },
+    { x: 600, y: 866, w: 350, h: 98 },
+  ],
+  photoB: [
+    { x: 110, y: 1360, w: 350, h: 242 },
+    { x: 600, y: 1360, w: 350, h: 242 },
+  ],
+  nameB: [
+    { x: 110, y: 1610, w: 350, h: 76 },
+    { x: 600, y: 1610, w: 350, h: 76 },
+  ],
+  // caixa ao lado de "AO VIVO" → nome do campo
+  campo: { x: 360, y: 410, w: 360, h: 62 },
+  // tabela: x-centros das 4 colunas de dados e y-centros das 2 linhas
+  table: {
+    cols: [390, 544, 686, 872], // SETS | 1º SET | 2º SET | PONTOS
+    rowA: 1147,
+    rowB: 1243,
+  },
+};
+
+type LiveScore = NonNullable<CavaletteGame["liveScore"]>;
+
+/** Números da pontuação ao vivo, posicionados nas células da tabela do PNG. */
+function FocusTable({ score }: { score: LiveScore }) {
+  const T = FOCUS_C.table;
+  const rowA = [
+    String(score.setsA),
+    score.gamesA[0] ?? "—",
+    score.gamesA[1] ?? "—",
+    score.pointsA,
+  ];
+  const rowB = [
+    String(score.setsB),
+    score.gamesB[0] ?? "—",
+    score.gamesB[1] ?? "—",
+    score.pointsB,
+  ];
+  const cell = (cx: number, cy: number, val: string | number, lime: boolean) => (
+    <div
+      key={`${cx}-${cy}`}
+      style={{
+        position: "absolute",
+        left: cx - 70,
+        top: cy - 34,
+        width: 140,
+        height: 68,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: lime ? LIME : "#fff",
+        fontFamily: FONT_DISPLAY,
+        fontSize: 50,
+        fontVariantNumeric: "tabular-nums",
+        zIndex: 3,
+      }}
+    >
+      {val}
+    </div>
+  );
+  return (
+    <>
+      {T.cols.map((cx, i) => cell(cx, T.rowA, rowA[i], i === 3))}
+      {T.cols.map((cx, i) => cell(cx, T.rowB, rowB[i], i === 3))}
+    </>
+  );
+}
+
 function FocusScene({ game }: { game: CavaletteGame }) {
+  // Com marcador a correr → cartaz "RESULTADO EM ANDAMENTO"; senão → "PRÓXIMO".
+  const live = game.liveScore;
+  const L = live ? FOCUS_C : FOCUS_S;
+  const a = game.teamA.players;
+  const b = game.teamB.players;
   return (
     <div
       style={{
         position: "absolute",
         inset: 0,
         zIndex: 1,
-        padding: "56px 44px 40px",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        background:
-          "radial-gradient(120% 70% at 50% 0%, #0a2a6b 0%, #051438 45%, #020817 100%)",
+        backgroundImage: `url('/cavalete/${L.bg}?v=${SCENE_ASSET_VERSION}')`,
+        backgroundSize: `${STAGE_W}px ${STAGE_H}px`,
+        backgroundRepeat: "no-repeat",
       }}
     >
-      {/* CAMPO X */}
-      <div
-        style={{
-          alignSelf: "center",
-          padding: "14px 56px",
-          borderRadius: 18,
-          border: `3px solid ${BLUE}`,
-          background: "rgba(2,12,36,.55)",
-          boxShadow:
-            "inset 0 0 22px rgba(45,140,255,.3), 0 0 26px rgba(45,140,255,.45)",
-          color: "#fff",
-          fontFamily: FONT_DISPLAY,
-          fontSize: 76,
-          letterSpacing: "2px",
-          textTransform: "uppercase",
-          textShadow: "0 0 20px rgba(45,140,255,.6)",
-        }}
-      >
-        {game.court?.name ?? "FINAL"}
-      </div>
+      {/* fotos + nomes Dupla A */}
+      {L.photoA.map((z, i) => (
+        <FocusPhotoAbs key={"pa" + i} zone={z} url={a[i]?.photoUrl ?? null} />
+      ))}
+      {L.nameA.map((z, i) => (
+        <FocusName key={"na" + i} zone={z} name={a[i]?.name ?? ""} />
+      ))}
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 20 }}>
-        <FocusTeam label="A" players={game.teamA.players} accent={CYAN} />
+      {/* fotos + nomes Dupla B */}
+      {L.photoB.map((z, i) => (
+        <FocusPhotoAbs key={"pb" + i} zone={z} url={b[i]?.photoUrl ?? null} />
+      ))}
+      {L.nameB.map((z, i) => (
+        <FocusName key={"nb" + i} zone={z} name={b[i]?.name ?? ""} />
+      ))}
 
-        {/* VS */}
+      {live && game.court?.name ? (
         <div
           style={{
-            textAlign: "center",
-            color: LIME,
+            position: "absolute",
+            left: FOCUS_C.campo.x,
+            top: FOCUS_C.campo.y,
+            width: FOCUS_C.campo.w,
+            height: FOCUS_C.campo.h,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
             fontFamily: FONT_DISPLAY,
-            fontSize: 110,
-            fontStyle: "italic",
-            lineHeight: 0.9,
-            textShadow: `0 0 26px rgba(155,240,0,.7)`,
+            fontSize: 38,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
+            zIndex: 3,
           }}
         >
-          VS
+          {game.court.name}
         </div>
+      ) : null}
 
-        <FocusTeam label="B" players={game.teamB.players} accent={BLUE} />
-      </div>
-
-      {/* HORÁRIO DO JOGO */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginTop: 16 }}>
-        <SectionTitle>HORÁRIO DO JOGO</SectionTitle>
+      {live ? (
+        <FocusTable score={live} />
+      ) : (
+        /* horário (variante PRÓXIMO JOGO) */
         <div
           style={{
-            padding: "10px 60px",
-            borderRadius: 16,
-            background: LIME,
-            color: "#03210a",
+            position: "absolute",
+            left: FOCUS_S.horario.cx - FOCUS_S.horario.w / 2,
+            top: FOCUS_S.horario.y,
+            width: FOCUS_S.horario.w,
+            height: FOCUS_S.horario.h,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
             fontFamily: FONT_DISPLAY,
-            fontSize: 80,
-            letterSpacing: "2px",
+            fontSize: 96,
+            letterSpacing: "3px",
             fontVariantNumeric: "tabular-nums",
-            boxShadow: "0 0 28px rgba(155,240,0,.5)",
+            zIndex: 3,
           }}
         >
           {formatTime(game.startsAt)}
         </div>
-      </div>
+      )}
     </div>
   );
 }

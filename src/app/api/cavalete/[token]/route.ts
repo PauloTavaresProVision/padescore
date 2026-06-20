@@ -6,6 +6,7 @@ import {
   transformGame,
   bucketCourtGames,
   buildPhotoIndex,
+  photoForName,
   type CavaletteGame,
   type CavaletePayload,
 } from "@/lib/padelteams/transform";
@@ -231,7 +232,8 @@ export async function GET(
   // jogos mock — mas mantém os sponsors REAIS da DB (ver bloco em baixo).
   const demoMode =
     (process.env.NODE_ENV !== "production" &&
-      url.searchParams.get("demo") === "1") ||
+      (url.searchParams.get("demo") === "1" ||
+        url.searchParams.get("demo") === "2")) ||
     previewMode;
   if (demoMode) {
     if (cavaleteCourts[0] && !liveByCourt[0]) {
@@ -346,23 +348,55 @@ export async function GET(
         padelteamsId: -1,
         name: "Carlos Sousa / Sérgio Vieira",
         players: [
-          { padelteamsId: -1, name: "Carlos Sousa", photoUrl: null },
-          { padelteamsId: -1, name: "Sérgio Vieira", photoUrl: null },
+          {
+            padelteamsId: -1,
+            name: "Carlos Sousa",
+            photoUrl: photoForName("Carlos Sousa", photoIndex),
+          },
+          {
+            padelteamsId: -1,
+            name: "Sérgio Vieira",
+            photoUrl: photoForName("Sérgio Vieira", photoIndex),
+          },
         ],
       },
       teamB: {
         padelteamsId: -2,
-        name: "Nicolau M. / Wojtek D.",
+        name: "Nicolau Monteiro / Wojtek Dowbor",
         players: [
-          { padelteamsId: -1, name: "Nicolau M.", photoUrl: null },
-          { padelteamsId: -1, name: "Wojtek D.", photoUrl: null },
+          {
+            padelteamsId: -1,
+            name: "Nicolau Monteiro",
+            photoUrl: photoForName("Nicolau Monteiro", photoIndex),
+          },
+          {
+            padelteamsId: -1,
+            name: "Wojtek Dowbor",
+            photoUrl: photoForName("Wojtek Dowbor", photoIndex),
+          },
         ],
       },
-      sets: [],
-      scoreLabel: null,
+      sets: [
+        { a: 6, b: 4, type: "set" },
+        { a: 3, b: 5, type: "set" },
+      ],
+      scoreLabel: "6-4 3-5",
       winner: null,
       isFeatured: true,
       court: demoCourt,
+      // ?demo=2 → cartaz "RESULTADO EM ANDAMENTO" (com marcador ao vivo).
+      // qualquer outro demo → "PRÓXIMO JOGO" (sem marcador).
+      liveScore:
+        url.searchParams.get("demo") === "2"
+          ? {
+              setsA: 1,
+              setsB: 1,
+              gamesA: [6, 3],
+              gamesB: [4, 5],
+              pointsA: "40",
+              pointsB: "30",
+            }
+          : null,
     });
   }
 

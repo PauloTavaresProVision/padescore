@@ -44,6 +44,22 @@ export interface CavaletteGame {
   isFeatured: boolean;
   /** Court associado (nosso id + nome) */
   court: { id: string; name: string } | null;
+  /**
+   * Pontuação AO VIVO do nosso marcador (operador), quando este jogo está a
+   * ser marcado no nosso sistema. Null = não há marcador a correr (mostra o
+   * cartaz "PRÓXIMO JOGO"); presente = mostra "RESULTADO EM ANDAMENTO".
+   *   setsA/B  → sets ganhos
+   *   gamesA/B → jogos por set já fechado, em ordem [set1, set2, ...]
+   *   pointsA/B→ pontos do set actual ("0","15","30","40","Ad")
+   */
+  liveScore: {
+    setsA: number;
+    setsB: number;
+    gamesA: number[];
+    gamesB: number[];
+    pointsA: string;
+    pointsB: string;
+  } | null;
 }
 
 // ============================================================================
@@ -101,7 +117,10 @@ export function buildPhotoIndex(
     .map((p) => ({ words: new Set(photoNameWords(p.name)), url: p.photo_url! }));
 }
 
-function photoForName(name: string, index: PhotoIndexEntry[]): string | null {
+export function photoForName(
+  name: string,
+  index: PhotoIndexEntry[],
+): string | null {
   const words = photoNameWords(name);
   let best: { url: string; common: number } | null = null;
   for (const e of index) {
@@ -172,6 +191,7 @@ export function transformGame(
     winner: decideWinner(sets),
     isFeatured: ctx.featuredGameIds.has(g.id),
     court: g.field ? ctx.courtByFieldId.get(g.field.id) ?? null : null,
+    liveScore: null, // preenchido pela rota quando há marcador a correr (Parte 2)
   };
 }
 
