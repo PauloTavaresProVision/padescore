@@ -74,18 +74,60 @@ function decideWinner(
   return null;
 }
 
+// Matching de foto por NOME. O nosso DB de jogadores (com fotos) não tem o
+// padelteams_player_id ligado, por isso ligamos pela coincidência de nome:
+// basta nome + apelido em comum (≥2 palavras), tolerando acentos, maiúsculas
+// e nomes do meio diferentes ("Ana Castro" ↔ "Ana Castro Gomes").
+function photoNameWords(s: string): string[] {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1);
+}
+
+export interface PhotoIndexEntry {
+  words: Set<string>;
+  url: string;
+}
+
+export function buildPhotoIndex(
+  players: { name: string; photo_url: string | null }[],
+): PhotoIndexEntry[] {
+  return players
+    .filter((p) => p.photo_url)
+    .map((p) => ({ words: new Set(photoNameWords(p.name)), url: p.photo_url! }));
+}
+
+function photoForName(name: string, index: PhotoIndexEntry[]): string | null {
+  const words = photoNameWords(name);
+  let best: { url: string; common: number } | null = null;
+  for (const e of index) {
+    let common = 0;
+    for (const w of words) if (e.words.has(w)) common++;
+    if (common >= 2 && (!best || common > best.common)) {
+      best = { url: e.url, common };
+    }
+  }
+  return best?.url ?? null;
+}
+
 /**
- * Converte um PadelTeamsPlayer para a shape do cavalete, aplicando lookup
- * de foto-override (mapa padelteams_player_id → photo_url do nosso DB).
+ * Converte um PadelTeamsPlayer para a shape do cavalete. A foto vem do
+ * override por padelteams_player_id (se ligado) e, em fallback, do matching
+ * por nome contra o índice de jogadores com foto.
  */
 function transformPlayer(
   p: PadelTeamsPlayer,
   photoOverrides: Map<number, string>,
+  photoIndex: PhotoIndexEntry[],
 ): CavalettePlayer {
   return {
     padelteamsId: p.id,
     name: p.name,
-    photoUrl: photoOverrides.get(p.id) ?? null,
+    photoUrl: photoOverrides.get(p.id) ?? photoForName(p.name, photoIndex) ?? null,
   };
 }
 
@@ -96,6 +138,7 @@ export function transformGame(
   g: PadelTeamsGame,
   ctx: {
     photoOverrides: Map<number, string>;
+    photoIndex: PhotoIndexEntry[];
     courtByFieldId: Map<number, { id: string; name: string }>;
     featuredGameIds: Set<number>;
   },
@@ -114,14 +157,14 @@ export function transformGame(
       padelteamsId: g.team1.id,
       name: g.team1.name,
       players: g.team1.players.map((p) =>
-        transformPlayer(p, ctx.photoOverrides),
+        transformPlayer(p, ctx.photoOverrides, ctx.photoIndex),
       ),
     },
     teamB: {
       padelteamsId: g.team2.id,
       name: g.team2.name,
       players: g.team2.players.map((p) =>
-        transformPlayer(p, ctx.photoOverrides),
+        transformPlayer(p, ctx.photoOverrides, ctx.photoIndex),
       ),
     },
     sets,

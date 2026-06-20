@@ -5,6 +5,7 @@ import { getCompetitionSnapshot } from "@/lib/padelteams/client";
 import {
   transformGame,
   bucketCourtGames,
+  buildPhotoIndex,
   type CavaletteGame,
   type CavaletePayload,
 } from "@/lib/padelteams/transform";
@@ -104,8 +105,7 @@ export async function GET(
       .eq("tournament_id", totem.tournament_id),
     supabase
       .from("players")
-      .select("padelteams_player_id, photo_url")
-      .not("padelteams_player_id", "is", null)
+      .select("name, padelteams_player_id, photo_url")
       .not("photo_url", "is", null),
   ]);
 
@@ -161,6 +161,9 @@ export async function GET(
       photoOverrides.set(p.padelteams_player_id, p.photo_url);
     }
   }
+  // Índice por NOME (fallback quando o jogador não tem padelteams_player_id
+  // ligado) — liga as fotos do backoffice aos jogadores da PadelTeams.
+  const photoIndex = buildPhotoIndex(playersRaw ?? []);
 
   const featuredGameIds = new Set<number>(
     (overridesRaw ?? [])
@@ -177,7 +180,12 @@ export async function GET(
     ? snapshot.games
         .filter((g) => g.field && ourFieldIds.has(g.field.id))
         .map((g) =>
-          transformGame(g, { photoOverrides, courtByFieldId, featuredGameIds }),
+          transformGame(g, {
+            photoOverrides,
+            photoIndex,
+            courtByFieldId,
+            featuredGameIds,
+          }),
         )
         .filter((g) => !isUndefinedGame(g))
     : [];
