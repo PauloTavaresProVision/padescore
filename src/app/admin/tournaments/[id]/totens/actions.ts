@@ -27,6 +27,26 @@ function fail(tournamentId: string, message: string): never {
 }
 
 /**
+ * Liga/desliga o Modo Finais do torneio. Quando ligado, todos os cavaletes
+ * passam a mostrar só os cartazes das finais (jogos em destaque), escondendo
+ * a rotação normal (jogos do dia, resultados, patrocinadores).
+ */
+export async function setFinalsMode(tournamentId: string, enabled: boolean) {
+  const supabase = await ensureOwner(tournamentId);
+  const { error } = await supabase
+    .from("tournaments")
+    .update({ cavalete_finals_mode: enabled })
+    .eq("id", tournamentId);
+  if (error) {
+    fail(
+      tournamentId,
+      "Falta aplicar a migração 0022 (cavalete_finals_mode) na base de dados antes de usar o Modo Finais.",
+    );
+  }
+  revalidatePath(`/admin/tournaments/${tournamentId}/totens`);
+}
+
+/**
  * Cria um cavalete novo (1 ou 2 campos). O token é gerado automaticamente
  * pelo default do schema (16 chars opacos).
  */
