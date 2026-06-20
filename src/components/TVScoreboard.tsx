@@ -91,45 +91,54 @@ export function TVScoreboard({
   }, [state]);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Catch-up: o realtime perde mensagens durante quedas de rede. Quando
-  // reconecta (ou o tab volta a ficar visível) volta a buscar o estado.
+  // Catch-up + polling de backup. Usa o endpoint HTTP `/api/match-poll/[id]`
+  // (fetch puro) em vez do cliente Supabase JS porque em smart TVs / webviews
+  // (YoloBox, etc.) tanto o cliente Supabase como o WebSocket do realtime
+  // falham silenciosamente. Com fetch normal a TV fica em dia mesmo sem realtime.
   const refetch = useCallback(async () => {
-    const supabase = createClient();
-    const [{ data: st }, { data: m }] = await Promise.all([
-      supabase
-        .from("match_state")
-        .select("*")
-        .eq("match_id", initialMatch.id)
-        .single(),
-      supabase
-        .from("matches")
-        .select(
-          "court_name, category, team_a_player1, team_a_player2, team_b_player1, team_b_player2, team_a_photo_url, team_b_photo_url, status, started_at, finished_at",
-        )
-        .eq("id", initialMatch.id)
-        .single(),
-    ]);
-    if (st) setState(st as unknown as TVState);
-    if (m) {
-      const row = m as Partial<TVMatch>;
-      setMatch((prev) => ({
-        ...prev,
-        court_name: row.court_name ?? prev.court_name,
-        category: row.category ?? null,
-        team_a_player1: row.team_a_player1 ?? prev.team_a_player1,
-        team_a_player2: row.team_a_player2 ?? null,
-        team_b_player1: row.team_b_player1 ?? prev.team_b_player1,
-        team_b_player2: row.team_b_player2 ?? null,
-        team_a_photo_url: row.team_a_photo_url ?? null,
-        team_b_photo_url: row.team_b_photo_url ?? null,
-        status: row.status ?? prev.status,
-        started_at: row.started_at ?? prev.started_at,
-        finished_at: row.finished_at ?? prev.finished_at,
-      }));
+    try {
+      const res = await fetch(`/api/match-poll/${initialMatch.id}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const { state: st, match: m } = (await res.json()) as {
+        state: TVState | null;
+        match: Partial<TVMatch> | null;
+      };
+      if (st) setState(st);
+      if (m) {
+        setMatch((prev) => ({
+          ...prev,
+          court_name: m.court_name ?? prev.court_name,
+          category: m.category ?? null,
+          team_a_player1: m.team_a_player1 ?? prev.team_a_player1,
+          team_a_player2: m.team_a_player2 ?? null,
+          team_b_player1: m.team_b_player1 ?? prev.team_b_player1,
+          team_b_player2: m.team_b_player2 ?? null,
+          team_a_photo_url: m.team_a_photo_url ?? null,
+          team_b_photo_url: m.team_b_photo_url ?? null,
+          status: m.status ?? prev.status,
+          started_at: m.started_at ?? prev.started_at,
+          finished_at: m.finished_at ?? prev.finished_at,
+        }));
+      }
+    } catch {
+      /* sem rede — próximo tick tenta de novo */
     }
   }, [initialMatch.id]);
 
   const { online, handleStatus } = useReconnect(refetch);
+
+  // Polling de backup a cada 3s. Em smart TVs / webviews que bloqueiam
+  // WebSockets o realtime do Supabase falha em silêncio e o placar congelava
+  // — este polling garante que a TV actualiza mesmo sem realtime (mesmo
+  // padrão do Scoreboard do OBS).
+  useEffect(() => {
+    const id = setInterval(() => {
+      void refetch();
+    }, 3000);
+    return () => clearInterval(id);
+  }, [refetch]);
 
   useEffect(() => {
     const supabase = createClient();

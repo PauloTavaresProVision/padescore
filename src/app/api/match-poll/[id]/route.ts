@@ -22,7 +22,7 @@ export async function GET(
     supabase
       .from("matches")
       .select(
-        "court_name, team_a_player1, team_a_player2, team_b_player1, team_b_player2, team_a_player1_short, team_a_player2_short, team_b_player1_short, team_b_player2_short, status, started_at, finished_at",
+        "court_name, category, team_a_player1, team_a_player2, team_b_player1, team_b_player2, team_a_player1_short, team_a_player2_short, team_b_player1_short, team_b_player2_short, team_a_photo_url, team_b_photo_url, status, started_at, finished_at",
       )
       .eq("id", id)
       .maybeSingle(),
