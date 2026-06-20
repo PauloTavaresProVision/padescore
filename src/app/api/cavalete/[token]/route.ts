@@ -77,12 +77,17 @@ export async function GET(
     supabase
       .from("tournaments")
       .select(
-        "id, name, padelteams_competition_code, scene_main_duration_sec, scene_sponsors_duration_sec",
+        "id, name, padelteams_competition_code, scene_main_duration_sec, scene_sponsors_duration_sec, cavalete_finals_mode",
       )
       .eq("id", totem.tournament_id)
       .maybeSingle()
       .then(async (r) => {
-        if (r.error && /scene_(main|sponsors)_duration_sec/i.test(r.error.message)) {
+        if (
+          r.error &&
+          /scene_(main|sponsors)_duration_sec|cavalete_finals_mode/i.test(
+            r.error.message,
+          )
+        ) {
           // Colunas ainda não existem — re-tentar sem elas
           return await supabase
             .from("tournaments")
@@ -493,14 +498,25 @@ export async function GET(
   type TournamentWithScenes = typeof tournament & {
     scene_main_duration_sec?: number | null;
     scene_sponsors_duration_sec?: number | null;
+    cavalete_finals_mode?: boolean | null;
   };
   const t = tournament as TournamentWithScenes;
   const sceneMainSec = t.scene_main_duration_sec ?? 40;
   const sceneSponsorsSec = t.scene_sponsors_duration_sec ?? 15;
+  // Modo Finais: pela flag do torneio OU forçado por ?finals=1 (para testar
+  // sem ter de mexer na BD). ?finals=0 força desligado.
+  const finalsParam = url.searchParams.get("finals");
+  const finalsMode =
+    finalsParam === "1"
+      ? true
+      : finalsParam === "0"
+        ? false
+        : (t.cavalete_finals_mode ?? false);
 
   const payload: CavaletePayload = {
     tournament: {
       name: tournament.name,
+      finalsMode,
       sceneDurations: {
         mainSec: sceneMainSec,
         sponsorsSec: sceneSponsorsSec,

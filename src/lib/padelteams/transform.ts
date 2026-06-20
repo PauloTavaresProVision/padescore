@@ -351,6 +351,8 @@ export function bucketCourtGames(
 export interface CavaletePayload {
   tournament: {
     name: string;
+    /** Modo Finais: quando true, o cavalete mostra só os cartazes de finais. */
+    finalsMode: boolean;
     /** Tempos de rotação configurados por torneio. Defaults: main 40s, sponsors 15s. */
     sceneDurations: {
       mainSec: number;

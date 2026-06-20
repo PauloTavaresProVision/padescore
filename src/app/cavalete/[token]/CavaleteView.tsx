@@ -160,7 +160,10 @@ export function CavaleteView({ token }: { token: string }) {
     0;
   const featuredGames = data?.featured ?? [];
   const hasFocus = featuredGames.length > 0;
-  const scenes = buildScenes(hasFocus, hasSponsors);
+  // Modo Finais: cavalete mostra SÓ os cartazes de finais (cena focus), sem a
+  // rotação normal (main/sponsors/byte).
+  const finalsMode = data?.tournament.finalsMode ?? false;
+  const scenes = buildScenes(hasFocus, hasSponsors, finalsMode);
   const nScenes = scenes.length;
 
   // Em dev/teste, ?scene=main|focus|sponsors|byte força uma cena (sem rotação)
@@ -169,7 +172,7 @@ export function CavaleteView({ token }: { token: string }) {
   const nPartners = data?.sponsors.footer.length ?? 0;
   const [sceneIdx, setSceneIdx] = useState(0);
   useEffect(() => {
-    const list = buildScenes(hasFocus, hasSponsors);
+    const list = buildScenes(hasFocus, hasSponsors, finalsMode);
     if (forceScene) {
       const i = list.indexOf(forceScene as SceneName);
       return void setSceneIdx(i >= 0 ? i : 0);
@@ -209,6 +212,7 @@ export function CavaleteView({ token }: { token: string }) {
     sceneIdx,
     hasFocus,
     hasSponsors,
+    finalsMode,
     nPartners,
     featuredGames.length,
     forceScene,
@@ -240,11 +244,52 @@ export function CavaleteView({ token }: { token: string }) {
 type SceneName = "main" | "focus" | "sponsors" | "byte";
 
 /** Ordem de rotação das cenas, conforme o que há para mostrar. */
-function buildScenes(hasFocus: boolean, hasSponsors: boolean): SceneName[] {
+function buildScenes(
+  hasFocus: boolean,
+  hasSponsors: boolean,
+  finalsMode: boolean,
+): SceneName[] {
+  // Modo Finais: só os cartazes das finais (cena focus), sem main/sponsors/byte.
+  if (finalsMode) return ["focus"];
   const s: SceneName[] = ["main"];
   if (hasFocus) s.push("focus");
   if (hasSponsors) s.push("sponsors", "byte");
   return s;
+}
+
+/** Standby do Modo Finais quando ainda não há jogo em destaque neste campo. */
+function FocusStandby() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 1,
+        backgroundImage: `url('/cavalete/${FOCUS_S.bg}?v=${SCENE_ASSET_VERSION}')`,
+        backgroundSize: `${STAGE_W}px ${STAGE_H}px`,
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          color: "#fff",
+          fontFamily: FONT_DISPLAY,
+          fontSize: 64,
+          letterSpacing: "3px",
+          textAlign: "center",
+          textShadow: "0 0 22px rgba(45,140,255,.8)",
+          opacity: 0.9,
+        }}
+      >
+        A AGUARDAR
+        <br />
+        PRÓXIMO JOGO
+      </div>
+    </div>
+  );
 }
 
 /** Carrossel dos jogos em destaque dentro da cena focus (um por vez). */
@@ -259,7 +304,7 @@ function FocusCarousel({ games }: { games: CavaletteGame[] }) {
     return () => clearTimeout(t);
   }, [idx, games.length]);
   const game = games[idx % games.length];
-  if (!game) return null;
+  if (!game) return <FocusStandby />;
   return <FocusScene game={game} />;
 }
 
