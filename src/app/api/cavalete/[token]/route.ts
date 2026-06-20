@@ -7,8 +7,10 @@ import {
   bucketCourtGames,
   buildPhotoIndex,
   photoForName,
+  buildLiveScore,
   type CavaletteGame,
   type CavaletePayload,
+  type MatchStateRow,
 } from "@/lib/padelteams/transform";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +70,7 @@ export async function GET(
     { data: sponsorsRaw },
     { data: overridesRaw },
     { data: playersRaw },
+    { data: liveMatchesRaw },
   ] = await Promise.all([
     // Tenta pedir colunas novas (migration 0016). Se ainda não foram
     // aplicadas, fallback para colunas base. Defaults aplicados depois.
@@ -108,6 +111,15 @@ export async function GET(
       .from("players")
       .select("name, padelteams_player_id, photo_url")
       .not("photo_url", "is", null),
+    // Jogos a serem marcados AO VIVO no nosso sistema, nos campos deste
+    // cavalete — para mostrar a pontuação do operador na cena EM FOCO.
+    supabase
+      .from("matches")
+      .select(
+        "id, court_id, team_a_player1, team_a_player2, team_b_player1, team_b_player2, match_state(sets_a, sets_b, games_a, games_b, sets_history, points_a, points_b, is_finished)",
+      )
+      .eq("status", "live")
+      .in("court_id", courtIds),
   ]);
 
   if (!tournament) {
@@ -398,6 +410,36 @@ export async function GET(
             }
           : null,
     });
+  }
+
+  // 7b) Pontuação AO VIVO: liga cada jogo em destaque ao marcador do operador
+  // (match "live" no MESMO campo). Constrói o liveScore alinhando as duplas
+  // por nome → a cena passa de "PRÓXIMO JOGO" para "RESULTADO EM ANDAMENTO".
+  const liveByCourtId = new Map<
+    string,
+    { aNames: string[]; bNames: string[]; state: MatchStateRow }
+  >();
+  for (const m of liveMatchesRaw ?? []) {
+    const st = (
+      Array.isArray(m.match_state) ? m.match_state[0] : m.match_state
+    ) as MatchStateRow | undefined;
+    if (!m.court_id || !st) continue;
+    liveByCourtId.set(m.court_id, {
+      aNames: [m.team_a_player1, m.team_a_player2].filter(
+        (n): n is string => !!n,
+      ),
+      bNames: [m.team_b_player1, m.team_b_player2].filter(
+        (n): n is string => !!n,
+      ),
+      state: st,
+    });
+  }
+  for (const g of featured) {
+    if (g.liveScore) continue; // já injectado (demo)
+    const live = g.court ? liveByCourtId.get(g.court.id) : undefined;
+    if (live) {
+      g.liveScore = buildLiveScore(g, live.aNames, live.bNames, live.state);
+    }
   }
 
   // 8) Sponsors

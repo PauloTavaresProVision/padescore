@@ -133,6 +133,74 @@ export function photoForName(
   return best?.url ?? null;
 }
 
+// Shape do nosso match_state (subset relevante) tal como vem da DB.
+export interface MatchStateRow {
+  sets_a: number;
+  sets_b: number;
+  games_a: number;
+  games_b: number;
+  sets_history: { a: number; b: number }[] | null;
+  points_a: string;
+  points_b: string;
+  is_finished: boolean;
+}
+
+/**
+ * Constrói o liveScore para um jogo em destaque a partir do match_state do
+ * nosso marcador (operador). Alinha as equipas pelo NOME: se a Dupla A do
+ * jogo (PadelTeams) corresponder à equipa B do nosso match, troca os lados
+ * para o score aparecer do lado certo.
+ *
+ *   matchTeamA/B = nomes dos jogadores no nosso match (team_a_player1+2, ...)
+ */
+export function buildLiveScore(
+  featured: CavaletteGame,
+  matchTeamA: string[],
+  matchTeamB: string[],
+  state: MatchStateRow,
+): NonNullable<CavaletteGame["liveScore"]> {
+  const featuredAWords = new Set(
+    featured.teamA.players.flatMap((p) => photoNameWords(p.name)),
+  );
+  const overlap = (names: string[]) =>
+    names.reduce(
+      (acc, n) =>
+        acc + photoNameWords(n).filter((w) => featuredAWords.has(w)).length,
+      0,
+    );
+  // Se a Dupla A do cartaz casa melhor com a equipa B do match → trocar.
+  const swap = overlap(matchTeamB) > overlap(matchTeamA);
+
+  const hist = Array.isArray(state.sets_history) ? state.sets_history : [];
+  // games por set: sets fechados (history) + set actual (se não terminou)
+  const gamesA = [
+    ...hist.map((s) => s.a),
+    ...(state.is_finished ? [] : [state.games_a]),
+  ];
+  const gamesB = [
+    ...hist.map((s) => s.b),
+    ...(state.is_finished ? [] : [state.games_b]),
+  ];
+
+  const base = {
+    setsA: state.sets_a,
+    setsB: state.sets_b,
+    gamesA,
+    gamesB,
+    pointsA: state.points_a,
+    pointsB: state.points_b,
+  };
+  if (!swap) return base;
+  return {
+    setsA: base.setsB,
+    setsB: base.setsA,
+    gamesA: base.gamesB,
+    gamesB: base.gamesA,
+    pointsA: base.pointsB,
+    pointsB: base.pointsA,
+  };
+}
+
 /**
  * Converte um PadelTeamsPlayer para a shape do cavalete. A foto vem do
  * override por padelteams_player_id (se ligado) e, em fallback, do matching
