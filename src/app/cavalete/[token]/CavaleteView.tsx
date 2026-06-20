@@ -1045,28 +1045,30 @@ const OFFICIALS_BOX = { x: 66, y: 630, w: 948, h: 566 };
 // posiciona fotos, nomes e números nas zonas medidas (canvas 1080×1920).
 // =============================================================================
 
-// Zonas medidas no FinalSresultado (próximo jogo). Cada foto preenche a sua
-// moldura (object-position:top garante que a cabeça nunca é cortada). As
-// molduras A (h544) são mais altas que as B (h384) — é assim o PNG do designer.
+// Zonas medidas (linha do neon, NÃO o glow) no FinalSresultado.
+//   moldura A: y435–896 (h461)   moldura B: y1174–1568 (h394)
+// A moldura A é mais alta; para as fotos ficarem do MESMO tamanho usamos a
+// altura da B (394) e centramo-la na moldura A (margem 33px topo/baixo).
+// object-position:top garante que nunca corta a cabeça.
 const FOCUS_S = {
   bg: "FinalSresultado.png",
   // caixa no topo (entre as molduras de cima) → nome do campo
   campo: { x: 392, y: 354, w: 296, h: 42 },
   photoA: [
-    { x: 152, y: 351, w: 348, h: 544 },
-    { x: 580, y: 351, w: 348, h: 544 },
+    { x: 152, y: 468, w: 348, h: 394 },
+    { x: 580, y: 468, w: 348, h: 394 },
   ],
   nameA: [
-    { x: 152, y: 922, w: 348, h: 132 },
-    { x: 580, y: 922, w: 348, h: 132 },
+    { x: 152, y: 924, w: 348, h: 130 },
+    { x: 580, y: 924, w: 348, h: 130 },
   ],
   photoB: [
-    { x: 152, y: 1173, w: 348, h: 384 },
-    { x: 580, y: 1173, w: 348, h: 384 },
+    { x: 152, y: 1174, w: 348, h: 394 },
+    { x: 580, y: 1174, w: 348, h: 394 },
   ],
   nameB: [
-    { x: 152, y: 1560, w: 348, h: 120 },
-    { x: 580, y: 1560, w: 348, h: 120 },
+    { x: 152, y: 1576, w: 348, h: 88 },
+    { x: 580, y: 1576, w: 348, h: 88 },
   ],
   horario: { cx: 540, y: 1740, w: 470, h: 130 },
 };
@@ -1143,10 +1145,11 @@ function FocusName({
         textAlign: "center",
         color: "#fff",
         fontFamily: FONT_DISPLAY,
-        fontSize: 52,
+        fontSize: 46,
         lineHeight: 1.0,
         letterSpacing: "1px",
         textTransform: "uppercase",
+        whiteSpace: "nowrap",
         zIndex: 3,
       }}
     >
@@ -1155,26 +1158,26 @@ function FocusName({
   );
 }
 
-// Zonas medidas no FinalCresultado (resultado em andamento). As molduras são
-// mais baixas porque a tabela de pontuação ocupa o centro.
+// Zonas medidas (linha do neon) no FinalCresultado.
+//   moldura A: y630–909 (h279)   moldura B: y1383–1602 (h219)
+// Altura uniforme = 219 (a da B), centrada na moldura A (margem 30px).
 const FOCUS_C = {
   bg: "FinalCresultado.png",
-  // molduras A (630..895) e B (1400..1660) têm a mesma altura → fotos preenchem
   photoA: [
-    { x: 120, y: 630, w: 350, h: 265 },
-    { x: 590, y: 630, w: 350, h: 265 },
+    { x: 126, y: 660, w: 330, h: 219 },
+    { x: 624, y: 660, w: 330, h: 219 },
   ],
   nameA: [
-    { x: 120, y: 928, w: 350, h: 70 },
-    { x: 590, y: 928, w: 350, h: 70 },
+    { x: 126, y: 915, w: 330, h: 100 },
+    { x: 624, y: 915, w: 330, h: 100 },
   ],
   photoB: [
-    { x: 120, y: 1400, w: 350, h: 260 },
-    { x: 590, y: 1400, w: 350, h: 260 },
+    { x: 126, y: 1383, w: 330, h: 219 },
+    { x: 624, y: 1383, w: 330, h: 219 },
   ],
   nameB: [
-    { x: 120, y: 1665, w: 350, h: 56 },
-    { x: 590, y: 1665, w: 350, h: 56 },
+    { x: 126, y: 1606, w: 330, h: 70 },
+    { x: 624, y: 1606, w: 330, h: 70 },
   ],
   // caixa ao lado de "AO VIVO" → nome do campo
   campo: { x: 360, y: 410, w: 360, h: 62 },
