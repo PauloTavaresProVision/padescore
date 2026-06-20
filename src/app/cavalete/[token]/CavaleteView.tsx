@@ -1046,20 +1046,25 @@ const OFFICIALS_BOX = { x: 66, y: 630, w: 948, h: 566 };
 // =============================================================================
 
 // Zonas medidas no FinalSresultado (próximo jogo).
+// As molduras de cima (A) são mais ALTAS que as de baixo (B) no PNG, por isso
+// as fotos usam todas a MESMA altura (a da moldura B) e ficam alinhadas pela
+// BASE de cada moldura — assim os jogadores aparecem todos do mesmo tamanho.
+const FOCUS_PHOTO_H = 384;
 const FOCUS_S = {
   bg: "FinalSresultado.png",
-  campo: { cx: 540, y: 235 },
+  // caixa no topo (entre as molduras de cima) → nome do campo
+  campo: { x: 392, y: 354, w: 296, h: 42 },
   photoA: [
-    { x: 152, y: 351, w: 348, h: 544 },
-    { x: 580, y: 351, w: 348, h: 544 },
+    { x: 152, y: 895 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
+    { x: 580, y: 895 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
   ],
   nameA: [
     { x: 152, y: 922, w: 348, h: 132 },
     { x: 580, y: 922, w: 348, h: 132 },
   ],
   photoB: [
-    { x: 152, y: 1173, w: 348, h: 350 },
-    { x: 580, y: 1173, w: 348, h: 350 },
+    { x: 152, y: 1557 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
+    { x: 580, y: 1557 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
   ],
   nameB: [
     { x: 152, y: 1560, w: 348, h: 120 },
@@ -1149,21 +1154,22 @@ function FocusName({
 // mais baixas porque a tabela de pontuação ocupa o centro.
 const FOCUS_C = {
   bg: "FinalCresultado.png",
+  // molduras A (630..895) e B (1400..1660) têm a mesma altura → fotos preenchem
   photoA: [
-    { x: 110, y: 525, w: 350, h: 325 },
-    { x: 600, y: 525, w: 350, h: 325 },
+    { x: 120, y: 630, w: 350, h: 265 },
+    { x: 590, y: 630, w: 350, h: 265 },
   ],
   nameA: [
-    { x: 110, y: 866, w: 350, h: 98 },
-    { x: 600, y: 866, w: 350, h: 98 },
+    { x: 120, y: 928, w: 350, h: 70 },
+    { x: 590, y: 928, w: 350, h: 70 },
   ],
   photoB: [
-    { x: 110, y: 1360, w: 350, h: 242 },
-    { x: 600, y: 1360, w: 350, h: 242 },
+    { x: 120, y: 1400, w: 350, h: 260 },
+    { x: 590, y: 1400, w: 350, h: 260 },
   ],
   nameB: [
-    { x: 110, y: 1610, w: 350, h: 76 },
-    { x: 600, y: 1610, w: 350, h: 76 },
+    { x: 120, y: 1665, w: 350, h: 56 },
+    { x: 590, y: 1665, w: 350, h: 56 },
   ],
   // caixa ao lado de "AO VIVO" → nome do campo
   campo: { x: 360, y: 410, w: 360, h: 62 },
@@ -1255,22 +1261,23 @@ function FocusScene({ game }: { game: CavaletteGame }) {
         <FocusName key={"nb" + i} zone={z} name={b[i]?.name ?? ""} />
       ))}
 
-      {live && game.court?.name ? (
+      {game.court?.name ? (
         <div
           style={{
             position: "absolute",
-            left: FOCUS_C.campo.x,
-            top: FOCUS_C.campo.y,
-            width: FOCUS_C.campo.w,
-            height: FOCUS_C.campo.h,
+            left: L.campo.x,
+            top: L.campo.y,
+            width: L.campo.w,
+            height: L.campo.h,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "#fff",
             fontFamily: FONT_DISPLAY,
-            fontSize: 38,
+            fontSize: Math.round(L.campo.h * 0.66),
             letterSpacing: "1px",
             textTransform: "uppercase",
+            whiteSpace: "nowrap",
             zIndex: 3,
           }}
         >
