@@ -1045,26 +1045,24 @@ const OFFICIALS_BOX = { x: 66, y: 630, w: 948, h: 566 };
 // posiciona fotos, nomes e números nas zonas medidas (canvas 1080×1920).
 // =============================================================================
 
-// Zonas medidas no FinalSresultado (próximo jogo).
-// As molduras de cima (A) são mais ALTAS que as de baixo (B) no PNG, por isso
-// as fotos usam todas a MESMA altura (a da moldura B) e ficam alinhadas pela
-// BASE de cada moldura — assim os jogadores aparecem todos do mesmo tamanho.
-const FOCUS_PHOTO_H = 384;
+// Zonas medidas no FinalSresultado (próximo jogo). Cada foto preenche a sua
+// moldura (object-position:top garante que a cabeça nunca é cortada). As
+// molduras A (h544) são mais altas que as B (h384) — é assim o PNG do designer.
 const FOCUS_S = {
   bg: "FinalSresultado.png",
   // caixa no topo (entre as molduras de cima) → nome do campo
   campo: { x: 392, y: 354, w: 296, h: 42 },
   photoA: [
-    { x: 152, y: 895 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
-    { x: 580, y: 895 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
+    { x: 152, y: 351, w: 348, h: 544 },
+    { x: 580, y: 351, w: 348, h: 544 },
   ],
   nameA: [
     { x: 152, y: 922, w: 348, h: 132 },
     { x: 580, y: 922, w: 348, h: 132 },
   ],
   photoB: [
-    { x: 152, y: 1557 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
-    { x: 580, y: 1557 - FOCUS_PHOTO_H, w: 348, h: FOCUS_PHOTO_H },
+    { x: 152, y: 1173, w: 348, h: 384 },
+    { x: 580, y: 1173, w: 348, h: 384 },
   ],
   nameB: [
     { x: 152, y: 1560, w: 348, h: 120 },
@@ -1100,7 +1098,14 @@ function FocusPhotoAbs({
         <img
           src={url}
           alt=""
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          // object-position TOP: ao recortar, corta SEMPRE pelos pés (baixo),
+          // nunca pela cabeça — assim a cara dos jogadores nunca é cortada.
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "top center",
+          }}
         />
       ) : (
         <svg viewBox="0 0 100 122" style={{ width: "60%", opacity: 0.4 }}>
@@ -1274,10 +1279,12 @@ function FocusScene({ game }: { game: CavaletteGame }) {
             justifyContent: "center",
             color: "#fff",
             fontFamily: FONT_DISPLAY,
-            fontSize: Math.round(L.campo.h * 0.66),
-            letterSpacing: "1px",
+            fontSize: Math.max(46, Math.round(L.campo.h * 0.7)),
+            fontWeight: 700,
+            letterSpacing: "4px",
             textTransform: "uppercase",
             whiteSpace: "nowrap",
+            textShadow: "0 0 18px rgba(45,140,255,.85), 0 2px 6px rgba(0,0,0,.6)",
             zIndex: 3,
           }}
         >
